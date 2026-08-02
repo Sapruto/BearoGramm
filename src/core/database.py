@@ -1,0 +1,81 @@
+import os
+from contextlib import asynccontextmanager
+from typing import AsyncGenerator
+
+from sqlalchemy.ext.asyncio import (
+    create_async_engine,
+    AsyncSession,
+    async_sessionmaker,
+    AsyncEngine
+)
+from sqlalchemy.orm import declarative_base
+
+from src.core.paths import DATABASE_ROOT, ENV_PATH
+from src.core.logger import get_logger
+from dotenv import load_dotenv
+
+logger = get_logger(__name__)
+
+load_dotenv(dotenv_path=ENV_PATH)
+
+#DATABASE_URL = f"postgresql+asyncpg://{os.getenv('DB_USER')}:{os.getenv('DB_PASSWORD')}@{os.getenv('DB_HOST')}:{os.getenv('DB_PORT')}/{os.getenv('DB_NAME')}"
+DATABASE_URL = f"sqlite+aiosqlite:///{DATABASE_ROOT}/test.db"
+
+connect_args = {}
+if "sqlite" in DATABASE_URL:
+    connect_args = {
+        "check_same_thread": False,
+        "timeout": 30,
+    }
+
+engine: AsyncEngine = create_async_engine(
+    DATABASE_URL,
+    echo=os.getenv("SQL_ECHO", "false").lower() == "true",
+    pool_pre_ping=True,
+    pool_size=int(os.getenv("DB_POOL_SIZE", "20")),
+    max_overflow=int(os.getenv("DB_MAX_OVERFLOW", "10")),
+    pool_timeout=int(os.getenv("DB_POOL_TIMEOUT", "30")),
+    pool_recycle=3600,
+    connect_args=connect_args if connect_args else None,
+)
+
+AsyncSessionLocal = async_sessionmaker(
+    engine,
+    class_=AsyncSession,
+    expire_on_commit=False,
+    autoflush=False,
+)
+Base = declarative_base()
+
+async def init_db():
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+    logger.info("Database tables created")
+
+async def get_db() -> AsyncGenerator[AsyncSession, None]:
+    async with AsyncSessionLocal() as session:
+        try:
+            yield session
+            await session.commit()
+        except Exception:
+            await session.rollback()
+            logger.error("Database error, rolling back")
+            raise
+
+@asynccontextmanager
+async def get_db_context():
+    async with AsyncSessionLocal() as session:
+        try:
+            yield session
+            await session.commit()
+        except Exception:
+            await session.rollback()
+            logger.error("Database error, rolling back")
+            raise
+
+async def execute_with_retry(session: AsyncSession, stmt):
+    return await session.execute(stmt)
+
+async def close_db():
+    await engine.dispose()
+    logger.info("Database connections closed")
