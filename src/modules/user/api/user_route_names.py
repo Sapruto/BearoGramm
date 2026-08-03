@@ -11,6 +11,8 @@ class AuthRoutes(str, Enum):
     login = '/api/login'
     register = '/api/register'
     logout = '/api/logout'
+
+    send_verify_token = "/api/send_token"
     verify_phone = '/api/verify/{token}'
 
     def __str__(self):
@@ -33,6 +35,9 @@ class AuthRoutesURL(str, Enum):
     login = f"{_get_base_url()}{AuthRoutes.login}"
     register = f"{_get_base_url()}{AuthRoutes.register}"
     logout = f"{_get_base_url()}{AuthRoutes.logout}"
+
+    send_verify_token = f"{_get_base_url()}{AuthRoutes.send_verify_token}"
+    verify_phone = f"{_get_base_url()}{AuthRoutes.verify_phone}"
 
     def __str__(self):
         return self.value
