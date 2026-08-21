@@ -316,12 +316,12 @@ class Encrypter:
 
         return await self.encrypt(decrypted)
 
-_encrypter_instance: Optional[SecureEncrypter] = None
+_encrypter_instance: Optional[Encrypter] = None
 
-def get_encrypter() -> SecureEncrypter:
+def get_encrypter() -> Encrypter:
     global _encrypter_instance
     if _encrypter_instance is None:
-        _encrypter_instance = SecureEncrypter()
+        _encrypter_instance = Encrypter()
     return _encrypter_instance
 
 class GenerateKeyPairResult(BaseModel):
