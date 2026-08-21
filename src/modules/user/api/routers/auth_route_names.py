@@ -7,13 +7,8 @@ from src.core.callbacks import test_url
 load_dotenv(find_dotenv())
 
 class AuthRoutes(str, Enum):
-    index = '/'
-    login = '/api/login'
-    register = '/api/register'
-    logout = '/api/logout'
-
-    send_verify_token = "/api/send_token"
-    verify_phone = '/api/verify/{token}'
+    get_login_token = '/api/auth/get_login_token'
+    verify_phone = '/api/auth/verify_phone'
 
     def __str__(self):
         return self.value
@@ -31,12 +26,7 @@ class AuthRoutesURL(str, Enum):
 
         return test_url
 
-    index = f"{_get_base_url()}{AuthRoutes.index}"
-    login = f"{_get_base_url()}{AuthRoutes.login}"
-    register = f"{_get_base_url()}{AuthRoutes.register}"
-    logout = f"{_get_base_url()}{AuthRoutes.logout}"
-
-    send_verify_token = f"{_get_base_url()}{AuthRoutes.send_verify_token}"
+    get_login_token = f"{_get_base_url()}{AuthRoutes.get_login_token}"
     verify_phone = f"{_get_base_url()}{AuthRoutes.verify_phone}"
 
     def __str__(self):

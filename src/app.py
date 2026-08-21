@@ -32,6 +32,10 @@ def create_app() -> FastAPI:
 
     app = include_all_routers(app)
 
+    @app.get("/")
+    async def index():
+        return "67"
+
     @app.exception_handler(HTTPException)
     async def http_exception_handler(request: Request, exc: HTTPException):
         return JSONResponse(

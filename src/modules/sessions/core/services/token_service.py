@@ -17,7 +17,7 @@ secret_key_jwt = os.getenv("JWT_SECRET_KEY")
 if not secret_key_jwt:
     raise ValueError("JWT_SECRET_KEY not set in .env")
 
-class TokenJWT:
+class TokenService:
     def __init__(self, secret_key: str = None):
         self.secret_key = secret_key or secret_key_jwt
         self.algorithm_type = "HS256"
@@ -55,3 +55,6 @@ class TokenJWT:
         except Exception as e:
             logger.error(e)
             return None
+
+def get_token_service() -> TokenService:
+    return TokenService()

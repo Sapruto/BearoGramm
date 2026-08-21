@@ -4,10 +4,12 @@ from sqlalchemy.orm import InstrumentedAttribute
 from sqlalchemy.ext.asyncio import AsyncSession
 from contextlib import asynccontextmanager
 from enum import Enum
-from typing import TypeVar, Generic, Optional, Any, List, Dict
+from typing import Generic, Optional, Any, List, Dict
 
 from src.core.database import AsyncSessionLocal
 from src.core.logger import get_logger
+
+from ..types_var import ORM
 
 class OnConflictAction(str, Enum):
     UPDATE = "UPDATE"
@@ -21,8 +23,6 @@ class InvalidTransactionStateError(Exception): pass
 
 logger = get_logger(__name__)
 
-ORM = TypeVar("ORM")
-
 class BaseManager(Generic[ORM], ABC):
     def __init__(self, model: Any, immutable_fields: list = None):
         self.model = model
@@ -33,16 +33,9 @@ class BaseManager(Generic[ORM], ABC):
     def identifier_field(self) -> InstrumentedAttribute:
         pass
 
-    async def get_field_by_attr(self, value: Any, where_field: InstrumentedAttribute, select_field: InstrumentedAttribute, session: Optional[AsyncSession] = None) -> Any:
+    async def get_by_field(self, value: Any, field: InstrumentedAttribute, select_field: Optional[InstrumentedAttribute] = None, session: Optional[AsyncSession] = None, for_update: bool = False) -> Optional[ORM]:
         async with self.__get_session(session) as sess:
-            result = await sess.execute(
-                select(select_field).where(where_field == value)
-            )
-            return result.scalar_one_or_none()
-            
-    async def get_model_by_field(self, value: Any, field: InstrumentedAttribute, session: Optional[AsyncSession] = None, for_update: bool = False) -> Optional[ORM]:
-        async with self.__get_session(session) as sess:
-            stmt = select(self.model).where(field == value)
+            stmt = select(select_field or self.model).where(field == value)
             
             if for_update:
                 stmt = stmt.with_for_update()
@@ -165,22 +158,17 @@ class BaseManager(Generic[ORM], ABC):
                     await sess.refresh(model)
             
             return model
-    
-    async def delete(self, identifier: Any, field_identifier: InstrumentedAttribute, commit: bool = True, session: Optional[AsyncSession] = None) -> bool:
-        if not session and not commit:
-            raise InvalidTransactionStateError("A commit cannot be false if no session is passed")
-        if session and not commit:
-            logger.warning("Session provided with commit=False - caller must manage transaction")
-        
+
+    async def delete(self, where: Optional[Dict[InstrumentedAttribute, Any]] = None, commit: bool = True, session: Optional[AsyncSession] = None) -> int:
+        if not where:
+            raise ValueError("Where condition is required for delete")
         async with self.__get_session(session) as sess:
-            result = await sess.execute(
-                delete(self.model).where(field_identifier == identifier)
-            )
-            
+            conditions = [field == value for field, value in where.items()]
+            stmt = delete(self.model).where(and_(*conditions))
+            result = await sess.execute(stmt)
             if commit:
                 await sess.commit()
-            
-            return result.rowcount > 0
+            return result.rowcount
 
     async def exists(self, identifier: Any, field_identifier: InstrumentedAttribute, session: Optional[AsyncSession] = None) -> bool:
         async with self.__get_session(session) as sess:

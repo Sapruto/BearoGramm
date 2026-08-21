@@ -10,10 +10,12 @@ class UserORM(Base):
 
     uuid: Mapped[str] = mapped_column(Uuid, primary_key=True, default=uuid4)
 
-    phone_number_hash: Mapped[str] = mapped_column(String(255), nullable=False)
-    phone_number_salt: Mapped[str] = mapped_column(String(64), nullable=False)
-
-    phone_verified: Mapped[bool] = mapped_column(Boolean, default=False)
+    phone_number_encrypted: Mapped[str] = mapped_column(
+        String(512),
+        nullable=True
+    )
+    phone_number_hash: Mapped[str] = mapped_column(String(64), nullable=True, index=True)
+    phone_number_mask: Mapped[str] = mapped_column(String(20), nullable=True)
 
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
