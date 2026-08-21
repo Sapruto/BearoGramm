@@ -12,6 +12,10 @@ from src.core.database import init_db, close_db
 load_dotenv()
 
 def include_all_routers(app: FastAPI) -> FastAPI:
+    from src.modules.user import auth_router
+
+    app.include_router(auth_router)
+
     return app
 
 @asynccontextmanager
