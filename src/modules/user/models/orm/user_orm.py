@@ -1,6 +1,6 @@
 from src.core.database import Base
 from sqlalchemy.orm import Mapped, mapped_column
-from sqlalchemy import String, DateTime, func, Boolean, Uuid
+from sqlalchemy import String, DateTime, func, Uuid
 
 from uuid import uuid4
 from datetime import datetime

@@ -1,7 +1,7 @@
 from fastapi import HTTPException, status
 
 class UserHaveNotAccess(HTTPException):
-    def __init__(self, detail: str = "User have no access"):
+    def __init__(self, detail: str = "User have no chat_types"):
         super().__init__(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail=detail,
