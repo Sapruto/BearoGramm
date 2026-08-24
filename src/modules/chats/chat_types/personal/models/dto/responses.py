@@ -5,32 +5,41 @@ from src.modules.chats.models.entities.chat_entity import ChatEntity
 from src.modules.chats.chat_types.personal.models.personal_contact import PersonalContact
 
 class CreateChatResponse(BaseModel):
-    chat: ChatEntity
+    success: bool
+    chat: Optional[ChatEntity] = None
+    error_message: Optional[str] = None
 
 class GetChatResponse(BaseModel):
-    chat: ChatEntity
+    success: bool
+    chat: Optional[ChatEntity] = None
+    error_message: Optional[str] = None
 
 class ListChatsResponse(BaseModel):
-    chats: List[ChatEntity]
-    total: int
+    success: bool
+    chat: Optional[ChatEntity] = None
+    total: Optional[int] = None
+    error_message: Optional[str] = None
 
 class ContactsResponse(BaseModel):
-    contacts: List[PersonalContact]
-    total: int
+    success: bool
+    contacts: Optional[List[PersonalContact]] = None
+    total: Optional[int] = None
+    error_message: Optional[str] = None
 
 class FindChatResponse(BaseModel):
     chat: Optional[ChatEntity] = None
     found: bool = False
 
 class BlockUserResponse(BaseModel):
-    chat: ChatEntity
+    success: bool
+    chat: Optional[ChatEntity] = None
+    error_message: Optional[str] = None
 
 class UnblockUserResponse(BaseModel):
-    chat: ChatEntity
+    success: bool
+    chat: Optional[ChatEntity] = None
+    error_message: Optional[str] = None
 
 class DeleteChatResponse(BaseModel):
-    chat_uuid: str
-
-class ErrorResponse(BaseModel):
-    detail: str
-    status_code: int
+    success: bool
+    error_message: Optional[str] = None

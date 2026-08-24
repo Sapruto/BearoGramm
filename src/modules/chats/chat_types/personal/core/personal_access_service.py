@@ -1,160 +1,247 @@
 from typing import Optional, List
 from uuid import uuid4
 from datetime import datetime
-from sqlalchemy import and_, func
 
-from src.general.repository.sql.sql_query import SqlQuery
-
-from ..models.personal_access_type import PersonalAccessType, PERSONAL_TYPE
-from ..models.personal_contact import PersonalContact
-from ....models.orm.chat_orm import ChatORM
+from ..core.personal_repository import PersonalChatRepository, get_personal_chat_repository
+from ..models.personal_access_type import PersonalAccessType
+from ..models.dto.responses import CreateChatResponse, GetChatResponse, ListChatsResponse, ContactsResponse, FindChatResponse, BlockUserResponse, UnblockUserResponse, DeleteChatResponse
 from ....models.entities.chat_entity import ChatEntity
-from ....core.repository.chat_repository import ChatRepository, get_chat_repository
 
 class PersonalAccessService:
-    def __init__(self, repo: Optional[ChatRepository] = None):
-        self.repo = repo or get_chat_repository()
+    def __init__(self, repo: Optional[PersonalChatRepository] = None):
+        self.repo = repo or get_personal_chat_repository()
 
-    async def create_personal_chat(self, user_uuid: str, companion_uuid: str) -> ChatEntity:
-        if user_uuid == companion_uuid:
-            raise ValueError("You can't create chat with bipolarca")
-
-        existing = await self.find_chat_between_users(user_uuid, companion_uuid)
-        if existing:
-            raise ValueError(f"Chat was created")
-
-        chat = ChatEntity(
-            uuid=str(uuid4()),
-            accesses=[
-                PersonalAccessType(user_uuid=user_uuid),
-                PersonalAccessType(user_uuid=companion_uuid)
-            ]
-        )
-
-        return await self.repo.save(chat)
-
-    async def get_by_uuid(self, chat_uuid: str) -> Optional[ChatEntity]:
-        query = SqlQuery().add_filter(ChatORM.uuid == chat_uuid)
-        return await self.repo.get(query)
-
-    async def get_personal_chat(self, chat_uuid: str, user_uuid: str) -> Optional[ChatEntity]:
-        chat = await self.get_by_uuid(chat_uuid)
-        if not chat:
-            return None
-
-        if not self.is_user_in_chat(chat, user_uuid):
-            return None
-
-        if not self._validate_personal_chat(chat):
-            return None
-
-        return chat
-
-    async def get_chats_for_user(self, user_uuid: str) -> List[ChatEntity]:
-        query = SqlQuery(limit=100)
-        query.add_filter(
-            and_(
-                ChatORM.access_type == PERSONAL_TYPE,
-                ChatORM.accesses.contains([{"user_uuid": user_uuid}])
-            )
-        )
-        chats = await self.repo.get_all(query)
-        return [c for c in chats if self._validate_personal_chat(c)]
-
-    async def get_contact_list(self, user_uuid: str) -> List[PersonalContact]:
-        chats = await self.get_chats_for_user(user_uuid)
-        contacts = []
-
-        for chat in chats:
-            other_user = self.get_other_user(chat, user_uuid)
-            if not other_user:
-                continue
-
-            other_access = self.get_user_access(chat, other_user)
-            if not other_access:
-                continue
-
-            contacts.append(
-                PersonalContact(
-                    chat_uuid=chat.uuid,
-                    user_uuid=other_user,
-                    is_blocked=other_access.is_blocked if other_access else False,
-                    last_message_at=other_access.last_message_at if other_access else None,
-                    unread_count=other_access.unread_count if other_access else 0,
-                    created_at=chat.created_at,
-                    updated_at=chat.updated_at
-                )
-            )
-
-        return sorted(
-            contacts,
-            key=lambda x: x["last_message_at"] or datetime.min,
-            reverse=True
-        )
-
-    async def find_chat_between_users(self, user_uuid: str, companion_uuid: str) -> Optional[ChatEntity]:
-        query = SqlQuery()
-        query.add_filter(
-            and_(
-                ChatORM.access_type == PERSONAL_TYPE,
-                ChatORM.accesses.contains([{"user_uuid": user_uuid}]),
-                ChatORM.accesses.contains([{"user_uuid": companion_uuid}]),
-                func.jsonb_array_length(ChatORM.accesses) == 2
-            )
-        )
-        return await self.repo.get(query)
-
-    async def block_user_in_chat(self, chat: ChatEntity, blocker_uuid: str, blocked_uuid: str) -> ChatEntity:
-        if not self.is_user_in_chat(chat, blocker_uuid):
-            raise ValueError(f"User {blocker_uuid} not in chat")
-
-        blocked_access = self.get_user_access(chat, blocked_uuid)
-        if not blocked_access:
-            raise ValueError(f"User {blocked_uuid} not found in chat")
-
-        blocked_access.is_blocked = True
-        blocked_access.blocked_at = datetime.now()
-        blocked_access.blocked_by = blocker_uuid
-
-        return await self.repo.save(chat)
-
-    async def unblock_user_in_chat(self, chat: ChatEntity, user_uuid: str) -> ChatEntity:
-        user_access = self.get_user_access(chat, user_uuid)
-        if not user_access:
-            raise ValueError(f"User {user_uuid} not found in chat")
-
-        user_access.is_blocked = False
-        user_access.blocked_at = None
-        user_access.blocked_by = None
-
-        return await self.repo.save(chat)
-
-    async def delete_chat(self, chat_uuid: str) -> None:
-        query = SqlQuery().add_filter(ChatORM.uuid == chat_uuid)
-        await self.repo.delete(query)
-
-    def is_user_in_chat(self, chat: ChatEntity, user_uuid: str) -> bool:
+    def _is_user_in_chat(self, chat: ChatEntity, user_uuid: str) -> bool:
         return any(a.user_uuid == user_uuid for a in chat.accesses)
 
-    def get_user_access(self, chat: ChatEntity, user_uuid: str) -> Optional[PersonalAccessType]:
+    def _get_user_access(self, chat: ChatEntity, user_uuid: str) -> Optional[PersonalAccessType]:
         for access in chat.accesses:
             if access.user_uuid == user_uuid:
                 return access
         return None
 
-    def get_other_user(self, chat: ChatEntity, user_uuid: str) -> Optional[str]:
-        participants = [a.user_uuid for a in chat.accesses]
-        if len(participants) != 2:
-            return None
-        return participants[0] if participants[0] != user_uuid else participants[1]
-
     def _validate_personal_chat(self, chat: ChatEntity) -> bool:
-        return len(chat.accesses) == 2 and len(set(a.user_uuid for a in chat.accesses)) == 2
+        participants = [a.user_uuid for a in chat.accesses]
+        return len(participants) == 2 and len(set(participants)) == 2
 
-    def get_participants(self, chat: ChatEntity) -> List[str]:
-        return [a.user_uuid for a in chat.accesses]
+    async def create_personal_chat(self, user_uuid: str, companion_uuid: str) -> CreateChatResponse:
+        try:
+            if user_uuid == companion_uuid:
+                return CreateChatResponse(
+                    success=False,
+                    error_message="Нельзя создать чат с самим собой"
+                )
+
+            existing = await self.repo.find_between_users(user_uuid, companion_uuid)
+            if existing:
+                return CreateChatResponse(
+                    success=False,
+                    error_message="Чат между пользователями уже существует"
+                )
+
+            chat = ChatEntity(
+                uuid=str(uuid4()),
+                accesses=[
+                    PersonalAccessType(user_uuid=user_uuid),
+                    PersonalAccessType(user_uuid=companion_uuid)
+                ],
+                created_at=datetime.now(),
+                updated_at=datetime.now()
+            )
+
+            result = await self.repo.save(chat)
+            return CreateChatResponse(success=True, chat=result)
+
+        except Exception as e:
+            return CreateChatResponse(
+                success=False,
+                error_message=f"Ошибка создания чата: {str(e)}"
+            )
+
+    async def get_personal_chat(self, chat_uuid: str, user_uuid: str) -> GetChatResponse:
+        try:
+            chat = await self.repo.get_by_uuid(chat_uuid)
+            if not chat:
+                return GetChatResponse(
+                    success=False,
+                    error_message=f"Чат {chat_uuid} не найден"
+                )
+
+            if not self._is_user_in_chat(chat, user_uuid):
+                return GetChatResponse(
+                    success=False,
+                    error_message="Вы не в этом чате"
+                )
+
+            if not self._validate_personal_chat(chat):
+                return GetChatResponse(
+                    success=False,
+                    error_message="Чат не является личным"
+                )
+
+            return GetChatResponse(success=True, chat=chat)
+
+        except Exception as e:
+            return GetChatResponse(
+                success=False,
+                error_message=f"Ошибка получения чата: {str(e)}"
+            )
+
+    async def get_chats_for_user(self, user_uuid: str, limit: int = 50, offset: int = 0) -> ListChatsResponse:
+        try:
+            chats, total = await self.repo.get_user_chats(user_uuid, limit, offset)
+            return ListChatsResponse(
+                success=True,
+                chats=chats,
+                total=total
+            )
+
+        except Exception as e:
+            return ListChatsResponse(
+                success=False,
+                error_message=f"Ошибка получения чатов: {str(e)}"
+            )
+
+    async def get_contact_list(self, user_uuid: str, limit: int = 50, offset: int = 0) -> ContactsResponse:
+        try:
+            contacts, total = await self.repo.get_contacts_with_status(user_uuid, limit, offset)
+            return ContactsResponse(
+                success=True,
+                contacts=contacts,
+                total=total
+            )
+
+        except Exception as e:
+            return ContactsResponse(
+                success=False,
+                error_message=f"Ошибка получения контактов: {str(e)}"
+            )
+
+    async def find_chat_between_users(self, user_uuid: str, companion_uuid: str) -> FindChatResponse:
+        try:
+            chat = await self.repo.find_between_users(user_uuid, companion_uuid)
+            return FindChatResponse(
+                chat=chat,
+                found=chat is not None
+            )
+
+        except Exception as e:
+            return FindChatResponse(
+                chat=None,
+                found=False
+            )
+
+    async def block_user_in_chat(self, chat_uuid: str, blocker_uuid: str, blocked_uuid: str) -> BlockUserResponse:
+        try:
+            chat = await self.repo.get_by_uuid(chat_uuid)
+            if not chat:
+                return BlockUserResponse(
+                    success=False,
+                    error_message=f"Чат {chat_uuid} не найден"
+                )
+
+            if not self._is_user_in_chat(chat, blocker_uuid):
+                return BlockUserResponse(
+                    success=False,
+                    error_message="Вы не в этом чате"
+                )
+
+            blocked_access = self._get_user_access(chat, blocked_uuid)
+            if not blocked_access:
+                return BlockUserResponse(
+                    success=False,
+                    error_message=f"Пользователь {blocked_uuid} не в чате"
+                )
+
+            if blocker_uuid == blocked_uuid:
+                return BlockUserResponse(
+                    success=False,
+                    error_message="Нельзя заблокировать самого себя"
+                )
+
+            if blocked_access.is_blocked:
+                return BlockUserResponse(
+                    success=False,
+                    error_message="Пользователь уже заблокирован"
+                )
+
+            blocked_access.is_blocked = True
+            blocked_access.blocked_at = datetime.now()
+            blocked_access.blocked_by = blocker_uuid
+
+            result = await self.repo.save(chat)
+            return BlockUserResponse(success=True, chat=result)
+
+        except Exception as e:
+            return BlockUserResponse(
+                success=False,
+                error_message=f"Ошибка блокировки: {str(e)}"
+            )
+
+    async def unblock_user_in_chat(self, chat_uuid: str, user_uuid: str, unblocker_uuid: str) -> UnblockUserResponse:
+        try:
+            chat = await self.repo.get_by_uuid(chat_uuid)
+            if not chat:
+                return UnblockUserResponse(
+                    success=False,
+                    error_message=f"Чат {chat_uuid} не найден"
+                )
+
+            if not self._is_user_in_chat(chat, unblocker_uuid):
+                return UnblockUserResponse(
+                    success=False,
+                    error_message="Вы не в этом чате"
+                )
+
+            user_access = self._get_user_access(chat, user_uuid)
+            if not user_access:
+                return UnblockUserResponse(
+                    success=False,
+                    error_message=f"Пользователь {user_uuid} не в чате"
+                )
+
+            if not user_access.is_blocked:
+                return UnblockUserResponse(
+                    success=False,
+                    error_message="Пользователь не заблокирован"
+                )
+
+            user_access.is_blocked = False
+            user_access.blocked_at = None
+            user_access.blocked_by = None
+
+            result = await self.repo.save(chat)
+            return UnblockUserResponse(success=True, chat=result)
+
+        except Exception as e:
+            return UnblockUserResponse(
+                success=False,
+                error_message=f"Ошибка разблокировки: {str(e)}"
+            )
+
+    async def delete_chat(self, chat_uuid: str, user_uuid: str) -> DeleteChatResponse:
+        try:
+            chat = await self.repo.get_by_uuid(chat_uuid)
+            if not chat:
+                return DeleteChatResponse(
+                    success=False,
+                    error_message=f"Чат {chat_uuid} не найден"
+                )
+
+            if not self._is_user_in_chat(chat, user_uuid):
+                return DeleteChatResponse(
+                    success=False,
+                    error_message="Вы не в этом чате"
+                )
+
+            await self.repo.delete(chat_uuid)
+            return DeleteChatResponse(success=True)
+
+        except Exception as e:
+            return DeleteChatResponse(
+                success=False,
+                error_message=f"Ошибка удаления чата: {str(e)}"
+            )
 
 def get_personal_access_service() -> PersonalAccessService:
     return PersonalAccessService()
-
-#THIS IS FUCKING STUPED KAL. And we need refactor this stuped service with new repo in the minimodule personal and там сделать крутую шнягу а  не во это дерьмо как сейчас но в целом работает пуфигу.
