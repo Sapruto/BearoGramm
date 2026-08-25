@@ -1,5 +1,5 @@
 from sqlalchemy import JSON, DateTime, func, Uuid, String, Index
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 from src.core.database import Base
 from uuid import uuid4
 from datetime import datetime
@@ -20,12 +20,19 @@ class ChatORM(Base):
     )
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
-        nullable=False,
-        default=func.now()
+        nullable=True
+    )
+
+    messages: Mapped[List["MessageORM"]] = relationship(
+        "MessageORM",
+        back_populates="chat",
+        lazy="selectin",
+        cascade="all, delete-orphan",
+        order_by="MessageORM.created_at.desc()"
     )
 
     __table_args__ = (
         Index('idx_chats_access_type', 'access_type'),
         Index('idx_chats_accesses_gin', 'accesses', postgresql_using='gin'),
-        Index('idx_chats_type_accesses', 'access_type', postgresql_ops={'accesses': 'jsonb_path_ops'}),
+        Index('idx_chats_type_accesses', 'access_type', 'accesses', postgresql_ops={'accesses': 'jsonb_path_ops'})
     )

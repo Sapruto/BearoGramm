@@ -8,16 +8,16 @@ load_dotenv(find_dotenv())
 
 class PersonalChatsRoutes(str, Enum):
     base = '/personal/chats'
-    create = '/personal/chats/create'
-    get = '/personal/chats/{chat_uuid}'
-    list = '/personal/chats/list'
-    contacts = '/personal/chats/contacts'
-    find = '/personal/chats/find'
-    add_user = '/personal/chats/{chat_uuid}/users'
-    remove_user = '/personal/chats/{chat_uuid}/users/{user_uuid}'
-    block = '/personal/chats/{chat_uuid}/block'
-    unblock = '/personal/chats/{chat_uuid}/unblock'
-    delete = '/personal/chats/{chat_uuid}'
+    create = '/create'
+    get = '/{chat_uuid}'
+    list = '/list'
+    contacts = '/contacts'
+    find = '/find'
+    add_user = '/{chat_uuid}/users'
+    remove_user = '/{chat_uuid}/users/{user_uuid}'
+    block = '/{chat_uuid}/block'
+    unblock = '/{chat_uuid}/unblock'
+    delete = '/{chat_uuid}'
 
     def __str__(self):
         return self.value

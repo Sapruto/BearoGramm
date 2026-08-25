@@ -7,7 +7,7 @@ from ..models.personal_access_type import PERSONAL_TYPE
 from ..models.personal_contact import PersonalContact
 from ....models.orm.chat_orm import ChatORM
 from ....models.entities.chat_entity import ChatEntity, ChatFields
-from ....core.repository.chat_repository import ChatRepository
+from ....core.repositories.chat_repository import ChatRepository
 from ....core.db.chat_db import ChatManager
 
 class PersonalChatRepository(ChatRepository):
@@ -15,7 +15,7 @@ class PersonalChatRepository(ChatRepository):
         super().__init__(manager)
 
     async def find_between_users(self, user_uuid: str, companion_uuid: str) -> Optional[ChatEntity]:
-        query = SqlQuery()
+        query = SqlQuery[ChatFields]()
         query.add_filter(
             and_(
                 ChatORM.access_type == PERSONAL_TYPE,
@@ -27,7 +27,7 @@ class PersonalChatRepository(ChatRepository):
         return await self.get(query)
 
     async def get_user_chats(self, user_uuid: str, limit: Optional[int] = None, offset: Optional[int] = None) -> Tuple[List[ChatEntity], int]:
-        query = SqlQuery()
+        query = SqlQuery[ChatFields]()
         query.add_filter(
             and_(
                 ChatORM.access_type == PERSONAL_TYPE,
@@ -73,7 +73,7 @@ class PersonalChatRepository(ChatRepository):
         return contacts, total
 
     async def get_all_user_chats_raw(self, user_uuid: str) -> List[ChatEntity]:
-        query = SqlQuery()
+        query = SqlQuery[ChatFields]()
         query.add_filter(
             and_(
                 ChatORM.access_type == PERSONAL_TYPE,
@@ -84,7 +84,7 @@ class PersonalChatRepository(ChatRepository):
         return await self.get_all(query)
 
     async def count_user_chats(self, user_uuid: str) -> int:
-        query = SqlQuery()
+        query = SqlQuery[ChatFields]()
         query.add_filter(
             and_(
                 ChatORM.access_type == PERSONAL_TYPE,

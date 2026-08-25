@@ -1,7 +1,6 @@
 from fastapi import APIRouter, Depends, Query, Path
 
-from src.modules.user import get_current_user_depends
-from src.modules.user.models.entities.user_entity import UserEntity
+from src.modules.user import get_current_user_depends, UserEntity
 
 from .personal_chats_router_names import PersonalChatsRoutes
 from ..core.personal_access_service import PersonalAccessService, get_personal_access_service

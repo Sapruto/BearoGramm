@@ -17,12 +17,12 @@ class ChatFields(str, Enum):
         return self.value
 
 class ChatEntity(BaseModel):
-    uuid: Optional[str] = None
+    uuid: Optional[str] = Field(default=None)
 
     accesses: List[definite_access_type] = Field(default_factory=list)
 
-    created_at: Optional[datetime] = None
-    updated_at: Optional[datetime] = None
+    created_at: Optional[datetime] = Field(default=None)
+    updated_at: Optional[datetime] = Field(default=None)
 
     @property
     def access_type(self) -> str:

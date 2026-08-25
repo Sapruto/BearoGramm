@@ -1,5 +1,5 @@
-from pydantic import BaseModel, Field, field_validator
-from typing import Any, Dict, Optional, Generic, List, Tuple
+from pydantic import Field, field_validator
+from typing import Any, Dict, Optional, List, Tuple
 
 from ..interfaces.query_interface import QueryInterface
 from ...types_var import Fields

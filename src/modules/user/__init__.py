@@ -5,6 +5,8 @@ from .api.routers.auth_route_names import AuthRoutes, AuthRoutesURL
 from .api.routers.login_required import login_required, get_current_user_depends, get_current_user
 from .api.exceptions import UserHaveNotAccess, UserNotFound, InvalidTokenError
 
+from .models.entities.user_entity import UserEntity
+
 __all__ = [
     "UserServiceAPI",
     "get_user_service_api",
@@ -23,4 +25,6 @@ __all__ = [
     "UserHaveNotAccess",
     "UserNotFound",
     "InvalidTokenError",
+
+    "UserEntity",
 ]
