@@ -14,9 +14,11 @@ load_dotenv()
 def include_all_routers(app: FastAPI) -> FastAPI:
     from src.modules.user import auth_router
     from src.modules.chats.chat_types.personal import personal_chats_router
+    from src.modules.messages import message_router
 
     app.include_router(auth_router)
     app.include_router(personal_chats_router)
+    app.include_router(message_router)
 
     return app
 

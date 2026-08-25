@@ -16,7 +16,8 @@ class MessageMapper(BaseMapper[MessageEntity, MessageORM, MessageFields]):
         MessageFields.MESSAGE_DATA: MessageORM.message_data,
         MessageFields.CREATED_AT: MessageORM.created_at,
         MessageFields.UPDATED_AT: MessageORM.updated_at,
-        MessageFields.CHAT_UUID: MessageORM.chat_uuid
+        MessageFields.CHAT_UUID: MessageORM.chat_uuid,
+        MessageFields.USER_UUID: MessageORM.user_uuid
     }
 
     reverse_field_mapping = {
@@ -24,7 +25,8 @@ class MessageMapper(BaseMapper[MessageEntity, MessageORM, MessageFields]):
         MessageORM.message_data: MessageFields.MESSAGE_DATA,
         MessageORM.created_at: MessageFields.CREATED_AT,
         MessageORM.updated_at: MessageFields.UPDATED_AT,
-        MessageORM.chat_uuid: MessageFields.CHAT_UUID
+        MessageORM.chat_uuid: MessageFields.CHAT_UUID,
+        MessageORM.user_uuid: MessageFields.USER_UUID
     }
 
     def to_orm(self, entity: MessageEntity) -> MessageORM:
@@ -33,7 +35,8 @@ class MessageMapper(BaseMapper[MessageEntity, MessageORM, MessageFields]):
             message_data=entity.message_data,
             created_at=entity.created_at,
             updated_at=entity.updated_at,
-            chat_uuid=entity.chat_uuid
+            chat_uuid=entity.chat_uuid,
+            user_uuid=entity.user_uuid
         )
 
     def to_entity(self, orm: MessageORM) -> MessageEntity:
@@ -42,7 +45,8 @@ class MessageMapper(BaseMapper[MessageEntity, MessageORM, MessageFields]):
             message_data=orm.message_data,
             created_at=orm.created_at,
             updated_at=orm.updated_at,
-            chat_uuid=orm.chat_uuid
+            chat_uuid=orm.chat_uuid,
+            user_uuid=orm.user_uuid
         )
 
     def to_orm_value(self, field: MessageFields, value: Any) -> Tuple[InstrumentedAttribute, Any]:

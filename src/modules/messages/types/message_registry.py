@@ -16,8 +16,10 @@ _is_init: bool = False
 
 def init_message_registry():
     from .text import TextMessageTypeName, TextMessageService
+    from .media import MediaMessageTypeName, MediaMessageService
 
     _registry.register(TextMessageTypeName, TextMessageService)
+    _registry.register(MediaMessageTypeName, MediaMessageService)
 
 def get_message_registry() -> MessageRegistry:
     global _registry, _is_init

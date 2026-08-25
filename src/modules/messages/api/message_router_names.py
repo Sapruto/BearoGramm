@@ -7,11 +7,11 @@ class MessageRoutes(str, Enum):
     base = '/api/messages'
 
     send_message = '/send'
-    get_messages = '/get'
-    get_message = '/get'
+    update_message = '/update'
     delete_message = '/delete'
+    get_messages = '/get'
 
-    ws_messages = '/ws/messages'
+    listen_messages_websocket = '/ws/listen_messages_websocket'
 
     def __str__(self):
         return self.value
@@ -26,15 +26,15 @@ class MessageRoutesURL(str, Enum):
             base_url = os.getenv("BASE_URL")
             if not base_url:
                 raise ValueError("BASE_URL must be set in .env for production")
-            return base_url.rstrip('/')
+            return base_url.rstrip('/') + MessageRoutes.base
 
-        return test_url
+        return test_url + MessageRoutes.base
 
     send_message = f"{_get_base_url()}{MessageRoutes.send_message}"
-    get_messages = f"{_get_base_url()}{MessageRoutes.get_messages}"
-    get_message = f"{_get_base_url()}{MessageRoutes.get_message}"
+    update_message = f"{_get_base_url()}{MessageRoutes.update_message}"
     delete_message = f"{_get_base_url()}{MessageRoutes.delete_message}"
-    ws_messages = f"{_get_base_url()}{MessageRoutes.ws_messages}"
+    get_messages = f"{_get_base_url()}{MessageRoutes.get_messages}"
+    listen_messages_websocket = f"{_get_base_url()}{MessageRoutes.listen_messages_websocket}"
 
     def __str__(self):
         return self.value

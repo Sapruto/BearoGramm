@@ -1,6 +1,6 @@
 from functools import wraps
 from typing import Optional, Callable, TypeVar
-from fastapi import Request, HTTPException, status
+from fastapi import Request, HTTPException, status, WebSocket
 
 from src.modules.sessions import SessionAPIService, get_session_service_api
 from src.core.logger import get_logger
@@ -102,3 +102,36 @@ def get_current_user_depends(session_service: Optional[SessionAPIService] = None
         return await get_current_user(request, session_service, user_service)
 
     return _get_current_user
+
+
+async def get_user_in_websocket(websocket: WebSocket, user_uuid: str = None, token: str = None, session_service: Optional[SessionAPIService] = None) -> Optional[UserEntity]:
+    user_svc = get_user_service_api()
+    session_svc = session_service or get_session_service_api()
+
+    if user_uuid:
+        try:
+            user = await user_svc.get_user_by_uuid(user_uuid)
+            if user:
+                return user
+        except Exception as e:
+            logger.error(f"Error getting user by uuid: {e}")
+
+    if token:
+        try:
+            if token.startswith("Bearer "):
+                token = token[7:]
+
+            session = await session_svc.validate_session(token)
+            if session and session.is_valid:
+                user = await user_svc.get_user_by_uuid(session.user_uuid)
+                if user:
+                    return user
+        except Exception as e:
+            logger.error(f"Error validating token: {e}")
+
+    if not token:
+        token = websocket.query_params.get("token")
+        if token:
+            return await get_user_in_websocket(websocket, None, token, session_service)
+
+    return None

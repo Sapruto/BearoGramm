@@ -15,6 +15,7 @@ class MessageFields(str, Enum):
     UPDATED_AT = "updated_at"
 
     CHAT_UUID = "chat_uuid"
+    USER_UUID = "user_uuid"
 
     def __str__(self):
         return self.value
@@ -28,6 +29,7 @@ class MessageEntity(BaseModel):
     updated_at: Optional[datetime] = Field(default=None)
 
     chat_uuid: Optional[str] = Field(default=None)
+    user_uuid: Optional[str] = Field(default=None)
 
     @field_validator('message_data')
     @classmethod

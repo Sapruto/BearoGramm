@@ -1,3 +1,9 @@
 2026-08-25 16:52:34 - core.src.core.database - INFO - database.py:81 - Database connections closed
 2026-08-25 16:54:44 - core.src.core.database - INFO - database.py:81 - Database connections closed
 2026-08-25 16:55:57 - core.src.core.database - INFO - database.py:81 - Database connections closed
+2026-08-25 23:44:11 - core.src.core.redis - INFO - redis.py:37 - Redis not initialized, initializing with default config...
+2026-08-25 23:44:11 - core.src.core.redis - INFO - redis.py:30 - Redis initialized
+2026-08-25 23:44:18 - core.src.core.database - INFO - database.py:81 - Database connections closed
+2026-08-25 23:46:48 - core.src.core.redis - INFO - redis.py:37 - Redis not initialized, initializing with default config...
+2026-08-25 23:46:48 - core.src.core.redis - INFO - redis.py:30 - Redis initialized
+2026-08-25 23:46:51 - core.src.core.database - INFO - database.py:81 - Database connections closed

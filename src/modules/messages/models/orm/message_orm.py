@@ -32,6 +32,13 @@ class MessageORM(Base):
         nullable=False,
         index=True
     )
+    user_uuid: Mapped[str] = mapped_column(
+        String(36),
+        ForeignKey("user.uuid"),
+        nullable=False,
+        index=True
+    )
+
     chat: Mapped["ChatORM"] = relationship(
         "ChatORM",
         back_populates="messages",
