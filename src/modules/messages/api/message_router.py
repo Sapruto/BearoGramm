@@ -1,6 +1,7 @@
 from fastapi import APIRouter, WebSocket, Depends
+import json
 
-from src.modules.user import get_current_user_depends, UserEntity
+from src.modules.user import get_current_user_depends, UserEntity, authenticate_by_token
 from src.core.logger import get_logger
 
 from .message_router_names import MessageRoutes
@@ -14,9 +15,48 @@ logger = get_logger(__name__)
 message_router = APIRouter(prefix=MessageRoutes.base)
 
 @message_router.websocket(MessageRoutes.listen_messages_websocket)
-async def listen_messages_websocket(websocket: WebSocket, user_uuid: str, token: str):
-    ws_service = get_websocket_message_service()
-    await ws_service.listen_messages(websocket, user_uuid, token)
+async def listen_messages_websocket(websocket: WebSocket):
+    closed = False
+    try:
+        await websocket.accept()
+
+        ws_service = get_websocket_message_service()
+
+        raw_data = await websocket.receive_text()
+        data = json.loads(raw_data)
+        token = data.get('auth')
+
+        if not token:
+            await websocket.send_text(json.dumps({"error": "Missing auth token"}))
+            await websocket.close(code=1008, reason="Missing auth token")
+            return
+        user = await authenticate_by_token(token)
+        if not user:
+            await websocket.send_text(json.dumps({"error": "Invalid token"}))
+            await websocket.close(code=1008, reason="Invalid token")
+            return
+        await websocket.send_text(json.dumps({
+            "status": "authenticated",
+            "user_uuid": user.uuid
+        }))
+
+        async def send_message(data: str) -> None:
+            await websocket.send_text(data)
+
+        async def receive_message() -> str:
+            return await websocket.receive_text()
+
+        await ws_service.listen_messages(
+            user_uuid=user.uuid,
+            send_message=send_message,
+            receive_message=receive_message
+        )
+    finally:
+        if not closed:
+            try:
+                await websocket.close(code=4000)
+            except Exception as e:
+                logger.error(f"Error closing websocket: {e}")
 
 @message_router.post(MessageRoutes.send_message, response_model=SendMessageResponse)
 async def send_message(request: SendMessageRequest, service: MessageService = Depends(get_message_service), current_user: UserEntity = Depends(get_current_user_depends())):
