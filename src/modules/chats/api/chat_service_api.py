@@ -4,6 +4,7 @@ from sqlalchemy import select
 from ..core.repositories.chat_repository import ChatRepository, get_chat_repository
 from ..models.entities.chat_entity import ChatEntity, ChatFields
 from ..models.orm.chat_orm import ChatORM
+from ..models.message_action_type import MessageActionType
 
 from src.general.repository.sql.sql_query import SqlQuery
 from src.core.logger import get_logger
@@ -24,7 +25,7 @@ class ChatServiceAPI:
             logger.error(f"Error checking chat exists: {e}")
             return False
 
-    async def user_in_chat(self, chat_uuid: str, user_uuid: str) -> bool:
+    async def user_in_chat(self, chat_uuid: str, user_uuid: str, action_type: MessageActionType) -> bool:
         try:
             chat = await self.get_chat(chat_uuid)
             if not chat:
