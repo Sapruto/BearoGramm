@@ -16,7 +16,7 @@ class GetChatResponse(BaseModel):
 
 class ListChatsResponse(BaseModel):
     success: bool
-    chat: Optional[ChatEntity] = None
+    chats: Optional[List[ChatEntity]] = None
     total: Optional[int] = None
     error_message: Optional[str] = None
 

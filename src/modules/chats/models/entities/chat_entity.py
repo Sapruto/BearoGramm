@@ -19,7 +19,7 @@ class ChatFields(str, Enum):
 class ChatEntity(BaseModel):
     uuid: Optional[str] = Field(default=None)
 
-    accesses: List[definite_access_type] = Field(default_factory=list)
+    accesses: List[definite_access_type] = Field(default=[])
 
     created_at: Optional[datetime] = Field(default=None)
     updated_at: Optional[datetime] = Field(default=None)
@@ -32,9 +32,7 @@ class ChatEntity(BaseModel):
         try:
             first_access = self.accesses[0]
             if hasattr(first_access, 'get_type'):
-                access_obj = first_access.get_type()
-                if hasattr(access_obj, 'get_type'):
-                    return access_obj.get_type()
+                return first_access.get_type()
         except Exception:
             pass
 
