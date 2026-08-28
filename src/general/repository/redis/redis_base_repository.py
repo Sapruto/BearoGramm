@@ -19,7 +19,7 @@ class BaseRedisRepository(Generic[Mapper, FieldsType, EntityType], BaseRepositor
     def __init__(self, redis_client: Redis, mapper: Mapper, ttl: Optional[int] = None):
         self.redis = redis_client
         self._mapper = mapper
-        self.ttl = ttl
+        self.default_ttl = ttl
 
         self._index_enabled = False
         self._index_prefix = f"idx:{mapper.key_prefix}:"
@@ -48,9 +48,11 @@ class BaseRedisRepository(Generic[Mapper, FieldsType, EntityType], BaseRepositor
     def _get_entity_id(self, entity: EntityType) -> Any:
         return self._mapper.get_id_from_entity(entity)
 
-    async def _set_ttl(self, key: str):
-        if self.ttl:
-            await self.redis.expire(key, self.ttl)
+    async def _set_ttl(self, key: str, ttl: int):
+        if ttl:
+            await self.redis.expire(key, ttl)
+        if self.default_ttl:
+            await self.redis.expire(key, self.default_ttl)
 
     def _json_serializer(self, obj):
         if isinstance(obj, datetime):
@@ -149,8 +151,8 @@ class BaseRedisRepository(Generic[Mapper, FieldsType, EntityType], BaseRepositor
         for redis_field, value in data.items():
             index_key = f"{self._index_prefix}{redis_field}:{self._mapper.serialize_value(value)}"
             await self.redis.set(index_key, key)
-            if self.ttl:
-                await self.redis.expire(index_key, self.ttl)
+            if self.default_ttl:
+                await self.redis.expire(index_key, self.default_ttl)
 
     async def _remove_indexes(self, key: str):
         entity = await self._get_by_key(key)

@@ -17,7 +17,7 @@ class DataProcessor:
     def __init__(self, message_registry: Optional[MessageRegistry] = None):
         self.message_registry = message_registry or get_message_registry()
 
-    async def process_data(self, typing_to_data: List[Tuple[str, Any]]) -> ProcessDataResponse:
+    async def save_data(self, typing_to_data: List[Tuple[str, Any]]) -> ProcessDataResponse:
         processed = []
 
         for data_type, raw_data in typing_to_data:
@@ -29,7 +29,7 @@ class DataProcessor:
                 )
 
             try:
-                result_data = await data_service.process(raw_data)
+                result_data = await data_service.save_data(raw_data)
                 processed.append(result_data)
 
             except Exception as e:
@@ -43,21 +43,21 @@ class DataProcessor:
             processed_data=processed
         )
 
-    async def unprocess_data(self, processed_data: List[BaseMessageData]) -> None:
+    async def delete_data(self, processed_data: List[BaseMessageData]) -> None:
         for data in processed_data:
             data_service = self.message_registry.get_data_service(data.data_type)
             if not data_service:
                 continue
 
             try:
-                success = data_service.unprocess(data)
+                success = data_service.delete_data(data)
                 if not success:
                     logger.error("Error in unprocess data")
 
             except Exception as e:
                 logger.error(f"Error in unprocess_data: {e}")
 
-    async def reprocess_data(self, old_message_data: List[BaseMessageData], new_typing_to_data: List[Tuple[str, Any]]) -> ProcessDataResponse:
+    async def update_data(self, old_message_data: List[BaseMessageData], new_typing_to_data: List[Tuple[str, Any]]) -> ProcessDataResponse:
         old_data_copy = [data.model_copy(deep=True) for data in old_message_data]
 
         old_indices_by_type = {}
@@ -86,7 +86,7 @@ class DataProcessor:
                 for idx in sorted(old_indices, reverse=True):
                     old_item = result_data[idx]
                     try:
-                        success = await data_service.unprocess(old_item)
+                        success = await data_service.delete_data(old_item)
                         if not success:
                             logger.warning(f"Failed to unprocess {data_type}")
                     except Exception as e:
@@ -94,7 +94,7 @@ class DataProcessor:
                     result_data.pop(idx)
 
                 try:
-                    new_item = await data_service.process(raw_data)
+                    new_item = await data_service.save_data(raw_data)
                     processed_new_items.append(new_item)
                     result_data.append(new_item)
                 except Exception as e:
@@ -117,7 +117,7 @@ class DataProcessor:
                 try:
                     data_service = self.message_registry.get_data_service(new_item.data_type)
                     if data_service:
-                        await data_service.unprocess(new_item)
+                        await data_service.delete_data(new_item)
                 except Exception as rollback_error:
                     logger.error(f"Rollback error: {rollback_error}")
 

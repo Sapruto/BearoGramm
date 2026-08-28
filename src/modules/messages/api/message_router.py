@@ -29,11 +29,13 @@ async def listen_messages_websocket(websocket: WebSocket):
         if not token:
             await websocket.send_text(json.dumps({"error": "Missing auth token"}))
             await websocket.close(code=1008, reason="Missing auth token")
+            closed = True
             return
         user = await authenticate_by_token(token)
         if not user:
             await websocket.send_text(json.dumps({"error": "Invalid token"}))
             await websocket.close(code=1008, reason="Invalid token")
+            closed = True
             return
         await websocket.send_text(json.dumps({
             "status": "authenticated",

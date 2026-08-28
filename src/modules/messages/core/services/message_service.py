@@ -39,7 +39,7 @@ class MessageService:
             if not self._checks_in_chat_service(request.chat_uuid, request.user_uuid):
                 return SendMessageResponse(success=False, error_message="_checks_in_chat_service failed")
 
-            process_result = await self.data_processor.process_data(request.typing_to_data)
+            process_result = await self.data_processor.save_data(request.typing_to_data)
 
             if not process_result.success:
                 return SendMessageResponse(
@@ -73,7 +73,7 @@ class MessageService:
 
         except Exception as e:
             logger.error(f"Error in send_message: {e}")
-            await self.data_processor.unprocess_data(process_result.processed_data if process_result else [])
+            await self.data_processor.delete_data(process_result.processed_data if process_result else [])
 
             return SendMessageResponse(
                 success=False,
@@ -94,7 +94,7 @@ class MessageService:
             if not self._checks_in_chat_service(message.chat_uuid, request.user_uuid):
                 return UpdateMessageResponse(success=False, error_message="_checks_in_chat_service failed")
 
-            process_result = await self.data_processor.reprocess_data(old_message_data=message.message_data, new_typing_to_data=request.typing_to_data)
+            process_result = await self.data_processor.update_data(old_message_data=message.message_data, new_typing_to_data=request.typing_to_data)
             if not process_result.success:
                 return UpdateMessageResponse(
                     success=False,

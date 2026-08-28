@@ -89,5 +89,11 @@ class MediaMessageService(BaseDataService[MediaMessageData]):
             logger.error(f"Media unprocess error: {e}")
             return False
 
+    async def prepare_to_save(self, data: MediaMessageData) -> MediaMessageData:
+        return data
+
+    async def prepare_to_use(self, data: MediaMessageData) -> MediaMessageData:
+        return data
+
 def get_media_message_service() -> MediaMessageService:
     return MediaMessageService()

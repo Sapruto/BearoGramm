@@ -28,16 +28,20 @@ if "sqlite" in DATABASE_URL:
         "timeout": 30,
     }
 
-engine: AsyncEngine = create_async_engine(
-    DATABASE_URL,
-    echo=os.getenv("SQL_ECHO", "false").lower() == "true",
-    pool_pre_ping=True,
-    pool_size=int(os.getenv("DB_POOL_SIZE", "20")),
-    max_overflow=int(os.getenv("DB_MAX_OVERFLOW", "10")),
-    pool_timeout=int(os.getenv("DB_POOL_TIMEOUT", "30")),
-    pool_recycle=3600,
-    connect_args=connect_args if connect_args else None,
-)
+engine_kwargs = {
+    "echo": os.getenv("SQL_ECHO", "false").lower() == "true",
+    "connect_args": connect_args if connect_args else None,
+}
+if "postgresql" in DATABASE_URL:
+    engine_kwargs.update({
+        "pool_pre_ping": True,
+        "pool_size": int(os.getenv("DB_POOL_SIZE", "20")),
+        "max_overflow": int(os.getenv("DB_MAX_OVERFLOW", "10")),
+        "pool_timeout": int(os.getenv("DB_POOL_TIMEOUT", "30")),
+        "pool_recycle": 3600,
+    })
+
+engine: AsyncEngine = create_async_engine(DATABASE_URL, **engine_kwargs)
 
 AsyncSessionLocal = async_sessionmaker(
     engine,
