@@ -9,9 +9,6 @@ class UserAPIModel(BaseModel):
     created_at: datetime
     updated_at: datetime
 
-    class Config:
-        from_attributes = True
-
 class UserSessionsAPIModel(BaseModel):
     token: str
     user_uuid: str

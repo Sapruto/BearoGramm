@@ -12,7 +12,7 @@ from ...types.base.base_message_data import base_message_data_type
 class MessageORM(Base):
     __tablename__ = "messages"
 
-    uuid: Mapped[str] = mapped_column(Uuid, primary_key=True, default=uuid4)
+    uuid: Mapped[str] = mapped_column(Uuid(as_uuid=False), primary_key=True, default=lambda: str(uuid4()))
 
     message_data: Mapped[List[base_message_data_type]] = mapped_column(JSON)
 

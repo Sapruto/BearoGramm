@@ -1,6 +1,3 @@
-import sys
-import os
-from pathlib import Path
 import tkinter as tk
 from tkinter import ttk, messagebox, scrolledtext
 import threading
@@ -15,6 +12,8 @@ class TestRunnerGUI:
         self.root.geometry("1000x700")
         self.root.configure(bg='#0d1117')
 
+        self.root.protocol("WM_DELETE_WINDOW", self.on_closing)
+
         self.setup_styles()
         self.create_widgets()
         self.refresh_list()
@@ -22,6 +21,15 @@ class TestRunnerGUI:
         self.current_logs = []
         self.current_full_output = ""
         self.current_stats = None
+
+    def on_closing(self):
+        if self.running:
+            if messagebox.askokcancel("Quit", "Tests are still running. Do you want to quit?"):
+                self.root.quit()
+                self.root.destroy()
+        else:
+            self.root.quit()
+            self.root.destroy()
 
     def setup_styles(self):
         style = ttk.Style()
@@ -345,6 +353,11 @@ class TestRunnerGUI:
         btn_close.pack(side=tk.RIGHT)
 
 if __name__ == "__main__":
-    root = tk.Tk()
-    app = TestRunnerGUI(root)
-    root.mainloop()
+    try:
+        root = tk.Tk()
+        app = TestRunnerGUI(root)
+        root.mainloop()
+    except KeyboardInterrupt:
+        print("\nApplication closed by user")
+    except Exception as e:
+        print(f"Error: {e}")

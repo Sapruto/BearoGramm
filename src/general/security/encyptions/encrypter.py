@@ -22,9 +22,6 @@ class EncryptionMetadata(BaseModel):
     nonce: str
     timestamp: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
 
-    class Config:
-        use_enum_values = True
-
 class KeyConfig(BaseModel):
     key_id: str
     master_key_b64: str
@@ -43,10 +40,10 @@ class KeyConfig(BaseModel):
             return base64.b64decode(self.salt_b64)
         return None
 
-    class Config:
-        json_encoders = {
+    model_config = {"json_encoders": {
             bytes: lambda v: base64.b64encode(v).decode('utf-8')
         }
+    }
 
 class EncryptedData(BaseModel):
     data: str

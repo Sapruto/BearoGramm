@@ -78,7 +78,6 @@ class UserService:
                     error_message="User not found"
                 )
 
-            user.phone_verified = True
             await self.user_repository.save(user)
 
             await self.verify_service.delete_code(code)

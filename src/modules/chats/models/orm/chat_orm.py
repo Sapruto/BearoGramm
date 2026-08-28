@@ -10,7 +10,7 @@ from ...chat_types.base.base_access_type import definite_access_type
 class ChatORM(Base):
     __tablename__ = "chats"
 
-    uuid: Mapped[str] = mapped_column(Uuid, primary_key=True, default=uuid4)
+    uuid: Mapped[str] = mapped_column(Uuid(as_uuid=False), primary_key=True, default=lambda: str(uuid4()))
     accesses: Mapped[List[definite_access_type]] = mapped_column(JSON)
     access_type: Mapped[str] = mapped_column(String(20), nullable=False)
     created_at: Mapped[datetime] = mapped_column(

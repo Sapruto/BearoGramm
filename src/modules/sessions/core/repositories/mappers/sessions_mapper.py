@@ -25,7 +25,7 @@ class SessionMapper(BaseRedisMapper[SessionEntity, SessionFields]):
         return SessionEntity(
             user_uuid=data.get("user_uuid"),
             token=data.get("token"),
-            expires_at=datetime.fromisoformat(data.get("expired_at")) if data.get("expired_at") else None,
+            expired_at=datetime.fromisoformat(data.get("expired_at")) if data.get("expired_at") else None,
         )
 
     def to_redis_value(self, field: SessionFields, value: Any) -> Tuple[str, Any]:

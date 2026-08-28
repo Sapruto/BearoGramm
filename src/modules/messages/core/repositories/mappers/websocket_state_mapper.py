@@ -3,7 +3,6 @@ from src.general.repository.redis.redis_base_mapper import BaseRedisMapper
 
 from ....models.entities.websocket_state_entity import WebSocketStateFields, WebSocketStateEntity
 
-
 class WebSocketStateMapper(BaseRedisMapper[WebSocketStateEntity, WebSocketStateFields]):
     key_prefix = "ws:user"
     storage_type = "hash"

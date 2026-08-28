@@ -6,6 +6,9 @@ class WebSocketStateFields(Enum):
     ONLINE = "online"
     LAST_ACTIVE = "last_active"
 
+    def __str__(self):
+        return self.value
+
 class WebSocketStateEntity(BaseModel):
     user_uuid: str = Field(...)
     online: bool = Field(...)

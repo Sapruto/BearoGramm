@@ -36,7 +36,7 @@ class MessageService:
     async def send_message(self, request: SendMessageRequest) -> SendMessageResponse:
         process_result = None
         try:
-            if not self._checks_in_chat_service(request.chat_uuid, request.user_uuid, MessageActionType.CREATE):
+            if not await self._checks_in_chat_service(request.chat_uuid, request.user_uuid, MessageActionType.CREATE):
                 return SendMessageResponse(success=False, error_message="_checks_in_chat_service failed")
 
             process_result = await self.data_processor.save_data(request.typing_to_data)
@@ -91,7 +91,7 @@ class MessageService:
             if message.user_uuid != request.user_uuid:
                 return UpdateMessageResponse(success=False, error_message="Message not belong to user")
 
-            if not self._checks_in_chat_service(message.chat_uuid, request.user_uuid, MessageActionType.UPDATE):
+            if not await self._checks_in_chat_service(message.chat_uuid, request.user_uuid, MessageActionType.UPDATE):
                 return UpdateMessageResponse(success=False, error_message="_checks_in_chat_service failed")
 
             process_result = await self.data_processor.update_data(old_message_data=message.message_data, new_typing_to_data=request.typing_to_data)
@@ -139,7 +139,7 @@ class MessageService:
             if message.user_uuid != request.user_uuid:
                 return DeleteMessageResponse(success=False, error_message="Message not belong to user")
 
-            if not self._checks_in_chat_service(message.chat_uuid, request.user_uuid, MessageActionType.DELETE):
+            if not await self._checks_in_chat_service(message.chat_uuid, request.user_uuid, MessageActionType.DELETE):
                 return DeleteMessageResponse(success=False, error_message="_checks_in_chat_service failed")
 
             query = SqlQuery[MessageFields]()
@@ -168,7 +168,7 @@ class MessageService:
 
     async def get_messages(self, request: GetMessagesRequest) -> GetMessagesResponse:
         try:
-            if not self._checks_in_chat_service(request.chat_uuid, request.user_uuid, MessageActionType.GET):
+            if not await self._checks_in_chat_service(request.chat_uuid, request.user_uuid, MessageActionType.GET):
                 return GetMessagesResponse(success=False, error_message="User not in chat or chat_uuid not correct")
 
             query = SqlQuery[MessageFields]()

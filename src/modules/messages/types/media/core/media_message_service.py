@@ -33,7 +33,7 @@ class MediaMessageService(BaseDataService[MediaMessageData]):
             logger.error(f"Path extraction error: {e}")
             return None
 
-    async def process(self, raw_data: Any) -> MediaMessageData:
+    async def save_data(self, raw_data: Any) -> MediaMessageData:
         try:
             if isinstance(raw_data, dict):
                 content = raw_data.get('content')
@@ -74,7 +74,7 @@ class MediaMessageService(BaseDataService[MediaMessageData]):
             logger.error(f"Media process error: {e}")
             raise
 
-    async def unprocess(self, processed_data: MediaMessageData) -> bool:
+    async def delete_data(self, processed_data: MediaMessageData) -> bool:
         try:
             if not processed_data.media_url:
                 return False

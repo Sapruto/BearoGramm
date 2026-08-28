@@ -108,9 +108,7 @@ class UserMapper(BaseMapper[UserEntity, UserORM, UserFields]):
 
         return UserEntity(
             uuid=orm.uuid,
-            phone_number=phone_number,
-            phone_number_hash=orm.phone_number_hash,
-            phone_number_mask=orm.phone_number_mask,
+            phone_number=phone_number if phone_number is not None else "",
             created_at=orm.created_at,
             updated_at=orm.updated_at,
         )

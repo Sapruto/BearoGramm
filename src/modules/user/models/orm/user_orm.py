@@ -8,7 +8,7 @@ from datetime import datetime
 class UserORM(Base):
     __tablename__ = "users"
 
-    uuid: Mapped[str] = mapped_column(Uuid, primary_key=True, default=uuid4)
+    uuid: Mapped[str] = mapped_column(Uuid(as_uuid=False), primary_key=True, default=lambda: str(uuid4()))
 
     phone_number_encrypted: Mapped[str] = mapped_column(
         String(512),

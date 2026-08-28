@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field
 from enum import Enum
 
 from datetime import datetime
@@ -30,21 +30,6 @@ class MessageEntity(BaseModel):
 
     chat_uuid: Optional[str] = Field(default=None)
     user_uuid: Optional[str] = Field(default=None)
-
-    @field_validator('message_data')
-    @classmethod
-    def validate_message_data(cls, v: Any) -> List[base_message_data_type]:
-        if not v:
-            return []
-
-        if not isinstance(v, list):
-            raise ValueError("accesses must be a list")
-
-        for current_message_data in v:
-            if not hasattr(current_message_data, 'get_type'):
-                raise ValueError(f"Invalid access type: {current_message_data}")
-
-        return v
 
     def add_content(self, new_data: base_message_data_type) -> None:
         self.message_data.append(new_data)

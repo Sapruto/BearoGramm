@@ -6,6 +6,8 @@ import io
 import re
 from contextlib import redirect_stdout, redirect_stderr
 
+sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
+
 project_root = Path(__file__).parent.parent
 src_path = project_root / "src"
 
@@ -17,7 +19,15 @@ if str(src_path) not in sys.path:
 os.chdir(project_root)
 
 CATEGORIES = {
-
+    "1": {"name": "User Tests", "path": "tests/unit/test_user"},
+    "2": {"name": "Messages Tests", "path": "tests/unit/test_messages"},
+    "3": {"name": "Chats Tests", "path": "tests/unit/test_chats"},
+    "4": {"name": "Database Tests", "path": "tests/unit/test_database"},
+    "5": {"name": "Repository Tests", "path": "tests/unit/test_repository"},
+    "6": {"name": "Security Tests", "path": "tests/unit/test_security"},
+    "7": {"name": "Sessions Tests", "path": "tests/unit/test_sessions"},
+    "8": {"name": "Calls Tests", "path": "tests/unit/test_calls"},
+    "9": {"name": "ALL TESTS", "path": "tests/unit"},
 }
 
 def print_categories():
