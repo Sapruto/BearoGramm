@@ -3,10 +3,11 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request, HTTPException
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
-import os
 from dotenv import load_dotenv
 import logging
 
+from src.core.settings import Settings
+from src.core.paths import STATIC_ROOT
 from src.core.database import init_db, close_db
 
 load_dotenv()
@@ -26,7 +27,7 @@ def include_all_routers(app: FastAPI) -> FastAPI:
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    if os.getenv("INIT_DB", False) == "True":
+    if Settings.DATABASE.INIT_DB == True:
         await init_db()
 
     yield
@@ -34,11 +35,10 @@ async def lifespan(app: FastAPI):
 
 def create_app() -> FastAPI:
     BASE_DIR = Path(__file__).parent.parent
-    STATIC_DIR = BASE_DIR / 'frontend' / 'static'
     app = FastAPI(lifespan=lifespan)
 
-    if STATIC_DIR.exists():
-        app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
+    if STATIC_ROOT.exists():
+        app.mount("/static", StaticFiles(directory=str(STATIC_ROOT)), name="static")
 
     app = include_all_routers(app)
 

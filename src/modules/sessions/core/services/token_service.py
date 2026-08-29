@@ -1,27 +1,17 @@
 import jwt
 from datetime import datetime, timedelta, timezone
 from typing import Optional, Dict, Any
-from logging import getLogger
 
-import os
-from dotenv import load_dotenv, find_dotenv
+from src.core.logger import get_logger
+from src.core.settings import Settings
 
-env_path = find_dotenv()
-if not env_path:
-    raise FileNotFoundError("Not found .env")
-load_dotenv(dotenv_path=env_path)
-
-logger = getLogger(__name__)
-
-secret_key_jwt = os.getenv("JWT_SECRET_KEY")
-if not secret_key_jwt:
-    raise ValueError("JWT_SECRET_KEY not set in .env")
+logger = get_logger(__name__)
 
 class TokenService:
     def __init__(self, secret_key: str = None):
-        self.secret_key = secret_key or secret_key_jwt
-        self.algorithm_type = "HS256"
-        self.token_live_time_expire_minuts = 60 * 24
+        self.secret_key = secret_key or Settings.JWT.SECRET_KEY
+        self.algorithm_type = Settings.JWT.ALGORITHM
+        self.token_live_time_expire_minuts = Settings.JWT.EXPIRE_MINUTES
 
     def create_access_token(self, data: Dict[str, Any], expires_delta: Optional[timedelta] = None) -> str:
         to_encode = data.copy()

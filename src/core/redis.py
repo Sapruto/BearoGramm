@@ -1,8 +1,8 @@
 from redis.asyncio import Redis
 from typing import Optional
-import os
 import asyncio
 
+from src.core.settings import Settings
 from src.core.logger import get_logger
 
 logger = get_logger(__name__)
@@ -18,10 +18,10 @@ def init_redis(host: Optional[str] = None, port: Optional[int] = None, db: Optio
         return _redis_client
 
     _redis_client = Redis(
-        host=host or os.getenv("REDIS_HOST", "localhost"),
-        port=port or int(os.getenv("REDIS_PORT", 6379)),
-        db=db or int(os.getenv("REDIS_DB", 0)),
-        password=password or os.getenv("REDIS_PASSWORD", None),
+        host=host or Settings.REDIS.REDIS_HOST,
+        port=port or Settings.REDIS.REDIS_PORT,
+        db=db or Settings.REDIS.REDIS_DB,
+        password=password or Settings.REDIS.REDIS_PASSWORD,
         decode_responses=decode_responses
     )
 

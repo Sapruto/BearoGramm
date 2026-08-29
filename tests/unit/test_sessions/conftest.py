@@ -59,8 +59,11 @@ def session_repository(mock_redis_client):
 
 @pytest.fixture
 def token_service():
-    with patch.dict('os.environ', {'JWT_SECRET_KEY': 'test_secret_key_123456789'}):
-        return TokenService(secret_key='test_secret_key_123456789')
+    with patch('src.modules.sessions.core.services.token_service.Settings') as mock_settings:
+        mock_settings.JWT.SECRET_KEY = "test_secret_key_123456789"
+        mock_settings.JWT.EXPIRE_MINUTES = 1440
+        mock_settings.JWT.ALGORITHM = "HS256"
+        return TokenService(secret_key="test_secret_key_123456789")
 
 
 @pytest.fixture

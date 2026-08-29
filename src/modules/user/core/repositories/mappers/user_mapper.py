@@ -2,11 +2,11 @@ from typing import Any, Tuple, Optional
 from sqlalchemy.orm import InstrumentedAttribute
 import asyncio
 import hashlib
-import os
 
 from src.general.security.encyptions.encrypter import Encrypter, get_encrypter
 from src.general.repository.sql.sql_base_mapper import BaseMapper
 from src.general.repository.exception import NotConvertableValue
+from src.core.settings import Settings
 from src.core.logger import get_logger
 
 from ....models.orm.user_orm import UserORM
@@ -35,9 +35,7 @@ class UserMapper(BaseMapper[UserEntity, UserORM, UserFields]):
 
     def __init__(self, encrypter: Optional[Encrypter] = None):
         self.encrypter = encrypter or get_encrypter()
-        self.hash_salt = os.getenv("PHONE_HASH_SALT")
-        if not self.hash_salt:
-            raise ValueError("PHONE_HASH_SALT must be in env")
+        self.hash_salt = Settings.PHONE.HASH_SALT
 
     def _normalize_phone(self, phone: str) -> str:
         cleaned = ''.join(filter(str.isdigit, phone))

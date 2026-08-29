@@ -1,4 +1,3 @@
-import os
 from contextlib import asynccontextmanager
 from typing import AsyncGenerator
 
@@ -10,6 +9,7 @@ from sqlalchemy.ext.asyncio import (
 )
 from sqlalchemy.orm import declarative_base
 
+from src.core.settings import Settings
 from src.core.paths import DATABASE_ROOT, ENV_PATH
 from src.core.logger import get_logger
 from dotenv import load_dotenv
@@ -29,16 +29,16 @@ if "sqlite" in DATABASE_URL:
     }
 
 engine_kwargs = {
-    "echo": os.getenv("SQL_ECHO", "false").lower() == "true",
+    "echo": Settings.DATABASE.SQL_ECHO,
     "connect_args": connect_args if connect_args else None,
 }
 if "postgresql" in DATABASE_URL:
     engine_kwargs.update({
         "pool_pre_ping": True,
-        "pool_size": int(os.getenv("DB_POOL_SIZE", "20")),
-        "max_overflow": int(os.getenv("DB_MAX_OVERFLOW", "10")),
-        "pool_timeout": int(os.getenv("DB_POOL_TIMEOUT", "30")),
-        "pool_recycle": 3600,
+        "pool_size": Settings.DATABASE.DB_POOL_SIZE,
+        "max_overflow": Settings.DATABASE.DB_MAX_OVERFLOW,
+        "pool_timeout": Settings.DATABASE.DB_POOL_TIMEOUT,
+        "pool_recycle": Settings.DATABASE.POOL_RECYCLE,
     })
 
 engine: AsyncEngine = create_async_engine(DATABASE_URL, **engine_kwargs)

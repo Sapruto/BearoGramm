@@ -1,7 +1,6 @@
 from enum import Enum
-import os
-from dotenv import load_dotenv, find_dotenv
-from src.core.callbacks import test_url
+
+from src.core.settings import Settings
 
 class AuthRoutes(str, Enum):
     base = '/api/auth'
@@ -12,21 +11,8 @@ class AuthRoutes(str, Enum):
         return self.value
 
 class AuthRoutesURL(str, Enum):
-    @staticmethod
-    def _get_base_url() -> str:
-        load_dotenv(find_dotenv())
-        env = os.getenv("ENV", "development")
-
-        if env == "production":
-            base_url = os.getenv("BASE_URL")
-            if not base_url:
-                raise ValueError("BASE_URL must be set in .env for production")
-            return base_url.rstrip('/')
-
-        return test_url
-
-    get_login_token = f"{_get_base_url()}{AuthRoutes.get_login_token}"
-    verify_phone = f"{_get_base_url()}{AuthRoutes.verify_phone}"
+    get_login_token = f"{Settings.BASE_URL}{AuthRoutes.get_login_token}"
+    verify_phone = f"{Settings.BASE_URL}{AuthRoutes.verify_phone}"
 
     def __str__(self):
         return self.value

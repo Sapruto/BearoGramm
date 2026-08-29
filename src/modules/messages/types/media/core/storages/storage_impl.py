@@ -1,11 +1,10 @@
 from typing import Optional, Tuple
-import os
-from pathlib import Path
 import boto3
 from botocore.config import Config
 
 from ..utils.media_utils import MediaUtils
 
+from src.core.settings import Settings
 from src.core.logger import get_logger
 
 logger = get_logger(__name__)
@@ -13,15 +12,15 @@ logger = get_logger(__name__)
 class StorageImpl:
     def __init__(self):
         self.media_utils = MediaUtils()
-        self.upload_dir = Path(os.getenv("UPLOAD_DIR", "uploads"))
+        self.upload_dir = Settings.MEDIA_STORAGE.UPLOAD_DIR
         self.upload_dir.mkdir(parents=True, exist_ok=True)
 
-        self.use_s3 = os.getenv("USE_S3", "false").lower() == "true"
-        self.endpoint_url = os.getenv("S3_ENDPOINT", "https://s3.ru1.storage.beget.cloud")
-        self.access_key = os.getenv("S3_ACCESS_KEY")
-        self.secret_key = os.getenv("S3_SECRET_KEY")
-        self.bucket_name = os.getenv("S3_BUCKET_NAME", "your-bucket")
-        self.region = os.getenv("S3_REGION", "ru1")
+        self.use_s3 = Settings.MEDIA_STORAGE.BOTO_3.USE_S3
+        self.endpoint_url = Settings.MEDIA_STORAGE.BOTO_3.S3_ENDPOINT
+        self.access_key = Settings.MEDIA_STORAGE.BOTO_3.S3_ACCESS_KEY
+        self.secret_key = Settings.MEDIA_STORAGE.BOTO_3.S3_SECRET_KEY
+        self.bucket_name = Settings.MEDIA_STORAGE.BOTO_3.S3_BUCKET_NAME
+        self.region = Settings.MEDIA_STORAGE.BOTO_3.S3_REGION
 
         self.s3_client = None
         if self.use_s3:

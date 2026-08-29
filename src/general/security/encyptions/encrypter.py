@@ -12,6 +12,8 @@ from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.backends import default_backend
 
 import asyncio
+
+from src.core.settings import Settings
 from src.core.logger import get_logger
 
 logger = get_logger(__name__)
@@ -111,11 +113,11 @@ class Encrypter:
             self._ciphers[key_id] = AESGCM(derived_key)
 
     def _load_keys_from_env(self):
-        master_key = os.getenv("MASTER_KEY")
+        master_key = Settings.ENCRYPTER.MASTER_KEY
         if master_key:
             self._load_keys({"default": master_key})
 
-        rotation_keys = os.getenv("ROTATION_KEYS", "")
+        rotation_keys = Settings.ENCRYPTER.ROTATION_KEYS
         if rotation_keys:
             try:
                 keys_dict = json.loads(rotation_keys)
@@ -162,7 +164,7 @@ class Encrypter:
     async def _decrypt_legacy(self, to_decrypt: str) -> Optional[str]:
         try:
             encrypted_data = base64.b64decode(to_decrypt.encode('utf-8'))
-            nonce = base64.b64decode(os.getenv("ENCRYPT_NONCE", ""))
+            nonce = base64.b64decode(Settings.ENCRYPTER.ENCRYPT_NONCE)
             if len(nonce) != 12:
                 raise ValueError("Invalid nonce length")
 

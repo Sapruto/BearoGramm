@@ -253,7 +253,11 @@ class TestEncrypter:
         'MASTER_KEY': base64.b64encode(b"test_key").decode('utf-8'),
         'ROTATION_KEYS': json.dumps({"rot1": base64.b64encode(b"rot_key").decode('utf-8')})
     })
-    def test_encrypter_loads_rotation_keys(self):
+
+    @patch('src.general.security.encyptions.encrypter.Settings')
+    def test_encrypter_loads_rotation_keys(self, mock_settings):
+        mock_settings.ENCRYPTER.ROTATION_KEYS = '{"rot1": "rot_key_b64"}'
+        mock_settings.ENCRYPTER.MASTER_KEY = base64.b64encode(b"test_key").decode('utf-8')
         encrypter = Encrypter()
         assert "default" in encrypter._keys
         assert "rot1" in encrypter._keys
