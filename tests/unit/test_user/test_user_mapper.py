@@ -1,5 +1,5 @@
 import pytest
-from unittest.mock import AsyncMock
+from unittest.mock import AsyncMock, patch
 from datetime import datetime
 from uuid import uuid4
 import hashlib
@@ -26,12 +26,19 @@ class TestUserMapper:
 
     def test_hash_phone(self, user_mapper):
         phone = "+79001234567"
-        hashed = user_mapper._hash_phone(phone)
-        expected = hashlib.sha256(
-            f"test_salt:+79001234567".encode('utf-8')
-        ).hexdigest()
-        assert hashed == expected
-        assert len(hashed) == 64
+
+        with patch('src.modules.user.core.repositories.mappers.user_mapper.Settings') as mock_settings:
+            mock_settings.PHONE.HASH_SALT = "test_salt"
+
+            mapper = UserMapper()
+            hashed = mapper._hash_phone(phone)
+
+            expected = hashlib.sha256(
+                f"test_salt:+79001234567".encode('utf-8')
+            ).hexdigest()
+
+            assert hashed == expected
+            assert len(hashed) == 64
 
     def test_to_orm_without_phone(self, user_mapper):
         entity = UserEntity(phone_number="")

@@ -9,28 +9,35 @@ from src.modules.messages.types.media.core.storages.storage_impl import StorageI
 class TestStorageImpl:
     @pytest.fixture
     def storage_impl(self):
-        with patch('src.modules.messages.types.media.core.storages.storage_impl.Path.mkdir'):
-            with patch('src.modules.messages.types.media.core.storages.storage_impl.os.getenv') as mock_getenv:
-                mock_getenv.return_value = "uploads"
+        with patch('pathlib.Path.mkdir'):
+            with patch('src.modules.messages.types.media.core.storages.storage_impl.Settings') as mock_settings:
+                mock_settings.MEDIA_STORAGE.UPLOAD_DIR = Path("/fake/uploads")
+                mock_settings.MEDIA_STORAGE.BOTO_3.USE_S3 = False
+                mock_settings.MEDIA_STORAGE.BOTO_3.S3_ENDPOINT = "https://s3.test.com"
+                mock_settings.MEDIA_STORAGE.BOTO_3.S3_ACCESS_KEY = None
+                mock_settings.MEDIA_STORAGE.BOTO_3.S3_SECRET_KEY = None
+                mock_settings.MEDIA_STORAGE.BOTO_3.S3_BUCKET_NAME = "test_bucket"
+                mock_settings.MEDIA_STORAGE.BOTO_3.S3_REGION = "ru1"
                 return StorageImpl()
 
     @pytest.mark.asyncio
     async def test_upload_local(self, storage_impl):
-        with patch('src.modules.messages.types.media.core.storages.storage_impl.open') as mock_open:
+        with patch('builtins.open') as mock_open:
             mock_file = MagicMock()
             mock_open.return_value.__enter__.return_value = mock_file
 
-            result = await storage_impl._upload_local(b"test content", "test.jpg")
+            with patch.object(storage_impl.media_utils, 'generate_path', return_value="test.jpg"):
+                result = await storage_impl._upload_local(b"test content", "test.jpg")
 
-            assert result[0] is True
-            assert "/media/" in result[1]
+                assert result[0] is True
+                assert "/media/" in result[1]
 
     @pytest.mark.asyncio
     async def test_delete_local_not_found(self, storage_impl):
         mock_path = MagicMock()
         mock_path.exists.return_value = False
 
-        with patch('src.modules.messages.types.media.core.storages.storage_impl.Path') as mock_path_class:
+        with patch('pathlib.Path') as mock_path_class:
             mock_path_class.return_value = mock_path
 
             result = await storage_impl._delete_local("test.jpg")
@@ -43,7 +50,7 @@ class TestStorageImpl:
         mock_path.exists.return_value = True
         mock_path.unlink.side_effect = Exception("Delete error")
 
-        with patch('src.modules.messages.types.media.core.storages.storage_impl.Path') as mock_path_class:
+        with patch('pathlib.Path') as mock_path_class:
             mock_path_class.return_value = mock_path
 
             result = await storage_impl._delete_local("test.jpg")
@@ -52,27 +59,21 @@ class TestStorageImpl:
 
     @pytest.mark.asyncio
     async def test_upload_s3(self, storage_impl):
-        with patch.dict('os.environ', {
-            'USE_S3': 'true',
-            'S3_ENDPOINT': 'https://s3.test.com',
-            'S3_ACCESS_KEY': 'test_key',
-            'S3_SECRET_KEY': 'test_secret',
-            'S3_BUCKET_NAME': 'test_bucket',
-            'S3_REGION': 'ru1'
-        }):
-            with patch('src.modules.messages.types.media.core.storages.storage_impl.boto3.client') as mock_client:
-                mock_s3 = MagicMock()
-                mock_s3.put_object = MagicMock(return_value={})
-                mock_client.return_value = mock_s3
+        with patch('src.modules.messages.types.media.core.storages.storage_impl.boto3.client') as mock_client:
+            mock_s3 = MagicMock()
+            mock_s3.put_object = MagicMock(return_value={})
+            mock_client.return_value = mock_s3
 
-                impl = StorageImpl()
-                impl.use_s3 = True
-                impl.s3_client = mock_s3
+            with patch.object(storage_impl.media_utils, 'generate_path', return_value="test.jpg"):
+                with patch.object(storage_impl.media_utils, 'get_content_type', return_value="image/jpeg"):
+                    storage_impl.use_s3 = True
+                    storage_impl.s3_client = mock_s3
+                    storage_impl.bucket_name = "test_bucket"
 
-                result = await impl._upload_to_s3(b"test", "test.jpg")
+                    result = await storage_impl._upload_to_s3(b"test", "test.jpg")
 
-                assert result[0] is True
-                assert "test_bucket" in result[1]
+                    assert result[0] is True
+                    assert "test_bucket" in result[1]
 
     @pytest.mark.asyncio
     async def test_delete_s3_success(self, storage_impl):
