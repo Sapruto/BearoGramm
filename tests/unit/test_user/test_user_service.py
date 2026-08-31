@@ -10,20 +10,23 @@ from src.modules.user.models.dto.requests import SendCodeRequest, VerifyCodeRequ
 @pytest.mark.unit
 class TestUserService:
     @pytest.mark.asyncio
-    async def test_get_login_token_new_user(self, user_service, user_repository, verify_service):
+    async def test_get_login_token_new_user(self, user_service, user_repository, verify_service, mock_session_service):
         request = SendCodeRequest(phone_number="+79001234567")
 
         user_repository.get_by_field = AsyncMock(return_value=None)
         new_user = UserEntity(phone_number="+79001234567")
         user_repository.save = AsyncMock(return_value=new_user)
-        verify_service.send_login_code = AsyncMock(return_value="test_token_123456")
+        verify_service.send_login_code = AsyncMock(return_value="12345")
 
         response = await user_service.get_login_token_and_register_if_not(request)
 
         assert response.success is True
         assert response.error_message is None
         user_repository.save.assert_called_once()
-        verify_service.send_login_code.assert_called_once()
+        verify_service.send_login_code.assert_called_once_with(
+            user_uuid=str(new_user.uuid),
+            phone_number="+79001234567"
+        )
 
     @pytest.mark.asyncio
     async def test_get_login_token_existing_user(self, user_service, user_repository, verify_service):
@@ -34,12 +37,13 @@ class TestUserService:
         )
 
         user_repository.get_by_field = AsyncMock(return_value=existing_user)
-        verify_service.send_login_code = AsyncMock(return_value="test_token_123456")
+        verify_service.send_login_code = AsyncMock(return_value="12345")
 
         response = await user_service.get_login_token_and_register_if_not(request)
 
         assert response.success is True
         user_repository.save.assert_not_called()
+        verify_service.send_login_code.assert_called_once()
 
     @pytest.mark.asyncio
     async def test_get_login_token_failed_to_create_user(self, user_service, user_repository):
@@ -78,10 +82,10 @@ class TestUserService:
         assert response.error_message == "Failed to get login token"
 
     @pytest.mark.asyncio
-    async def test_verify_phone_success(self, user_service, verify_service, user_repository):
+    async def test_verify_phone_success(self, user_service, verify_service, user_repository, mock_session_service):
         request = VerifyCodeRequest(
             phone_number="+79001234567",
-            code="123456"
+            code="12345"
         )
         user = UserEntity(
             uuid=str(uuid4()),
@@ -90,21 +94,22 @@ class TestUserService:
 
         verify_service.verify_code = AsyncMock(return_value=True)
         user_repository.get_by_field = AsyncMock(return_value=user)
-        user_repository.save = AsyncMock(return_value=user)
         verify_service.delete_code = AsyncMock(return_value=True)
 
         response = await user_service.verify_phone(request)
 
         assert response.success is True
-        assert response.user == user
+        assert response.token is not None
+        assert response.user_uuid == str(user.uuid)
         assert response.error_message is None
-        user_repository.save.assert_called_once()
+        verify_service.verify_code.assert_called_once_with("12345")
+        mock_session_service.create_session.assert_called_once()
 
     @pytest.mark.asyncio
     async def test_verify_phone_invalid_code(self, user_service, verify_service):
         request = VerifyCodeRequest(
             phone_number="+79001234567",
-            code="123456"
+            code="12345"
         )
 
         verify_service.verify_code = AsyncMock(return_value=False)
@@ -113,13 +118,14 @@ class TestUserService:
 
         assert response.success is False
         assert response.error_message == "Invalid or expired code"
-        assert response.user is None
+        assert response.token is None
+        assert response.user_uuid is None
 
     @pytest.mark.asyncio
     async def test_verify_phone_user_not_found(self, user_service, verify_service, user_repository):
         request = VerifyCodeRequest(
             phone_number="+79001234567",
-            code="123456"
+            code="12345"
         )
 
         verify_service.verify_code = AsyncMock(return_value=True)
@@ -134,7 +140,7 @@ class TestUserService:
     async def test_verify_phone_exception(self, user_service, verify_service):
         request = VerifyCodeRequest(
             phone_number="+79001234567",
-            code="123456"
+            code="12345"
         )
 
         verify_service.verify_code = AsyncMock(side_effect=Exception("Validation error"))

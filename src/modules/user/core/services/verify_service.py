@@ -1,37 +1,47 @@
 from typing import Optional
-from enum import Enum
+from datetime import datetime, timedelta
 
 from src.core.logger import get_logger
-from src.modules.sessions import SessionAPIService, get_session_service_api, CreateSessionRequest
+from src.general.repository.redis.redis_query import RedisQuery
 
 from ..client.client_sms_api import ClientSMS, get_client_sms_api
+from ..repositories.verification_code_repository import VerificationCodeRepository, get_verification_code_repository, VerificationCodeEntity, VerificationCodeFields
 
 logger = get_logger(__name__)
 
-class VerifyType(str, Enum):
-    PHONE_VERIFY = "phone_verify"
-    LOGIN = "login"
-
 class VerifyService:
-    def __init__(self, session_service: Optional[SessionAPIService] = None, sms_api: Optional[ClientSMS] = None):
-        self.session_service = session_service or get_session_service_api()
+    def __init__(self, verification_code_repository: Optional[VerificationCodeRepository] = None, sms_api: Optional[ClientSMS] = None,):
+        self.verification_code_repository = verification_code_repository or get_verification_code_repository()
         self.sms_api = sms_api or get_client_sms_api()
 
     async def send_phone_verify_code(self, user_uuid: str, phone_number: str) -> Optional[str]:
         try:
-            session = await self.session_service.create_session(request=CreateSessionRequest(user_uuid=user_uuid))
+            query = RedisQuery[VerificationCodeFields]().add_filter(
+                VerificationCodeFields.PHONE, phone_number
+            )
+            await self.verification_code_repository.delete(query)
 
-            code = session.token
-            expires_in = session.expires_in_seconds // 60
+            code = self.verification_code_repository.gen_code()
+            entity = VerificationCodeEntity(
+                user_uuid=user_uuid,
+                phone=phone_number,
+                code=code,
+                expired_at=datetime.now() + timedelta(seconds=self.verification_code_repository.ttl),
+            )
+            await self.verification_code_repository.save(entity)
 
+            ttl_minutes = self.verification_code_repository.ttl // 60
             sent = await self.sms_api.send_verify_code(
                 phone_number=phone_number,
                 code=code,
-                time_of_live_per_minuts=expires_in
+                time_of_live_per_minuts=ttl_minutes
             )
 
             if not sent:
-                await self.session_service.delete_session(code)
+                query = RedisQuery[VerificationCodeFields]().add_filter(
+                    VerificationCodeFields.PHONE, phone_number
+                )
+                await self.verification_code_repository.delete(query)
                 return None
 
             return code
@@ -42,19 +52,32 @@ class VerifyService:
 
     async def send_login_code(self, user_uuid: str, phone_number: str) -> Optional[str]:
         try:
-            session = await self.session_service.create_session(request=CreateSessionRequest(user_uuid=user_uuid))
+            query = RedisQuery[VerificationCodeFields]().add_filter(
+                VerificationCodeFields.PHONE, phone_number
+            )
+            await self.verification_code_repository.delete(query)
 
-            code = session.token
-            expires_in = session.expires_in_seconds // 60
+            code = self.verification_code_repository.gen_code()
+            entity = VerificationCodeEntity(
+                user_uuid=user_uuid,
+                phone=phone_number,
+                code=code,
+                expired_at=datetime.now() + timedelta(seconds=self.verification_code_repository.ttl),
+            )
+            await self.verification_code_repository.save(entity)
 
+            ttl_minutes = self.verification_code_repository.ttl // 60
             sent = await self.sms_api.send_login_code(
                 phone_number=phone_number,
                 code=code,
-                time_of_live_per_minuts=expires_in
+                time_of_live_per_minuts=ttl_minutes
             )
 
             if not sent:
-                await self.session_service.delete_session(code)
+                query = RedisQuery[VerificationCodeFields]().add_filter(
+                    VerificationCodeFields.PHONE, phone_number
+                )
+                await self.verification_code_repository.delete(query)
                 return None
 
             return code
@@ -65,16 +88,47 @@ class VerifyService:
 
     async def verify_code(self, code: str) -> bool:
         try:
-            session = await self.session_service.validate_session(code)
-            return session.is_valid
+            query = RedisQuery[VerificationCodeFields]().add_filter(
+                VerificationCodeFields.CODE, code
+            )
+            entity = await self.verification_code_repository.get(query)
+
+            if not entity:
+                return False
+
+            if datetime.now() > entity.expired_at:
+                query = RedisQuery[VerificationCodeFields]().add_filter(
+                    VerificationCodeFields.PHONE, entity.phone
+                )
+                await self.verification_code_repository.delete(query)
+                return False
+
+            query = RedisQuery[VerificationCodeFields]().add_filter(
+                VerificationCodeFields.PHONE, entity.phone
+            )
+            await self.verification_code_repository.delete(query)
+            return True
+
         except Exception as e:
             logger.error(f"Error verifying code: {e}")
             return False
 
     async def delete_code(self, code: str) -> bool:
         try:
-            result = await self.session_service.delete_session(code)
-            return result.success
+            query = RedisQuery[VerificationCodeFields]().add_filter(
+                VerificationCodeFields.CODE, code
+            )
+            entity = await self.verification_code_repository.get(query)
+
+            if not entity:
+                return False
+
+            query = RedisQuery[VerificationCodeFields]().add_filter(
+                VerificationCodeFields.PHONE, entity.phone
+            )
+            result = await self.verification_code_repository.delete(query)
+            return result > 0
+
         except Exception as e:
             logger.error(f"Error deleting code: {e}")
             return False

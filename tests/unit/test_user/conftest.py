@@ -7,6 +7,10 @@ from src.modules.user.models.entities.user_entity import UserEntity
 from src.modules.user.models.orm.user_orm import UserORM
 from src.modules.user.core.repositories.mappers.user_mapper import UserMapper
 from src.modules.user.core.repositories.user_repository import UserRepository
+from src.modules.user.core.repositories.verification_code_repository import (
+    VerificationCodeRepository,
+    VerificationCodeEntity,
+)
 from src.modules.user.core.services.user_service import UserService
 from src.modules.user.core.services.verify_service import VerifyService
 from src.modules.user.core.client.client_sms_api import ClientSMS
@@ -102,6 +106,25 @@ def mock_sms_client():
 
 
 @pytest.fixture
+def mock_verify_repo():
+    repo = MagicMock(spec=VerificationCodeRepository)
+    repo.gen_code = MagicMock(return_value="12345")
+    repo.ttl = 300
+    repo.save = AsyncMock()
+    repo.delete = AsyncMock(return_value=1)
+    repo.get = AsyncMock(return_value=None)
+
+    entity = MagicMock()
+    entity.phone = "+79001234567"
+    entity.code = "12345"
+    entity.expired_at = datetime.now() + timedelta(minutes=5)
+
+    repo.get_by_code = AsyncMock(return_value=entity)
+    repo.delete_by_phone = AsyncMock(return_value=True)
+    return repo
+
+
+@pytest.fixture
 def user_repository():
     repo = MagicMock(spec=UserRepository)
     repo.get_by_field = AsyncMock()
@@ -112,18 +135,19 @@ def user_repository():
 
 
 @pytest.fixture
-def verify_service(mock_session_service, mock_sms_client):
+def verify_service(mock_verify_repo, mock_sms_client):
     return VerifyService(
-        session_service=mock_session_service,
+        verification_code_repository=mock_verify_repo,
         sms_api=mock_sms_client
     )
 
 
 @pytest.fixture
-def user_service(user_repository, verify_service):
+def user_service(user_repository, verify_service, mock_session_service):
     return UserService(
         user_repository=user_repository,
-        verify_service=verify_service
+        verify_service=verify_service,
+        session_service=mock_session_service
     )
 
 

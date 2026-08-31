@@ -22,9 +22,9 @@ class VerifyCodeRequest(BaseModel):
     )
     code: str = Field(
         description="Код из SMS",
-        min_length=6,
-        max_length=6,
-        examples=["123456"]
+        min_length=5,
+        max_length=5,
+        examples=["12345"]
     )
 
     @field_validator('phone_number')
@@ -47,6 +47,6 @@ class VerifyCodeRequest(BaseModel):
             raise ValueError('Code cannot be empty')
         if not v.isdigit():
             raise ValueError('Code must contain only digits')
-        if len(v) != 6:
-            raise ValueError('Code must be exactly 6 digits')
+        if len(v) != 5:
+            raise ValueError('Code must be exactly 5 digits')
         return v

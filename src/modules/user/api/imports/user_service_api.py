@@ -27,7 +27,6 @@ class UserServiceAPI:
             return UserAPIModel(
                 uuid=user.uuid,
                 phone_number=user.phone_number,
-                phone_verified=user.phone_verified,
                 created_at=user.created_at,
                 updated_at=user.updated_at
             )
@@ -49,7 +48,6 @@ class UserServiceAPI:
             return UserAPIModel(
                 uuid=user.uuid,
                 phone_number=user.phone_number,
-                phone_verified=user.phone_verified,
                 created_at=user.created_at,
                 updated_at=user.updated_at
             )
