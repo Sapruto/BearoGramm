@@ -34,7 +34,9 @@ class TestTokenService:
         assert payload["session_id"] == "test_session"
 
     def test_verify_token_expired(self, token_service):
-        with patch('src.modules.sessions.core.services.token_service.jwt.decode') as mock_decode:
+        with patch(
+            "src.modules.sessions.core.services.token_service.jwt.decode"
+        ) as mock_decode:
             mock_decode.side_effect = jwt.ExpiredSignatureError("Token expired")
 
             payload = token_service.verify_token("expired_token")
@@ -42,7 +44,9 @@ class TestTokenService:
             assert payload is None
 
     def test_verify_token_invalid(self, token_service):
-        with patch('src.modules.sessions.core.services.token_service.jwt.decode') as mock_decode:
+        with patch(
+            "src.modules.sessions.core.services.token_service.jwt.decode"
+        ) as mock_decode:
             mock_decode.side_effect = jwt.InvalidTokenError("Invalid token")
 
             payload = token_service.verify_token("invalid_token")
@@ -59,7 +63,9 @@ class TestTokenService:
         assert payload["user_uuid"] == "test_uuid"
 
     def test_decode_token_invalid(self, token_service):
-        with patch('src.modules.sessions.core.services.token_service.jwt.decode') as mock_decode:
+        with patch(
+            "src.modules.sessions.core.services.token_service.jwt.decode"
+        ) as mock_decode:
             mock_decode.side_effect = Exception("Decode error")
 
             payload = token_service.decode_token("invalid_token")
@@ -68,5 +74,6 @@ class TestTokenService:
 
     def test_get_token_service(self):
         from src.modules.sessions.core.services.token_service import get_token_service
+
         service = get_token_service()
         assert isinstance(service, TokenService)

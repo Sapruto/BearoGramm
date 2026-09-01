@@ -2,6 +2,7 @@ from pydantic import BaseModel
 from typing import Optional
 from datetime import datetime
 
+
 class PersonalContact(BaseModel):
     chat_uuid: str
     user_uuid: str

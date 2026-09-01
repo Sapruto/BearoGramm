@@ -10,7 +10,9 @@ from src.modules.user.core.services.verify_service import VerifyService
 @pytest.mark.unit
 class TestVerifyService:
     @pytest.mark.asyncio
-    async def test_send_phone_verify_code_success(self, verify_service, mock_verify_repo, mock_sms_client):
+    async def test_send_phone_verify_code_success(
+        self, verify_service, mock_verify_repo, mock_sms_client
+    ):
         user_uuid = str(uuid4())
         phone_number = "+79001234567"
 
@@ -23,13 +25,13 @@ class TestVerifyService:
         mock_verify_repo.delete.assert_called_once()
         mock_verify_repo.save.assert_called_once()
         mock_sms_client.send_verify_code.assert_called_once_with(
-            phone_number=phone_number,
-            code="12345",
-            time_of_live_per_minuts=5
+            phone_number=phone_number, code="12345", time_of_live_per_minuts=5
         )
 
     @pytest.mark.asyncio
-    async def test_send_phone_verify_code_sms_failed(self, verify_service, mock_verify_repo, mock_sms_client):
+    async def test_send_phone_verify_code_sms_failed(
+        self, verify_service, mock_verify_repo, mock_sms_client
+    ):
         mock_sms_client.send_verify_code = AsyncMock(return_value=False)
         mock_verify_repo.delete = AsyncMock(return_value=1)
         mock_verify_repo.save = AsyncMock()
@@ -42,7 +44,9 @@ class TestVerifyService:
         assert mock_verify_repo.delete.call_count == 2
 
     @pytest.mark.asyncio
-    async def test_send_login_code_success(self, verify_service, mock_verify_repo, mock_sms_client):
+    async def test_send_login_code_success(
+        self, verify_service, mock_verify_repo, mock_sms_client
+    ):
         user_uuid = str(uuid4())
         phone_number = "+79001234567"
 
@@ -55,13 +59,13 @@ class TestVerifyService:
         mock_verify_repo.delete.assert_called_once()
         mock_verify_repo.save.assert_called_once()
         mock_sms_client.send_login_code.assert_called_once_with(
-            phone_number=phone_number,
-            code="12345",
-            time_of_live_per_minuts=5
+            phone_number=phone_number, code="12345", time_of_live_per_minuts=5
         )
 
     @pytest.mark.asyncio
-    async def test_send_login_code_sms_failed(self, verify_service, mock_verify_repo, mock_sms_client):
+    async def test_send_login_code_sms_failed(
+        self, verify_service, mock_verify_repo, mock_sms_client
+    ):
         mock_sms_client.send_login_code = AsyncMock(return_value=False)
         mock_verify_repo.delete = AsyncMock(return_value=1)
         mock_verify_repo.save = AsyncMock()
@@ -74,7 +78,9 @@ class TestVerifyService:
         assert mock_verify_repo.delete.call_count == 2
 
     @pytest.mark.asyncio
-    async def test_send_phone_verify_code_exception(self, verify_service, mock_verify_repo):
+    async def test_send_phone_verify_code_exception(
+        self, verify_service, mock_verify_repo
+    ):
         mock_verify_repo.delete = AsyncMock(side_effect=Exception("Redis error"))
         user_uuid = str(uuid4())
         phone_number = "+79001234567"

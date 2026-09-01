@@ -12,7 +12,7 @@ class TestChatMapper:
     def test_to_orm_value(self, chat_mapper, sample_user_uuid, sample_companion_uuid):
         accesses = [
             {"user_uuid": sample_user_uuid},
-            {"user_uuid": sample_companion_uuid}
+            {"user_uuid": sample_companion_uuid},
         ]
         field, value = chat_mapper.to_orm_value(ChatFields.ACCESSES, accesses)
         assert field == ChatORM.accesses
@@ -22,10 +22,12 @@ class TestChatMapper:
         with pytest.raises(NotConvertableValue):
             chat_mapper.to_orm_value(ChatFields.ACCESSES, "invalid")
 
-    def test_to_entity_value(self, chat_mapper, sample_user_uuid, sample_companion_uuid):
+    def test_to_entity_value(
+        self, chat_mapper, sample_user_uuid, sample_companion_uuid
+    ):
         accesses = [
             {"user_uuid": sample_user_uuid},
-            {"user_uuid": sample_companion_uuid}
+            {"user_uuid": sample_companion_uuid},
         ]
         field, value = chat_mapper.to_entity_value(ChatORM.accesses, accesses)
         assert field == ChatFields.ACCESSES
@@ -57,7 +59,7 @@ class TestChatMapper:
     def test_field_mapping_consistency(self, chat_mapper):
         for field, orm_attr in chat_mapper.field_mapping.items():
             assert isinstance(field, ChatFields)
-            assert hasattr(ChatORM, str(orm_attr).split('.')[-1])
+            assert hasattr(ChatORM, str(orm_attr).split(".")[-1])
 
     def test_get_field_name(self, chat_mapper):
         name = chat_mapper.get_field_name(ChatORM.uuid)

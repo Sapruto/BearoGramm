@@ -3,5 +3,6 @@ from .text_message_data import TextMessageData, TextMessageTypeName
 
 __all__ = [
     "TextMessageService",
-    "TextMessageData", "TextMessageTypeName",
+    "TextMessageData",
+    "TextMessageTypeName",
 ]

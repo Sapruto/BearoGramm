@@ -1,7 +1,11 @@
 import pytest
 from unittest.mock import AsyncMock, MagicMock
 
-from src.modules.calls.core.clients.push_client_impl import PushClientImpl, DummyPushClientImpl, get_push_impl
+from src.modules.calls.core.clients.push_client_impl import (
+    PushClientImpl,
+    DummyPushClientImpl,
+    get_push_impl,
+)
 
 
 @pytest.mark.unit
@@ -18,7 +22,7 @@ class TestPushClientImpl:
             phone_number="+79001234567",
             title="Test",
             body="Test body",
-            data={"key": "value"}
+            data={"key": "value"},
         )
 
         assert result is True
@@ -28,9 +32,7 @@ class TestPushClientImpl:
         client = DummyPushClientImpl()
 
         result = await client.send(
-            phone_number="+79001234567",
-            title="Test",
-            body="Test body"
+            phone_number="+79001234567", title="Test", body="Test body"
         )
 
         assert result is True

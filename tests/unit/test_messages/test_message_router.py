@@ -3,7 +3,10 @@ from unittest.mock import AsyncMock, MagicMock
 from fastapi import WebSocket
 
 from src.modules.messages.api.message_router import message_router
-from src.modules.messages.api.message_router_names import MessageRoutes, MessageRoutesURL
+from src.modules.messages.api.message_router_names import (
+    MessageRoutes,
+    MessageRoutesURL,
+)
 
 
 @pytest.mark.unit
@@ -26,7 +29,7 @@ class TestMessageRouter:
         assert MessageRoutes.get_messages == "/get"
 
     def test_message_routes_url(self):
-        assert hasattr(MessageRoutesURL, 'send_message')
-        assert hasattr(MessageRoutesURL, 'update_message')
-        assert hasattr(MessageRoutesURL, 'delete_message')
-        assert hasattr(MessageRoutesURL, 'get_messages')
+        assert hasattr(MessageRoutesURL, "send_message")
+        assert hasattr(MessageRoutesURL, "update_message")
+        assert hasattr(MessageRoutesURL, "delete_message")
+        assert hasattr(MessageRoutesURL, "get_messages")

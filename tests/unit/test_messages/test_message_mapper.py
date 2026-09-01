@@ -3,7 +3,10 @@ from datetime import datetime, timezone
 from uuid import uuid4
 
 from src.modules.messages.core.repositories.mappers.message_mapper import MessageMapper
-from src.modules.messages.models.entities.message_entity import MessageEntity, MessageFields
+from src.modules.messages.models.entities.message_entity import (
+    MessageEntity,
+    MessageFields,
+)
 from src.modules.messages.models.orm.message_orm import MessageORM
 from src.general.repository.exception import NotConvertableValue
 
@@ -32,8 +35,7 @@ class TestMessageMapper:
 
     def test_to_orm_value(self, message_mapper, sample_text_data):
         field, value = message_mapper.to_orm_value(
-            MessageFields.MESSAGE_DATA,
-            [sample_text_data]
+            MessageFields.MESSAGE_DATA, [sample_text_data]
         )
         assert field == MessageORM.message_data
         assert len(value) == 1
@@ -44,17 +46,13 @@ class TestMessageMapper:
 
     def test_to_entity_value(self, message_mapper, sample_text_data):
         field, value = message_mapper.to_entity_value(
-            MessageORM.message_data,
-            [sample_text_data]
+            MessageORM.message_data, [sample_text_data]
         )
         assert field == MessageFields.MESSAGE_DATA
         assert len(value) == 1
 
     def test_to_entity_value_none(self, message_mapper):
-        field, value = message_mapper.to_entity_value(
-            MessageORM.message_data,
-            None
-        )
+        field, value = message_mapper.to_entity_value(MessageORM.message_data, None)
         assert field == MessageFields.MESSAGE_DATA
         assert value == []
 
@@ -79,7 +77,7 @@ class TestMessageMapper:
     def test_field_mapping_consistency(self, message_mapper):
         for field, orm_attr in message_mapper.field_mapping.items():
             assert isinstance(field, MessageFields)
-            assert hasattr(MessageORM, str(orm_attr).split('.')[-1])
+            assert hasattr(MessageORM, str(orm_attr).split(".")[-1])
 
     def test_get_field_name(self, message_mapper):
         name = message_mapper.get_field_name(MessageORM.uuid)

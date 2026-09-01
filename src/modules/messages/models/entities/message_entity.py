@@ -6,6 +6,7 @@ from typing import List, Optional, Any
 
 from ...types.base.base_message_data import base_message_data_type
 
+
 class MessageFields(str, Enum):
     UUID = "uuid"
 
@@ -19,6 +20,7 @@ class MessageFields(str, Enum):
 
     def __str__(self):
         return self.value
+
 
 class MessageEntity(BaseModel):
     uuid: Optional[str] = Field(default=None)

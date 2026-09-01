@@ -117,9 +117,7 @@ def mock_redis():
 @pytest.fixture
 def redis_repository(mock_redis):
     repo = BaseRedisRepository(
-        redis_client=mock_redis,
-        mapper=MockRedisMapper(),
-        ttl=3600
+        redis_client=mock_redis, mapper=MockRedisMapper(), ttl=3600
     )
     repo._index_enabled = False
     repo._set_ttl = AsyncMock()

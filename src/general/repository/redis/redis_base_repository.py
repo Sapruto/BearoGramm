@@ -15,7 +15,11 @@ logger = get_logger(__name__)
 
 Mapper = TypeVar("Mapper", bound=BaseRedisMapper)
 
-class BaseRedisRepository(Generic[Mapper, FieldsType, EntityType], BaseRepositoryInterface[RedisQuery[FieldsType], FieldsType, EntityType]):
+
+class BaseRedisRepository(
+    Generic[Mapper, FieldsType, EntityType],
+    BaseRepositoryInterface[RedisQuery[FieldsType], FieldsType, EntityType],
+):
     def __init__(self, redis_client: Redis, mapper: Mapper, ttl: Optional[int] = None):
         self.redis = redis_client
         self._mapper = mapper
@@ -57,7 +61,7 @@ class BaseRedisRepository(Generic[Mapper, FieldsType, EntityType], BaseRepositor
     def _json_serializer(self, obj):
         if isinstance(obj, datetime):
             return obj.isoformat()
-        if hasattr(obj, '__dict__'):
+        if hasattr(obj, "__dict__"):
             return obj.__dict__
         raise TypeError(f"Type {type(obj)} not serializable")
 
@@ -108,9 +112,7 @@ class BaseRedisRepository(Generic[Mapper, FieldsType, EntityType], BaseRepositor
 
         while True:
             cursor, scan_keys = await self.redis.scan(
-                cursor,
-                match=pattern,
-                count=scan_count
+                cursor, match=pattern, count=scan_count
             )
             for key in scan_keys:
                 if isinstance(key, bytes):
@@ -121,7 +123,9 @@ class BaseRedisRepository(Generic[Mapper, FieldsType, EntityType], BaseRepositor
 
         return keys
 
-    def _match_filters(self, entity: EntityType, filters: Dict[FieldsType, Any]) -> bool:
+    def _match_filters(
+        self, entity: EntityType, filters: Dict[FieldsType, Any]
+    ) -> bool:
         if not filters:
             return True
 
@@ -131,7 +135,9 @@ class BaseRedisRepository(Generic[Mapper, FieldsType, EntityType], BaseRepositor
                 return False
         return True
 
-    def _apply_sorting(self, entities: List[EntityType], order_by: List[tuple]) -> List[EntityType]:
+    def _apply_sorting(
+        self, entities: List[EntityType], order_by: List[tuple]
+    ) -> List[EntityType]:
         if not order_by:
             return entities
 
@@ -140,7 +146,7 @@ class BaseRedisRepository(Generic[Mapper, FieldsType, EntityType], BaseRepositor
             for field, direction in order_by:
                 value = getattr(entity, field, None)
                 if isinstance(value, (int, float)):
-                    key_tuple.append(value if direction == 'asc' else -value)
+                    key_tuple.append(value if direction == "asc" else -value)
                 else:
                     key_tuple.append(value)
             return tuple(key_tuple)
@@ -178,7 +184,9 @@ class BaseRedisRepository(Generic[Mapper, FieldsType, EntityType], BaseRepositor
             if storage_type == "hash":
                 await self.redis.hset(key, mapping=data)
             else:
-                await self.redis.set(key, json.dumps(data, default=self._json_serializer))
+                await self.redis.set(
+                    key, json.dumps(data, default=self._json_serializer)
+                )
 
             await self._set_ttl(key)
 
@@ -217,7 +225,9 @@ class BaseRedisRepository(Generic[Mapper, FieldsType, EntityType], BaseRepositor
             logger.error(f"Unexpected error in delete: {e}")
             raise
 
-    async def get_by_field(self, value: Any, field: FieldsType, select_field: Optional[FieldsType] = None) -> Optional[EntityType]:
+    async def get_by_field(
+        self, value: Any, field: FieldsType, select_field: Optional[FieldsType] = None
+    ) -> Optional[EntityType]:
         try:
             if self._index_enabled:
                 redis_field = self._to_redis_field(field)
@@ -273,9 +283,9 @@ class BaseRedisRepository(Generic[Mapper, FieldsType, EntityType], BaseRepositor
             keys = await self._find_keys_by_query(query)
 
             if query.offset:
-                keys = keys[query.offset:]
+                keys = keys[query.offset :]
             if query.limit:
-                keys = keys[:query.limit]
+                keys = keys[: query.limit]
 
             entities = []
             for key in keys:
@@ -341,10 +351,10 @@ class BaseRedisRepository(Generic[Mapper, FieldsType, EntityType], BaseRepositor
                 deleted += 1
         return deleted
 
-    def enable_indexes(self) -> 'BaseRedisRepository':
+    def enable_indexes(self) -> "BaseRedisRepository":
         self._index_enabled = True
         return self
 
-    def disable_indexes(self) -> 'BaseRedisRepository':
+    def disable_indexes(self) -> "BaseRedisRepository":
         self._index_enabled = False
         return self

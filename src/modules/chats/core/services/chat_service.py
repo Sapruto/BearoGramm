@@ -8,6 +8,7 @@ from src.core.logger import get_logger
 
 logger = get_logger(__name__)
 
+
 class ChatService:
     def __init__(self, chat_repository: Optional[ChatRepository] = None):
         self.chat_repository = chat_repository or get_chat_repository()
@@ -27,9 +28,9 @@ class ChatService:
                 return False
 
             for access in chat.accesses:
-                if hasattr(access, 'user_uuid') and access.user_uuid == user.uuid:
+                if hasattr(access, "user_uuid") and access.user_uuid == user.uuid:
                     return True
-                if hasattr(access, 'get_user_uuid'):
+                if hasattr(access, "get_user_uuid"):
                     if access.get_user_uuid() == user.uuid:
                         return True
 
@@ -45,6 +46,7 @@ class ChatService:
         except Exception as e:
             logger.error(f"Error getting chat: {e}")
             return None
+
 
 def get_chat_service() -> ChatService:
     return ChatService()

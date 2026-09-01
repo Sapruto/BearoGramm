@@ -3,6 +3,7 @@ from enum import Enum
 from typing import Optional, List
 from datetime import datetime, timezone
 
+
 class CallStateFields(str, Enum):
     USER_UUID = "user_uuid"
     ROOM_ID = "room_id"
@@ -19,6 +20,7 @@ class CallStateFields(str, Enum):
     def __str__(self):
         return self.value
 
+
 class CallStatus(str, Enum):
     WAITING = "waiting"
     ACTIVE = "active"
@@ -26,9 +28,11 @@ class CallStatus(str, Enum):
     ENDED = "ended"
     TIMEOUT = "timeout"
 
+
 class CallType(str, Enum):
     P2P = "p2p"
     ROOM = "room"
+
 
 class CallStateEntity(BaseModel):
     user_uuid: str
@@ -54,7 +58,7 @@ class CallStateEntity(BaseModel):
             CallStatus.ACTIVE: 3600,
             CallStatus.REJECTED: 300,
             CallStatus.ENDED: 86400,
-            CallStatus.TIMEOUT: 60
+            CallStatus.TIMEOUT: 60,
         }
 
         ttl = ttl_map.get(self.status, 30)
@@ -66,5 +70,5 @@ class CallStateEntity(BaseModel):
 
         return ttl
 
-    def update_ttl(self, new_ttl: int) -> 'CallStateEntity':
+    def update_ttl(self, new_ttl: int) -> "CallStateEntity":
         return self

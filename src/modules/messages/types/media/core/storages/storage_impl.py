@@ -9,6 +9,7 @@ from src.core.logger import get_logger
 
 logger = get_logger(__name__)
 
+
 class StorageImpl:
     def __init__(self):
         self.media_utils = MediaUtils()
@@ -25,17 +26,19 @@ class StorageImpl:
         self.s3_client = None
         if self.use_s3:
             if not self.access_key or not self.secret_key:
-                logger.warning("S3 credentials not configured. Falling back to local storage.")
+                logger.warning(
+                    "S3 credentials not configured. Falling back to local storage."
+                )
                 self.use_s3 = False
             else:
                 try:
                     self.s3_client = boto3.client(
-                        's3',
+                        "s3",
                         endpoint_url=self.endpoint_url,
                         aws_access_key_id=self.access_key,
                         aws_secret_access_key=self.secret_key,
-                        config=Config(signature_version='s3v4'),
-                        region_name=self.region
+                        config=Config(signature_version="s3v4"),
+                        region_name=self.region,
                     )
                     logger.info("S3 client initialized successfully")
                 except Exception as e:
@@ -44,10 +47,7 @@ class StorageImpl:
 
     async def _s3_file_exists(self, filename: str) -> bool:
         try:
-            self.s3_client.head_object(
-                Bucket=self.bucket_name,
-                Key=filename
-            )
+            self.s3_client.head_object(Bucket=self.bucket_name, Key=filename)
             return True
         except Exception:
             return False
@@ -56,23 +56,22 @@ class StorageImpl:
         file_path = self.upload_dir / filename
         return file_path.exists()
 
-    async def _upload_to_s3(self, file_content: bytes, filename: str, content_type: Optional[str] = None) -> Tuple[bool, Optional[str]]:
+    async def _upload_to_s3(
+        self, file_content: bytes, filename: str, content_type: Optional[str] = None
+    ) -> Tuple[bool, Optional[str]]:
         try:
             file_path = self.media_utils.generate_path(filename)
 
             if not content_type:
                 content_type = self.media_utils.get_content_type(filename)
 
-            extra_args = {'ContentType': content_type} if content_type else {}
+            extra_args = {"ContentType": content_type} if content_type else {}
 
             self.s3_client.put_object(
-                Bucket=self.bucket_name,
-                Key=file_path,
-                Body=file_content,
-                **extra_args
+                Bucket=self.bucket_name, Key=file_path, Body=file_content, **extra_args
             )
 
-            base_url = self.endpoint_url.replace('https://', '').replace('http://', '')
+            base_url = self.endpoint_url.replace("https://", "").replace("http://", "")
             file_url = f"https://{self.bucket_name}.{base_url}/{file_path}"
 
             logger.info(f"File uploaded to S3: {file_path}")
@@ -84,10 +83,7 @@ class StorageImpl:
 
     async def _delete_from_s3(self, filename: str) -> bool:
         try:
-            self.s3_client.delete_object(
-                Bucket=self.bucket_name,
-                Key=filename
-            )
+            self.s3_client.delete_object(Bucket=self.bucket_name, Key=filename)
 
             logger.info(f"File deleted from S3: {filename}")
             return True
@@ -96,14 +92,16 @@ class StorageImpl:
             logger.error(f"S3 delete error: {e}")
             return False
 
-    async def _upload_local(self, file_content: bytes, filename: str, content_type: Optional[str] = None) -> Tuple[bool, Optional[str]]:
+    async def _upload_local(
+        self, file_content: bytes, filename: str, content_type: Optional[str] = None
+    ) -> Tuple[bool, Optional[str]]:
         try:
             file_path = self.media_utils.generate_path(filename)
 
             full_path = self.upload_dir / file_path
             full_path.parent.mkdir(parents=True, exist_ok=True)
 
-            with open(full_path, 'wb') as f:
+            with open(full_path, "wb") as f:
                 f.write(file_content)
 
             url = f"/media/{file_path}"
@@ -130,7 +128,9 @@ class StorageImpl:
             logger.error(f"Local delete error: {e}")
             return False
 
-    async def upload_file(self, file_content: bytes, filename: str, content_type: Optional[str] = None) -> Tuple[bool, Optional[str]]:
+    async def upload_file(
+        self, file_content: bytes, filename: str, content_type: Optional[str] = None
+    ) -> Tuple[bool, Optional[str]]:
         if self.use_s3 and self.s3_client:
             return await self._upload_to_s3(file_content, filename, content_type)
         else:
@@ -150,10 +150,11 @@ class StorageImpl:
 
     def get_file_url(self, file_path: str) -> str:
         if self.use_s3:
-            base_url = self.endpoint_url.replace('https://', '').replace('http://', '')
+            base_url = self.endpoint_url.replace("https://", "").replace("http://", "")
             return f"https://{self.bucket_name}.{base_url}/{file_path}"
         else:
             return f"/media/{file_path}"
+
 
 def get_storage_impl() -> StorageImpl:
     return StorageImpl()

@@ -10,6 +10,7 @@ from ....models.entities.chat_entity import ChatFields, ChatEntity
 
 logger = get_logger(__name__)
 
+
 class ChatMapper(BaseMapper[ChatEntity, ChatORM, ChatFields]):
     field_mapping = {
         ChatFields.UUID: ChatORM.uuid,
@@ -41,7 +42,9 @@ class ChatMapper(BaseMapper[ChatEntity, ChatORM, ChatFields]):
             updated_at=orm.updated_at,
         )
 
-    def to_orm_value(self, field: ChatFields, value: Any) -> Tuple[InstrumentedAttribute, Any]:
+    def to_orm_value(
+        self, field: ChatFields, value: Any
+    ) -> Tuple[InstrumentedAttribute, Any]:
         orm_field = self.to_orm_field(field)
 
         if field == ChatFields.ACCESSES:
@@ -51,7 +54,9 @@ class ChatMapper(BaseMapper[ChatEntity, ChatORM, ChatFields]):
 
         return orm_field, value
 
-    def to_entity_value(self, field: InstrumentedAttribute, value: Any) -> Tuple[ChatFields, Any]:
+    def to_entity_value(
+        self, field: InstrumentedAttribute, value: Any
+    ) -> Tuple[ChatFields, Any]:
         entity_field = self.to_entity_field(field)
 
         if entity_field == ChatFields.ACCESSES:
@@ -80,7 +85,9 @@ class ChatMapper(BaseMapper[ChatEntity, ChatORM, ChatFields]):
             if self.get_field_name(orm_attr) == field_name:
                 return entity_enum
 
-        raise ValueError(f"No reverse mapping found for field: {field} (name: {field_name})")
+        raise ValueError(
+            f"No reverse mapping found for field: {field} (name: {field_name})"
+        )
 
     def get_field_name(self, field: InstrumentedAttribute) -> str:
-        return str(field).split('.')[-1]
+        return str(field).split(".")[-1]

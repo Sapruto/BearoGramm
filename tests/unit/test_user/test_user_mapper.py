@@ -27,14 +27,16 @@ class TestUserMapper:
     def test_hash_phone(self, user_mapper):
         phone = "+79001234567"
 
-        with patch('src.modules.user.core.repositories.mappers.user_mapper.Settings') as mock_settings:
+        with patch(
+            "src.modules.user.core.repositories.mappers.user_mapper.Settings"
+        ) as mock_settings:
             mock_settings.PHONE.HASH_SALT = "test_salt"
 
             mapper = UserMapper()
             hashed = mapper._hash_phone(phone)
 
             expected = hashlib.sha256(
-                f"test_salt:+79001234567".encode('utf-8')
+                f"test_salt:+79001234567".encode("utf-8")
             ).hexdigest()
 
             assert hashed == expected
@@ -56,10 +58,7 @@ class TestUserMapper:
         assert entity.updated_at == sample_user_orm.updated_at
 
     def test_to_orm_value(self, user_mapper):
-        field, value = user_mapper.to_orm_value(
-            UserFields.PHONE_NUMBER,
-            "+79001234567"
-        )
+        field, value = user_mapper.to_orm_value(UserFields.PHONE_NUMBER, "+79001234567")
         assert field == UserORM.phone_number_hash
         assert isinstance(value, str)
         assert len(value) == 64
@@ -70,29 +69,25 @@ class TestUserMapper:
 
     def test_to_entity_value(self, user_mapper):
         field, value = user_mapper.to_entity_value(
-            UserORM.phone_number_encrypted,
-            "encrypted_data"
+            UserORM.phone_number_encrypted, "encrypted_data"
         )
         assert field == UserFields.PHONE_NUMBER
         assert value == "+79001234567"
 
     def test_to_entity_value_none(self, user_mapper):
-        field, value = user_mapper.to_entity_value(
-            UserORM.phone_number_encrypted,
-            None
-        )
+        field, value = user_mapper.to_entity_value(UserORM.phone_number_encrypted, None)
         assert field == UserFields.PHONE_NUMBER
         assert value is None
 
     def test_field_mapping_consistency(self, user_mapper):
         for field, orm_attr in user_mapper.field_mapping.items():
             assert isinstance(field, UserFields)
-            assert hasattr(UserORM, str(orm_attr).split('.')[-1])
+            assert hasattr(UserORM, str(orm_attr).split(".")[-1])
 
     def test_reverse_field_mapping_consistency(self, user_mapper):
         for orm_attr, field in user_mapper.reverse_field_mapping.items():
             assert isinstance(field, UserFields)
-            assert hasattr(UserORM, str(orm_attr).split('.')[-1])
+            assert hasattr(UserORM, str(orm_attr).split(".")[-1])
 
     def test_to_orm_field(self, user_mapper):
         orm_field = user_mapper.to_orm_field(UserFields.UUID)

@@ -1,6 +1,9 @@
 import pytest
 
-from src.modules.messages.types.text.text_message_data import TextMessageData, TextMessageTypeName
+from src.modules.messages.types.text.text_message_data import (
+    TextMessageData,
+    TextMessageTypeName,
+)
 from src.modules.messages.types.base.base_message_data import BaseMessageData
 
 

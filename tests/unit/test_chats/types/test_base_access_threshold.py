@@ -36,8 +36,8 @@ class TestBaseAccessThreshold:
 
     def test_base_access_threshold_with_fields(self):
         threshold = BaseAccessThreshold()
-        assert hasattr(threshold, 'model_dump')
-        assert hasattr(threshold, 'model_dump_json')
+        assert hasattr(threshold, "model_dump")
+        assert hasattr(threshold, "model_dump_json")
 
     def test_threshold_serialization(self):
         threshold = MockThreshold(custom_field="hello")

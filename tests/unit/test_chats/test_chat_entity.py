@@ -4,12 +4,17 @@ from uuid import uuid4
 from pydantic import ValidationError
 
 from src.modules.chats.models.entities.chat_entity import ChatEntity, ChatFields
-from src.modules.chats.chat_types.personal.models.personal_access_type import PersonalAccessType, PERSONAL_TYPE
+from src.modules.chats.chat_types.personal.models.personal_access_type import (
+    PersonalAccessType,
+    PERSONAL_TYPE,
+)
 
 
 @pytest.mark.unit
 class TestChatEntity:
-    def test_chat_entity_creation(self, sample_chat_uuid, sample_user_uuid, sample_companion_uuid):
+    def test_chat_entity_creation(
+        self, sample_chat_uuid, sample_user_uuid, sample_companion_uuid
+    ):
         now = datetime.now(timezone.utc)
         access1 = PersonalAccessType(user_uuid=sample_user_uuid)
         access2 = PersonalAccessType(user_uuid=sample_companion_uuid)
@@ -18,7 +23,7 @@ class TestChatEntity:
             uuid=sample_chat_uuid,
             accesses=[access1, access2],
             created_at=now,
-            updated_at=now
+            updated_at=now,
         )
 
         assert chat.uuid == sample_chat_uuid
@@ -42,7 +47,9 @@ class TestChatEntity:
         with pytest.raises(ValidationError):
             ChatEntity(accesses=[])
 
-    def test_chat_entity_access_type_property(self, sample_user_uuid, sample_companion_uuid):
+    def test_chat_entity_access_type_property(
+        self, sample_user_uuid, sample_companion_uuid
+    ):
         access1 = PersonalAccessType(user_uuid=sample_user_uuid)
         access2 = PersonalAccessType(user_uuid=sample_companion_uuid)
 
@@ -53,7 +60,9 @@ class TestChatEntity:
         with pytest.raises(ValidationError):
             ChatEntity(accesses=[])
 
-    def test_chat_entity_add_access(self, sample_chat_uuid, sample_user_uuid, sample_companion_uuid):
+    def test_chat_entity_add_access(
+        self, sample_chat_uuid, sample_user_uuid, sample_companion_uuid
+    ):
         access1 = PersonalAccessType(user_uuid=sample_user_uuid)
         chat = ChatEntity(accesses=[access1])
 
@@ -63,7 +72,9 @@ class TestChatEntity:
         assert len(chat.accesses) == 2
         assert chat.accesses[1].user_uuid == sample_companion_uuid
 
-    def test_chat_entity_remove_access(self, sample_chat_uuid, sample_user_uuid, sample_companion_uuid):
+    def test_chat_entity_remove_access(
+        self, sample_chat_uuid, sample_user_uuid, sample_companion_uuid
+    ):
         access1 = PersonalAccessType(user_uuid=sample_user_uuid)
         access2 = PersonalAccessType(user_uuid=sample_companion_uuid)
 
@@ -73,7 +84,9 @@ class TestChatEntity:
         assert len(chat.accesses) == 1
         assert chat.accesses[0].user_uuid == sample_companion_uuid
 
-    def test_chat_entity_remove_access_not_exists(self, sample_chat_uuid, sample_user_uuid, sample_companion_uuid):
+    def test_chat_entity_remove_access_not_exists(
+        self, sample_chat_uuid, sample_user_uuid, sample_companion_uuid
+    ):
         access1 = PersonalAccessType(user_uuid=sample_user_uuid)
         access2 = PersonalAccessType(user_uuid=sample_companion_uuid)
         access3 = PersonalAccessType(user_uuid=str(uuid4()))

@@ -16,7 +16,11 @@ logger = get_logger(__name__)
 
 Mapper = TypeVar("Mapper", bound=BaseMapper)
 
-class BaseRepository(Generic[Manager, FieldsType, EntityType], BaseRepositoryInterface[SqlQuery[FieldsType], FieldsType, EntityType]):
+
+class BaseRepository(
+    Generic[Manager, FieldsType, EntityType],
+    BaseRepositoryInterface[SqlQuery[FieldsType], FieldsType, EntityType],
+):
     def __init__(self, manager: Manager, mapper: Mapper):
         self.manager = manager
         self.model = manager.model
@@ -29,10 +33,14 @@ class BaseRepository(Generic[Manager, FieldsType, EntityType], BaseRepositoryInt
     def _to_entity(self, orm: Any) -> EntityType:
         return self._mapper.to_entity(orm)
 
-    def _to_orm_value(self, field: FieldsType, value: Any) -> Tuple[InstrumentedAttribute, Any]:
+    def _to_orm_value(
+        self, field: FieldsType, value: Any
+    ) -> Tuple[InstrumentedAttribute, Any]:
         return self._mapper.to_orm_value(field, value)
 
-    def _to_entity_value(self, field: InstrumentedAttribute, value: Any) -> Tuple[FieldsType, Any]:
+    def _to_entity_value(
+        self, field: InstrumentedAttribute, value: Any
+    ) -> Tuple[FieldsType, Any]:
         return self._mapper.to_entity_value(field, value)
 
     def _to_orm_field(self, field: FieldsType) -> InstrumentedAttribute:
@@ -41,7 +49,9 @@ class BaseRepository(Generic[Manager, FieldsType, EntityType], BaseRepositoryInt
     def _to_entity_field(self, field: InstrumentedAttribute) -> FieldsType:
         return self._mapper.to_entity_field(field)
 
-    def _build_where(self, filters: Dict[FieldsType, Any]) -> Dict[InstrumentedAttribute, Any]:
+    def _build_where(
+        self, filters: Dict[FieldsType, Any]
+    ) -> Dict[InstrumentedAttribute, Any]:
         result = {}
         for field, value in (filters or {}).items():
             try:
@@ -55,7 +65,9 @@ class BaseRepository(Generic[Manager, FieldsType, EntityType], BaseRepositoryInt
     async def save(self, EntityType: EntityType) -> EntityType:
         try:
             orm_obj = self._to_orm(EntityType)
-            result = await self.manager.create(orm_obj, on_conflict=OnConflictAction.NOTHING)
+            result = await self.manager.create(
+                orm_obj, on_conflict=OnConflictAction.NOTHING
+            )
             return self._to_entity(result)
         except NotConvertableError as e:
             logger.error(f"Conversion error in save: {e}")
@@ -75,12 +87,18 @@ class BaseRepository(Generic[Manager, FieldsType, EntityType], BaseRepositoryInt
             logger.error(f"Unexpected error in delete: {e}")
             raise
 
-    async def get_by_field(self, value: Any, field: FieldsType, select_field: Optional[FieldsType] = None) -> Optional[Union[EntityType, Any]]:
+    async def get_by_field(
+        self, value: Any, field: FieldsType, select_field: Optional[FieldsType] = None
+    ) -> Optional[Union[EntityType, Any]]:
         try:
             orm_field = self._to_orm_field(field)
             _, orm_value = self._to_orm_value(field, value)
-            orm_select_field = self._to_orm_field(select_field) if select_field else None
-            result = await self.manager.get_by_field(orm_value, orm_field, orm_select_field)
+            orm_select_field = (
+                self._to_orm_field(select_field) if select_field else None
+            )
+            result = await self.manager.get_by_field(
+                orm_value, orm_field, orm_select_field
+            )
             if isinstance(result, self.manager.model):
                 return self._to_entity(result)
             _, entity_value = self._to_entity_value(orm_select_field, result)
@@ -108,9 +126,7 @@ class BaseRepository(Generic[Manager, FieldsType, EntityType], BaseRepositoryInt
         try:
             where = self._build_where(query.filters or {})
             results = await self.manager.get_all(
-                where=where,
-                limit=query.limit,
-                offset=query.offset
+                where=where, limit=query.limit, offset=query.offset
             )
             return [self._to_entity(r) for r in results]
         except NotConvertableError as e:

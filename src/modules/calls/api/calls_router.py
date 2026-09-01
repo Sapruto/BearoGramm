@@ -11,6 +11,7 @@ logger = get_logger(__name__)
 
 calls_router = APIRouter(prefix=CallsRoutes.base)
 
+
 @calls_router.websocket(CallsRoutes.call)
 async def call(websocket: WebSocket):
     closed = False
@@ -19,7 +20,7 @@ async def call(websocket: WebSocket):
 
         raw_data = await websocket.receive_text()
         data = json.loads(raw_data)
-        token = data.get('auth')
+        token = data.get("auth")
 
         if not token:
             await websocket.send_text(json.dumps({"error": "Missing auth token"}))
@@ -32,6 +33,7 @@ async def call(websocket: WebSocket):
             await websocket.close(code=1008, reason="Invalid token")
             closed = True
             return
+
         async def send_message(data: str) -> None:
             await websocket.send_text(data)
 
@@ -41,9 +43,7 @@ async def call(websocket: WebSocket):
         ws_service = get_calls_state_service()
 
         await ws_service.call(
-            user_uuid=user.uuid,
-            ws_send=send_message,
-            ws_receive=receive_message
+            user_uuid=user.uuid, ws_send=send_message, ws_receive=receive_message
         )
 
     finally:
@@ -53,6 +53,7 @@ async def call(websocket: WebSocket):
             except Exception as e:
                 logger.error(f"Error closing websocket: {e}")
 
+
 @calls_router.websocket(CallsRoutes.listen_calls)
 async def listen_calls(websocket: WebSocket, phone_number: str):
     closed = False
@@ -61,7 +62,7 @@ async def listen_calls(websocket: WebSocket, phone_number: str):
 
         raw_data = await websocket.receive_text()
         data = json.loads(raw_data)
-        token = data.get('auth')
+        token = data.get("auth")
 
         if not token:
             await websocket.send_text(json.dumps({"error": "Missing auth token"}))
@@ -74,6 +75,7 @@ async def listen_calls(websocket: WebSocket, phone_number: str):
             await websocket.close(code=1008, reason="Invalid token")
             closed = True
             return
+
         async def send_message(data: str) -> None:
             await websocket.send_text(data)
 
@@ -83,9 +85,7 @@ async def listen_calls(websocket: WebSocket, phone_number: str):
         ws_service = get_calls_state_service()
 
         await ws_service.listen_calls(
-            user_uuid=user.uuid,
-            ws_send=send_message,
-            ws_receive=receive_message
+            user_uuid=user.uuid, ws_send=send_message, ws_receive=receive_message
         )
 
     finally:

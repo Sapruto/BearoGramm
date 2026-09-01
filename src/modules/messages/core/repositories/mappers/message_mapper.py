@@ -12,6 +12,7 @@ from ....types.message_registry import MessageRegistry, get_message_registry
 
 logger = get_logger(__name__)
 
+
 class MessageMapper(BaseMapper[MessageEntity, MessageORM, MessageFields]):
     field_mapping = {
         MessageFields.UUID: MessageORM.uuid,
@@ -19,7 +20,7 @@ class MessageMapper(BaseMapper[MessageEntity, MessageORM, MessageFields]):
         MessageFields.CREATED_AT: MessageORM.created_at,
         MessageFields.UPDATED_AT: MessageORM.updated_at,
         MessageFields.CHAT_UUID: MessageORM.chat_uuid,
-        MessageFields.USER_UUID: MessageORM.user_uuid
+        MessageFields.USER_UUID: MessageORM.user_uuid,
     }
 
     reverse_field_mapping = {
@@ -28,13 +29,15 @@ class MessageMapper(BaseMapper[MessageEntity, MessageORM, MessageFields]):
         MessageORM.created_at: MessageFields.CREATED_AT,
         MessageORM.updated_at: MessageFields.UPDATED_AT,
         MessageORM.chat_uuid: MessageFields.CHAT_UUID,
-        MessageORM.user_uuid: MessageFields.USER_UUID
+        MessageORM.user_uuid: MessageFields.USER_UUID,
     }
 
     def __init__(self, message_registry: Optional[MessageRegistry] = None):
         self.message_registry = message_registry or get_message_registry()
 
-    async def _prepare_list_to_save(self, message_data: List[BaseMessageData]) -> List[BaseMessageData]:
+    async def _prepare_list_to_save(
+        self, message_data: List[BaseMessageData]
+    ) -> List[BaseMessageData]:
         prepared = []
         for data in message_data:
             service = self.message_registry.get_data_service(data.data_type)
@@ -49,7 +52,9 @@ class MessageMapper(BaseMapper[MessageEntity, MessageORM, MessageFields]):
                 prepared.append(data)
         return prepared
 
-    async def _prepare_list_to_use(self, message_data: List[BaseMessageData]) -> List[BaseMessageData]:
+    async def _prepare_list_to_use(
+        self, message_data: List[BaseMessageData]
+    ) -> List[BaseMessageData]:
         prepared = []
         for data in message_data:
             service = self.message_registry.get_data_service(data.data_type)
@@ -66,7 +71,9 @@ class MessageMapper(BaseMapper[MessageEntity, MessageORM, MessageFields]):
 
     def _validate_message_data(self, value: Any) -> List[BaseMessageData]:
         if not isinstance(value, list):
-            raise NotConvertableValue(value, "message_data", "Message data must be a list")
+            raise NotConvertableValue(
+                value, "message_data", "Message data must be a list"
+            )
         return value
 
     def _normalize_message_data(self, value: Any) -> List[BaseMessageData]:
@@ -77,10 +84,14 @@ class MessageMapper(BaseMapper[MessageEntity, MessageORM, MessageFields]):
             return []
         return value
 
-    async def prepare_data_to_save(self, message_data: List[BaseMessageData]) -> List[BaseMessageData]:
+    async def prepare_data_to_save(
+        self, message_data: List[BaseMessageData]
+    ) -> List[BaseMessageData]:
         return await self._prepare_list_to_save(message_data)
 
-    async def prepare_data_to_use(self, message_data: List[BaseMessageData]) -> List[BaseMessageData]:
+    async def prepare_data_to_use(
+        self, message_data: List[BaseMessageData]
+    ) -> List[BaseMessageData]:
         return await self._prepare_list_to_use(message_data)
 
     def to_orm(self, entity: MessageEntity) -> MessageORM:
@@ -90,7 +101,7 @@ class MessageMapper(BaseMapper[MessageEntity, MessageORM, MessageFields]):
             created_at=entity.created_at,
             updated_at=entity.updated_at,
             chat_uuid=entity.chat_uuid,
-            user_uuid=entity.user_uuid
+            user_uuid=entity.user_uuid,
         )
 
     def to_entity(self, orm: MessageORM) -> MessageEntity:
@@ -100,10 +111,12 @@ class MessageMapper(BaseMapper[MessageEntity, MessageORM, MessageFields]):
             created_at=orm.created_at,
             updated_at=orm.updated_at,
             chat_uuid=orm.chat_uuid,
-            user_uuid=orm.user_uuid
+            user_uuid=orm.user_uuid,
         )
 
-    def to_orm_value(self, field: MessageFields, value: Any) -> Tuple[InstrumentedAttribute, Any]:
+    def to_orm_value(
+        self, field: MessageFields, value: Any
+    ) -> Tuple[InstrumentedAttribute, Any]:
         orm_field = self.to_orm_field(field)
 
         if field == MessageFields.MESSAGE_DATA:
@@ -112,7 +125,9 @@ class MessageMapper(BaseMapper[MessageEntity, MessageORM, MessageFields]):
 
         return orm_field, value
 
-    def to_entity_value(self, field: InstrumentedAttribute, value: Any) -> Tuple[MessageFields, Any]:
+    def to_entity_value(
+        self, field: InstrumentedAttribute, value: Any
+    ) -> Tuple[MessageFields, Any]:
         entity_field = self.to_entity_field(field)
 
         if entity_field == MessageFields.MESSAGE_DATA:
@@ -140,4 +155,4 @@ class MessageMapper(BaseMapper[MessageEntity, MessageORM, MessageFields]):
         raise ValueError(f"No reverse mapping found for field: {field}")
 
     def get_field_name(self, field: InstrumentedAttribute) -> str:
-        return str(field).split('.')[-1]
+        return str(field).split(".")[-1]

@@ -4,6 +4,7 @@ from enum import Enum
 from typing import Optional
 from datetime import datetime
 
+
 class UserFields(str, Enum):
     UUID = "uuid"
 
@@ -16,6 +17,7 @@ class UserFields(str, Enum):
 
     def __str__(self):
         return self.value
+
 
 class UserEntity(BaseModel):
     uuid: Optional[str] = Field(default=None)

@@ -1,6 +1,9 @@
 import pytest
 
-from src.modules.messages.types.media.core.validator.media_validator import MediaValidator, MediaValidatorConfig
+from src.modules.messages.types.media.core.validator.media_validator import (
+    MediaValidator,
+    MediaValidatorConfig,
+)
 
 
 @pytest.mark.unit

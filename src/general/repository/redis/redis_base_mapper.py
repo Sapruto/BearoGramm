@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 from typing import Generic, Dict, Any, Tuple, Optional
 from src.general.types_var import Entity, Fields
 
+
 class BaseRedisMapper(Generic[Entity, Fields], ABC):
     field_mapping: Dict[Fields, str] = {}
     reverse_field_mapping: Dict[str, Fields] = {}
@@ -67,6 +68,7 @@ class BaseRedisMapper(Generic[Entity, Fields], ABC):
             return str(value)
         if isinstance(value, (list, dict)):
             import json
+
             return json.dumps(value, ensure_ascii=False)
         return str(value)
 
@@ -88,6 +90,7 @@ class BaseRedisMapper(Generic[Entity, Fields], ABC):
                 return None
         if target_type in (list, dict):
             import json
+
             try:
                 return json.loads(value)
             except json.JSONDecodeError:

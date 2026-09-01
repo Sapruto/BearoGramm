@@ -9,8 +9,14 @@ from src.core.logger import get_logger
 
 logger = get_logger(__name__)
 
+
 class MediaMessageService(BaseDataService[MediaMessageData]):
-    def __init__(self, storage: Optional[StorageAPI] = None, media_utils: Optional[MediaUtils] = None, validator: Optional[MediaValidator] = None):
+    def __init__(
+        self,
+        storage: Optional[StorageAPI] = None,
+        media_utils: Optional[MediaUtils] = None,
+        validator: Optional[MediaValidator] = None,
+    ):
         self.storage = storage or get_storage_api()
         self.media_utils = media_utils or MediaUtils()
         self.validator = validator or MediaValidator()
@@ -18,16 +24,17 @@ class MediaMessageService(BaseDataService[MediaMessageData]):
 
     def _extract_path(self, url: str) -> Optional[str]:
         try:
-            if 'storage.beget.cloud' in url:
-                parts = url.split('/', 3)
+            if "storage.beget.cloud" in url:
+                parts = url.split("/", 3)
                 return parts[3] if len(parts) >= 4 else None
 
-            if '/media/' in url:
-                return url.split('/media/', 1)[1]
+            if "/media/" in url:
+                return url.split("/media/", 1)[1]
 
             from urllib.parse import urlparse
+
             parsed = urlparse(url)
-            return parsed.path.lstrip('/') if parsed.path else None
+            return parsed.path.lstrip("/") if parsed.path else None
 
         except Exception as e:
             logger.error(f"Path extraction error: {e}")
@@ -36,12 +43,12 @@ class MediaMessageService(BaseDataService[MediaMessageData]):
     async def save_data(self, raw_data: Any) -> MediaMessageData:
         try:
             if isinstance(raw_data, dict):
-                content = raw_data.get('content')
-                filename = raw_data.get('filename', 'file.bin')
-                chat_uuid = raw_data.get('chat_uuid')
+                content = raw_data.get("content")
+                filename = raw_data.get("filename", "file.bin")
+                chat_uuid = raw_data.get("chat_uuid")
             elif isinstance(raw_data, bytes):
                 content = raw_data
-                filename = 'file.bin'
+                filename = "file.bin"
                 chat_uuid = None
             else:
                 raise ValueError("raw_data must be bytes or dict")
@@ -57,18 +64,13 @@ class MediaMessageService(BaseDataService[MediaMessageData]):
             content_type = self.media_utils.get_content_type(filename)
 
             success, result = await self.storage.upload_file(
-                content,
-                file_path,
-                content_type
+                content, file_path, content_type
             )
 
             if not success:
                 raise ValueError(f"Upload failed: {result}")
 
-            return MediaMessageData(
-                data_type=self.data_type,
-                media_url=result
-            )
+            return MediaMessageData(data_type=self.data_type, media_url=result)
 
         except Exception as e:
             logger.error(f"Media process error: {e}")
@@ -94,6 +96,7 @@ class MediaMessageService(BaseDataService[MediaMessageData]):
 
     async def prepare_to_use(self, data: MediaMessageData) -> MediaMessageData:
         return data
+
 
 def get_media_message_service() -> MediaMessageService:
     return MediaMessageService()

@@ -2,7 +2,10 @@ import pytest
 from unittest.mock import AsyncMock
 
 from src.modules.messages.types.text.text_message_service import TextMessageService
-from src.modules.messages.types.text.text_message_data import TextMessageData, TextMessageTypeName
+from src.modules.messages.types.text.text_message_data import (
+    TextMessageData,
+    TextMessageTypeName,
+)
 
 
 @pytest.mark.unit
@@ -58,6 +61,9 @@ class TestTextMessageService:
         assert result.text == "decrypted_text"
 
     def test_get_text_message_service(self):
-        from src.modules.messages.types.text.text_message_service import get_text_message_service
+        from src.modules.messages.types.text.text_message_service import (
+            get_text_message_service,
+        )
+
         service = get_text_message_service()
         assert isinstance(service, TextMessageService)

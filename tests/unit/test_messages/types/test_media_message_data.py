@@ -1,6 +1,9 @@
 import pytest
 
-from src.modules.messages.types.media.models.media_message_data import MediaMessageData, MediaMessageTypeName
+from src.modules.messages.types.media.models.media_message_data import (
+    MediaMessageData,
+    MediaMessageTypeName,
+)
 from src.modules.messages.types.base.base_message_data import BaseMessageData
 
 
@@ -9,7 +12,7 @@ class TestMediaMessageData:
     def test_media_message_data_creation(self):
         data = MediaMessageData(
             media_url="https://example.com/media/test.jpg",
-            data_type=MediaMessageTypeName
+            data_type=MediaMessageTypeName,
         )
         assert data.media_url == "https://example.com/media/test.jpg"
         assert data.data_type == MediaMessageTypeName

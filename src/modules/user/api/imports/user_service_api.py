@@ -9,16 +9,20 @@ from ...models.entities.user_entity import UserFields
 
 logger = get_logger(__name__)
 
+
 class UserServiceAPI:
-    def __init__(self, user_repository: Optional[UserRepository] = None, session_service: Optional[SessionAPIService] = None):
+    def __init__(
+        self,
+        user_repository: Optional[UserRepository] = None,
+        session_service: Optional[SessionAPIService] = None,
+    ):
         self.user_repository = user_repository or get_user_repository()
         self.session_service = session_service or get_session_service_api()
 
     async def get_user_by_uuid(self, user_uuid: str) -> Optional[UserAPIModel]:
         try:
             user = await self.user_repository.get_by_field(
-                value=user_uuid,
-                field=UserFields.UUID
+                value=user_uuid, field=UserFields.UUID
             )
 
             if not user:
@@ -28,7 +32,7 @@ class UserServiceAPI:
                 uuid=user.uuid,
                 phone_number=user.phone_number,
                 created_at=user.created_at,
-                updated_at=user.updated_at
+                updated_at=user.updated_at,
             )
 
         except Exception as e:
@@ -38,8 +42,7 @@ class UserServiceAPI:
     async def get_user_by_phone(self, phone_number: str) -> Optional[UserAPIModel]:
         try:
             user = await self.user_repository.get_by_field(
-                value=phone_number,
-                field=UserFields.PHONE_NUMBER
+                value=phone_number, field=UserFields.PHONE_NUMBER
             )
 
             if not user:
@@ -49,7 +52,7 @@ class UserServiceAPI:
                 uuid=user.uuid,
                 phone_number=user.phone_number,
                 created_at=user.created_at,
-                updated_at=user.updated_at
+                updated_at=user.updated_at,
             )
 
         except Exception as e:
@@ -62,25 +65,19 @@ class UserServiceAPI:
 
             sessions = [
                 UserSessionsAPIModel(
-                    token=s.token,
-                    user_uuid=s.user_uuid,
-                    expires_at=s.expired_at
+                    token=s.token, user_uuid=s.user_uuid, expires_at=s.expired_at
                 )
                 for s in sessions_response.sessions
             ]
 
             return UserSessionResponseAPIModel(
-                user_uuid=user_uuid,
-                sessions=sessions,
-                total=sessions_response.total
+                user_uuid=user_uuid, sessions=sessions, total=sessions_response.total
             )
 
         except Exception as e:
             logger.error(f"Error getting user sessions: {e}")
             return UserSessionResponseAPIModel(
-                user_uuid=user_uuid,
-                sessions=[],
-                total=0
+                user_uuid=user_uuid, sessions=[], total=0
             )
 
     async def delete_user_session(self, token: str) -> bool:
@@ -96,6 +93,7 @@ class UserServiceAPI:
         except Exception as e:
             logger.error(f"Error deleting all user sessions: {e}")
             return 0
+
 
 def get_user_service_api() -> UserServiceAPI:
     return UserServiceAPI()

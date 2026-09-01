@@ -4,7 +4,12 @@ import json
 
 from src.general.repository.redis.redis_base_mapper import BaseRedisMapper
 
-from ....models.entities.call_state_entity import CallStateEntity, CallStateFields, CallType
+from ....models.entities.call_state_entity import (
+    CallStateEntity,
+    CallStateFields,
+    CallType,
+)
+
 
 class CallsStateMapper(BaseRedisMapper[CallStateEntity, CallStateFields]):
     key_prefix = "call:state"
@@ -21,14 +26,16 @@ class CallsStateMapper(BaseRedisMapper[CallStateEntity, CallStateFields]):
         CallStateFields.CALLEE_UUID: "callee_uuid",
         CallStateFields.CREATED_AT: "created_at",
         CallStateFields.UPDATED_AT: "updated_at",
-        CallStateFields.CALL_TYPE: "call_type"
+        CallStateFields.CALL_TYPE: "call_type",
     }
 
     def to_redis(self, entity: CallStateEntity) -> Dict[str, Any]:
         return {
             "user_uuid": entity.user_uuid,
             "room_id": entity.room_id or "",
-            "status": entity.status.value if hasattr(entity.status, 'value') else entity.status,
+            "status": entity.status.value
+            if hasattr(entity.status, "value")
+            else entity.status,
             "participants": json.dumps(entity.participants),
             "sdp_offer": entity.sdp_offer or "",
             "sdp_answer": entity.sdp_answer or "",
@@ -36,7 +43,9 @@ class CallsStateMapper(BaseRedisMapper[CallStateEntity, CallStateFields]):
             "callee_uuid": entity.callee_uuid or "",
             "created_at": entity.created_at.isoformat(),
             "updated_at": entity.updated_at.isoformat(),
-            "call_type": entity.call_type.value if hasattr(entity.call_type, 'value') else entity.call_type
+            "call_type": entity.call_type.value
+            if hasattr(entity.call_type, "value")
+            else entity.call_type,
         }
 
     def to_entity(self, data: Dict[str, Any]) -> CallStateEntity:
@@ -95,7 +104,9 @@ class CallsStateMapper(BaseRedisMapper[CallStateEntity, CallStateFields]):
 
         return redis_field, self.serialize_value(value)
 
-    def to_entity_value(self, redis_field: str, value: Any) -> Tuple[CallStateFields, Any]:
+    def to_entity_value(
+        self, redis_field: str, value: Any
+    ) -> Tuple[CallStateFields, Any]:
         field = self.to_entity_field(redis_field)
 
         if field == CallStateFields.PARTICIPANTS:

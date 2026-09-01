@@ -1,7 +1,11 @@
 import pytest
 from unittest.mock import AsyncMock
 
-from src.modules.user.api.routers.auth_router import auth_router, get_login_token, verify_phone
+from src.modules.user.api.routers.auth_router import (
+    auth_router,
+    get_login_token,
+    verify_phone,
+)
 from src.modules.user.models.dto.requests import SendCodeRequest, VerifyCodeRequest
 from src.modules.user.models.dto.responses import SendCodeResponse, VerifyCodeResponse
 from src.modules.user.models.entities.user_entity import UserEntity
@@ -20,7 +24,9 @@ class TestAuthRouter:
         response = await get_login_token(request, mock_service)
 
         assert response.success is True
-        mock_service.get_login_token_and_register_if_not.assert_called_once_with(request)
+        mock_service.get_login_token_and_register_if_not.assert_called_once_with(
+            request
+        )
 
     def test_router_prefix(self):
         assert auth_router.prefix == "/api/auth"

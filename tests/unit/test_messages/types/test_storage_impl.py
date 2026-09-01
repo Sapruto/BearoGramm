@@ -9,8 +9,10 @@ from src.modules.messages.types.media.core.storages.storage_impl import StorageI
 class TestStorageImpl:
     @pytest.fixture
     def storage_impl(self):
-        with patch('pathlib.Path.mkdir'):
-            with patch('src.modules.messages.types.media.core.storages.storage_impl.Settings') as mock_settings:
+        with patch("pathlib.Path.mkdir"):
+            with patch(
+                "src.modules.messages.types.media.core.storages.storage_impl.Settings"
+            ) as mock_settings:
                 mock_settings.MEDIA_STORAGE.UPLOAD_DIR = Path("/fake/uploads")
                 mock_settings.MEDIA_STORAGE.BOTO_3.USE_S3 = False
                 mock_settings.MEDIA_STORAGE.BOTO_3.S3_ENDPOINT = "https://s3.test.com"
@@ -22,11 +24,13 @@ class TestStorageImpl:
 
     @pytest.mark.asyncio
     async def test_upload_local(self, storage_impl):
-        with patch('builtins.open') as mock_open:
+        with patch("builtins.open") as mock_open:
             mock_file = MagicMock()
             mock_open.return_value.__enter__.return_value = mock_file
 
-            with patch.object(storage_impl.media_utils, 'generate_path', return_value="test.jpg"):
+            with patch.object(
+                storage_impl.media_utils, "generate_path", return_value="test.jpg"
+            ):
                 result = await storage_impl._upload_local(b"test content", "test.jpg")
 
                 assert result[0] is True
@@ -37,7 +41,7 @@ class TestStorageImpl:
         mock_path = MagicMock()
         mock_path.exists.return_value = False
 
-        with patch('pathlib.Path') as mock_path_class:
+        with patch("pathlib.Path") as mock_path_class:
             mock_path_class.return_value = mock_path
 
             result = await storage_impl._delete_local("test.jpg")
@@ -50,7 +54,7 @@ class TestStorageImpl:
         mock_path.exists.return_value = True
         mock_path.unlink.side_effect = Exception("Delete error")
 
-        with patch('pathlib.Path') as mock_path_class:
+        with patch("pathlib.Path") as mock_path_class:
             mock_path_class.return_value = mock_path
 
             result = await storage_impl._delete_local("test.jpg")
@@ -59,13 +63,21 @@ class TestStorageImpl:
 
     @pytest.mark.asyncio
     async def test_upload_s3(self, storage_impl):
-        with patch('src.modules.messages.types.media.core.storages.storage_impl.boto3.client') as mock_client:
+        with patch(
+            "src.modules.messages.types.media.core.storages.storage_impl.boto3.client"
+        ) as mock_client:
             mock_s3 = MagicMock()
             mock_s3.put_object = MagicMock(return_value={})
             mock_client.return_value = mock_s3
 
-            with patch.object(storage_impl.media_utils, 'generate_path', return_value="test.jpg"):
-                with patch.object(storage_impl.media_utils, 'get_content_type', return_value="image/jpeg"):
+            with patch.object(
+                storage_impl.media_utils, "generate_path", return_value="test.jpg"
+            ):
+                with patch.object(
+                    storage_impl.media_utils,
+                    "get_content_type",
+                    return_value="image/jpeg",
+                ):
                     storage_impl.use_s3 = True
                     storage_impl.s3_client = mock_s3
                     storage_impl.bucket_name = "test_bucket"
@@ -134,7 +146,9 @@ class TestStorageImpl:
     async def test_upload_file_s3(self, storage_impl):
         storage_impl.use_s3 = True
         storage_impl.s3_client = MagicMock()
-        storage_impl._upload_to_s3 = AsyncMock(return_value=(True, "https://s3.com/test.jpg"))
+        storage_impl._upload_to_s3 = AsyncMock(
+            return_value=(True, "https://s3.com/test.jpg")
+        )
 
         result = await storage_impl.upload_file(b"test", "test.jpg")
 
@@ -201,7 +215,12 @@ class TestStorageImpl:
         assert url == "/media/test.jpg"
 
     def test_get_storage_impl(self):
-        with patch('src.modules.messages.types.media.core.storages.storage_impl.StorageImpl') as mock_impl:
-            from src.modules.messages.types.media.core.storages.storage_impl import get_storage_impl
+        with patch(
+            "src.modules.messages.types.media.core.storages.storage_impl.StorageImpl"
+        ) as mock_impl:
+            from src.modules.messages.types.media.core.storages.storage_impl import (
+                get_storage_impl,
+            )
+
             get_storage_impl()
             mock_impl.assert_called_once()

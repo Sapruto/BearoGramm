@@ -2,8 +2,13 @@ import pytest
 from datetime import datetime
 from uuid import uuid4
 
-from src.modules.chats.chat_types.personal.models.personal_access_type import PersonalAccessType, PERSONAL_TYPE
-from src.modules.chats.chat_types.personal.models.personal_access_threshold import PersonalAccessThreshold
+from src.modules.chats.chat_types.personal.models.personal_access_type import (
+    PersonalAccessType,
+    PERSONAL_TYPE,
+)
+from src.modules.chats.chat_types.personal.models.personal_access_threshold import (
+    PersonalAccessThreshold,
+)
 from src.modules.chats.chat_types.base.base_access_type import BaseAccessType
 
 
@@ -35,7 +40,7 @@ class TestPersonalAccessType:
             blocked_at=now,
             blocked_by=blocked_by,
             last_message_at=now,
-            unread_count=10
+            unread_count=10,
         )
 
         assert access.is_blocked is True
@@ -67,7 +72,7 @@ class TestPersonalAccessType:
             blocked_at=now,
             blocked_by=blocked_by,
             last_message_at=now,
-            unread_count=5
+            unread_count=5,
         )
 
         threshold = access.get_threshold()
@@ -89,7 +94,7 @@ class TestPersonalAccessType:
             blocked_at=now,
             blocked_by=blocked_by,
             last_message_at=now,
-            unread_count=3
+            unread_count=3,
         )
 
         raw_data = access.get_raw_data()

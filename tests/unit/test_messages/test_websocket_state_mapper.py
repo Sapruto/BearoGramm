@@ -1,7 +1,12 @@
 import pytest
 
-from src.modules.messages.core.repositories.mappers.websocket_state_mapper import WebSocketStateMapper
-from src.modules.messages.models.entities.websocket_state_entity import WebSocketStateEntity, WebSocketStateFields
+from src.modules.messages.core.repositories.mappers.websocket_state_mapper import (
+    WebSocketStateMapper,
+)
+from src.modules.messages.models.entities.websocket_state_entity import (
+    WebSocketStateEntity,
+    WebSocketStateFields,
+)
 
 
 @pytest.mark.unit
@@ -9,9 +14,7 @@ class TestWebSocketStateMapper:
     def test_to_redis(self):
         mapper = WebSocketStateMapper()
         entity = WebSocketStateEntity(
-            user_uuid="test_uuid",
-            online=True,
-            last_activity=True
+            user_uuid="test_uuid", online=True, last_activity=True
         )
 
         redis_data = mapper.to_redis(entity)
@@ -23,9 +26,7 @@ class TestWebSocketStateMapper:
     def test_to_redis_offline(self):
         mapper = WebSocketStateMapper()
         entity = WebSocketStateEntity(
-            user_uuid="test_uuid",
-            online=False,
-            last_activity=False
+            user_uuid="test_uuid", online=False, last_activity=False
         )
 
         redis_data = mapper.to_redis(entity)
@@ -38,7 +39,7 @@ class TestWebSocketStateMapper:
         redis_data = {
             "user_uuid": "test_uuid",
             "online": "true",
-            "last_activity": "true"
+            "last_activity": "true",
         }
 
         entity = mapper.to_entity(redis_data)
@@ -52,7 +53,7 @@ class TestWebSocketStateMapper:
         redis_data = {
             "user_uuid": "test_uuid",
             "online": "true",
-            "last_activity": "false"
+            "last_activity": "false",
         }
 
         entity = mapper.to_entity(redis_data)
@@ -62,9 +63,7 @@ class TestWebSocketStateMapper:
 
     def test_to_entity_missing_fields(self):
         mapper = WebSocketStateMapper()
-        redis_data = {
-            "user_uuid": "test_uuid"
-        }
+        redis_data = {"user_uuid": "test_uuid"}
 
         entity = mapper.to_entity(redis_data)
 
@@ -105,13 +104,17 @@ class TestWebSocketStateMapper:
         mapper = WebSocketStateMapper()
         assert mapper.to_redis_field(WebSocketStateFields.USER_UUID) == "user_uuid"
         assert mapper.to_redis_field(WebSocketStateFields.ONLINE) == "online"
-        assert mapper.to_redis_field(WebSocketStateFields.LAST_ACTIVE) == "last_activity"
+        assert (
+            mapper.to_redis_field(WebSocketStateFields.LAST_ACTIVE) == "last_activity"
+        )
 
     def test_to_entity_field(self):
         mapper = WebSocketStateMapper()
         assert mapper.to_entity_field("user_uuid") == WebSocketStateFields.USER_UUID
         assert mapper.to_entity_field("online") == WebSocketStateFields.ONLINE
-        assert mapper.to_entity_field("last_activity") == WebSocketStateFields.LAST_ACTIVE
+        assert (
+            mapper.to_entity_field("last_activity") == WebSocketStateFields.LAST_ACTIVE
+        )
 
     def test_key_prefix(self):
         mapper = WebSocketStateMapper()

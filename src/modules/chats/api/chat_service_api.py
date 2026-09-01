@@ -4,12 +4,13 @@ from sqlalchemy import select
 from ..core.repositories.chat_repository import ChatRepository, get_chat_repository
 from ..models.entities.chat_entity import ChatEntity, ChatFields
 from ..models.orm.chat_orm import ChatORM
-from ..models.message_action_type import MessageActionType
 
 from src.general.repository.sql.sql_query import SqlQuery
 from src.core.logger import get_logger
 
+
 logger = get_logger(__name__)
+
 
 class ChatServiceAPI:
     def __init__(self, chat_repository: Optional[ChatRepository] = None):
@@ -25,16 +26,18 @@ class ChatServiceAPI:
             logger.error(f"Error checking chat exists: {e}")
             return False
 
-    async def user_in_chat(self, chat_uuid: str, user_uuid: str, action_type: MessageActionType) -> bool:
+    async def user_in_chat(
+        self, chat_uuid: str, user_uuid: str
+    ) -> bool:
         try:
             chat = await self.get_chat(chat_uuid)
             if not chat:
                 return False
 
             for access in chat.accesses:
-                if hasattr(access, 'user_uuid') and access.user_uuid == user_uuid:
+                if hasattr(access, "user_uuid") and access.user_uuid == user_uuid:
                     return True
-                if hasattr(access, 'get_user_uuid'):
+                if hasattr(access, "get_user_uuid"):
                     if access.get_user_uuid() == user_uuid:
                         return True
 
@@ -87,9 +90,9 @@ class ChatServiceAPI:
 
             participants = []
             for access in chat.accesses:
-                if hasattr(access, 'user_uuid'):
+                if hasattr(access, "user_uuid"):
                     participants.append(access.user_uuid)
-                elif hasattr(access, 'get_user_uuid'):
+                elif hasattr(access, "get_user_uuid"):
                     participants.append(access.get_user_uuid())
 
             return participants
@@ -97,6 +100,7 @@ class ChatServiceAPI:
         except Exception as e:
             logger.error(f"Error getting chat participants: {e}")
             return []
+
 
 def get_chat_service_api() -> ChatServiceAPI:
     return ChatServiceAPI()

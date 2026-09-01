@@ -3,8 +3,15 @@ from unittest.mock import AsyncMock, MagicMock, patch
 from datetime import datetime, timedelta, timezone
 from uuid import uuid4
 
-from src.modules.sessions.models.entities.session_entity import SessionEntity, SessionFields
-from src.modules.sessions.models.dto.session_dto import SessionDTO, CreateSessionDTO, SessionResultDTO
+from src.modules.sessions.models.entities.session_entity import (
+    SessionEntity,
+    SessionFields,
+)
+from src.modules.sessions.models.dto.session_dto import (
+    SessionDTO,
+    CreateSessionDTO,
+    SessionResultDTO,
+)
 from src.modules.sessions.core.repositories.mappers.sessions_mapper import SessionMapper
 from src.modules.sessions.core.repositories.sessions_repository import SessionRepository
 from src.modules.sessions.core.services.session_service import SessionService
@@ -17,7 +24,7 @@ def sample_session_entity():
     return SessionEntity(
         user_uuid=str(uuid4()),
         token="test_token_123456",
-        expired_at=datetime.now(timezone.utc) + timedelta(hours=24)
+        expired_at=datetime.now(timezone.utc) + timedelta(hours=24),
     )
 
 
@@ -26,7 +33,7 @@ def sample_session_dto():
     return SessionDTO(
         token="test_token_123456",
         user_uuid=str(uuid4()),
-        expired_at=datetime.now(timezone.utc) + timedelta(hours=24)
+        expired_at=datetime.now(timezone.utc) + timedelta(hours=24),
     )
 
 
@@ -59,7 +66,9 @@ def session_repository(mock_redis_client):
 
 @pytest.fixture
 def token_service():
-    with patch('src.modules.sessions.core.services.token_service.Settings') as mock_settings:
+    with patch(
+        "src.modules.sessions.core.services.token_service.Settings"
+    ) as mock_settings:
         mock_settings.JWT.SECRET_KEY = "test_secret_key_123456789"
         mock_settings.JWT.EXPIRE_MINUTES = 1440
         mock_settings.JWT.ALGORITHM = "HS256"
@@ -72,7 +81,7 @@ def session_service(session_repository, token_service):
         session_repository=session_repository,
         token_service=token_service,
         session_ttl_hours=24,
-        max_sessions_per_user=5
+        max_sessions_per_user=5,
     )
     return service
 
@@ -86,6 +95,8 @@ def session_api_service(session_service):
 def mock_token_service():
     service = MagicMock(spec=TokenService)
     service.create_access_token = MagicMock(return_value="test_token_123456")
-    service.verify_token = MagicMock(return_value={"user_uuid": str(uuid4()), "session_id": str(uuid4())})
+    service.verify_token = MagicMock(
+        return_value={"user_uuid": str(uuid4()), "session_id": str(uuid4())}
+    )
     service.decode_token = MagicMock(return_value={"user_uuid": str(uuid4())})
     return service

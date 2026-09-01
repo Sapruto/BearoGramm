@@ -3,7 +3,7 @@ import pytest
 from src.general.repository.exception import (
     NotConvertableError,
     NotConvertableField,
-    NotConvertableValue
+    NotConvertableValue,
 )
 
 

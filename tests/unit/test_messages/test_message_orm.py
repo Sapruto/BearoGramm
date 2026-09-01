@@ -18,4 +18,4 @@ class TestMessageORM:
         assert MessageORM.__tablename__ == "messages"
 
     def test_message_orm_relationships(self, sample_message_orm):
-        assert hasattr(sample_message_orm, 'chat')
+        assert hasattr(sample_message_orm, "chat")

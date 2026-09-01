@@ -11,20 +11,26 @@ from ...models.entities.user_entity import UserEntity
 
 logger = get_logger(__name__)
 
-T = TypeVar('T')
+T = TypeVar("T")
+
 
 def get_request_from_args(*args, **kwargs) -> Optional[Request]:
     for arg in args:
         if isinstance(arg, Request):
             return arg
-    return kwargs.get('request')
+    return kwargs.get("request")
 
-async def get_current_user(request: Request, session_service: Optional[SessionAPIService] = None, user_service=None) -> UserEntity:
+
+async def get_current_user(
+    request: Request,
+    session_service: Optional[SessionAPIService] = None,
+    user_service=None,
+) -> UserEntity:
     token = request.headers.get("Authorization")
     if not token:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Authorization header missing"
+            detail="Authorization header missing",
         )
 
     if token.startswith("Bearer "):
@@ -36,7 +42,7 @@ async def get_current_user(request: Request, session_service: Optional[SessionAP
     if not session.is_valid:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid or expired session token"
+            detail="Invalid or expired session token",
         )
 
     user_svc = user_service or get_user_service_api()
@@ -44,11 +50,11 @@ async def get_current_user(request: Request, session_service: Optional[SessionAP
 
     if not user:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="User not found"
+            status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
         )
 
     return user
+
 
 def login_required(session_service: Optional[SessionAPIService] = None):
     def decorator(func: Callable[..., T]) -> Callable[..., T]:
@@ -58,14 +64,14 @@ def login_required(session_service: Optional[SessionAPIService] = None):
             if not request:
                 raise HTTPException(
                     status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                    detail="Request object not found"
+                    detail="Request object not found",
                 )
 
             token = request.headers.get("Authorization")
             if not token:
                 raise HTTPException(
                     status_code=status.HTTP_401_UNAUTHORIZED,
-                    detail="Authorization header missing"
+                    detail="Authorization header missing",
                 )
 
             if token.startswith("Bearer "):
@@ -77,7 +83,7 @@ def login_required(session_service: Optional[SessionAPIService] = None):
             if not session.is_valid:
                 raise HTTPException(
                     status_code=status.HTTP_401_UNAUTHORIZED,
-                    detail="Invalid or expired session token"
+                    detail="Invalid or expired session token",
                 )
 
             user_svc = get_user_service_api()
@@ -85,11 +91,10 @@ def login_required(session_service: Optional[SessionAPIService] = None):
 
             if not user:
                 raise HTTPException(
-                    status_code=status.HTTP_404_NOT_FOUND,
-                    detail="User not found"
+                    status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
                 )
 
-            kwargs['current_user'] = user
+            kwargs["current_user"] = user
             request.state.user = user
 
             return await func(*args, **kwargs)
@@ -98,7 +103,10 @@ def login_required(session_service: Optional[SessionAPIService] = None):
 
     return decorator
 
-def get_current_user_depends(session_service: Optional[SessionAPIService] = None, user_service = None):
+
+def get_current_user_depends(
+    session_service: Optional[SessionAPIService] = None, user_service=None
+):
     async def _get_current_user(request: Request) -> UserEntity:
         return await get_current_user(request, session_service, user_service)
 

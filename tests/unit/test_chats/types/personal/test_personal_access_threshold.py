@@ -2,7 +2,9 @@ import pytest
 from datetime import datetime
 from uuid import uuid4
 
-from src.modules.chats.chat_types.personal.models.personal_access_threshold import PersonalAccessThreshold
+from src.modules.chats.chat_types.personal.models.personal_access_threshold import (
+    PersonalAccessThreshold,
+)
 from src.modules.chats.chat_types.base.base_access_threshold import BaseAccessThreshold
 
 
@@ -13,10 +15,7 @@ class TestPersonalAccessThreshold:
         assert isinstance(threshold, BaseAccessThreshold)
 
     def test_personal_access_threshold_creation(self):
-        threshold = PersonalAccessThreshold(
-            is_blocked=False,
-            unread_count=0
-        )
+        threshold = PersonalAccessThreshold(is_blocked=False, unread_count=0)
         assert threshold.is_blocked is False
         assert threshold.unread_count == 0
         assert threshold.blocked_at is None
@@ -32,7 +31,7 @@ class TestPersonalAccessThreshold:
             blocked_at=now,
             blocked_by=blocked_by,
             last_message_at=now,
-            unread_count=5
+            unread_count=5,
         )
 
         assert threshold.is_blocked is True
@@ -88,6 +87,7 @@ class TestPersonalAccessThreshold:
 
     def test_block_method_updates_blocked_at(self):
         import time
+
         threshold = PersonalAccessThreshold()
         blocker = str(uuid4())
 

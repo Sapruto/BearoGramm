@@ -1,7 +1,9 @@
 from typing import Any, Optional
 
+
 class NotConvertableError(Exception):
     pass
+
 
 class NotConvertableField(NotConvertableError):
     def __init__(self, field: Any, target: str, reason: Optional[str] = None):
@@ -12,6 +14,7 @@ class NotConvertableField(NotConvertableError):
         if reason:
             message += f": {reason}"
         super().__init__(message)
+
 
 class NotConvertableValue(NotConvertableError):
     def __init__(self, value: Any, target: str, reason: Optional[str] = None):

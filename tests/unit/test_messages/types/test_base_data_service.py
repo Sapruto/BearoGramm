@@ -2,7 +2,10 @@ import pytest
 from unittest.mock import AsyncMock
 
 from src.modules.messages.types.base.base_data_service import BaseDataService
-from src.modules.messages.types.text.text_message_data import TextMessageData, TextMessageTypeName
+from src.modules.messages.types.text.text_message_data import (
+    TextMessageData,
+    TextMessageTypeName,
+)
 
 
 class MockDataService(BaseDataService[TextMessageData]):

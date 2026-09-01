@@ -2,6 +2,7 @@ from pathlib import Path
 from fastapi.templating import Jinja2Templates
 from fastapi import Request
 
+
 def get_templates() -> Jinja2Templates:
     current_file = Path(__file__).resolve()
 

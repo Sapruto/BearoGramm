@@ -2,7 +2,9 @@ import pytest
 from datetime import datetime
 from uuid import uuid4
 
-from src.modules.chats.chat_types.personal.models.personal_contact import PersonalContact
+from src.modules.chats.chat_types.personal.models.personal_contact import (
+    PersonalContact,
+)
 
 
 @pytest.mark.unit
@@ -11,10 +13,7 @@ class TestPersonalContact:
         chat_uuid = str(uuid4())
         user_uuid = str(uuid4())
 
-        contact = PersonalContact(
-            chat_uuid=chat_uuid,
-            user_uuid=user_uuid
-        )
+        contact = PersonalContact(chat_uuid=chat_uuid, user_uuid=user_uuid)
 
         assert contact.chat_uuid == chat_uuid
         assert contact.user_uuid == user_uuid
@@ -36,7 +35,7 @@ class TestPersonalContact:
             last_message_at=now,
             unread_count=5,
             created_at=now,
-            updated_at=now
+            updated_at=now,
         )
 
         assert contact.chat_uuid == chat_uuid
@@ -57,25 +56,18 @@ class TestPersonalContact:
 
     def test_personal_contact_with_blocked_true(self):
         contact = PersonalContact(
-            chat_uuid=str(uuid4()),
-            user_uuid=str(uuid4()),
-            is_blocked=True
+            chat_uuid=str(uuid4()), user_uuid=str(uuid4()), is_blocked=True
         )
         assert contact.is_blocked is True
 
     def test_personal_contact_with_unread_count(self):
         contact = PersonalContact(
-            chat_uuid=str(uuid4()),
-            user_uuid=str(uuid4()),
-            unread_count=99
+            chat_uuid=str(uuid4()), user_uuid=str(uuid4()), unread_count=99
         )
         assert contact.unread_count == 99
 
     def test_personal_contact_fields_types(self):
-        contact = PersonalContact(
-            chat_uuid=str(uuid4()),
-            user_uuid=str(uuid4())
-        )
+        contact = PersonalContact(chat_uuid=str(uuid4()), user_uuid=str(uuid4()))
         assert isinstance(contact.chat_uuid, str)
         assert isinstance(contact.user_uuid, str)
         assert isinstance(contact.is_blocked, bool)

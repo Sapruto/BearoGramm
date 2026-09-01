@@ -11,6 +11,7 @@ if str(project_root) not in sys.path:
 if str(src_path) not in sys.path:
     sys.path.insert(0, str(src_path))
 
+
 @pytest.fixture
 def mock_session():
     session = AsyncMock()
@@ -21,6 +22,7 @@ def mock_session():
     session.add = AsyncMock()
     session.refresh = AsyncMock()
     return session
+
 
 @pytest.fixture
 def mock_redis():

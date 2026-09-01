@@ -3,6 +3,7 @@ from typing import Optional
 
 from ...base.base_access_threshold import BaseAccessThreshold
 
+
 class PersonalAccessThreshold(BaseAccessThreshold):
     is_blocked: bool = False
     blocked_at: Optional[datetime] = None

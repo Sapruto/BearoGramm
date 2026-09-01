@@ -4,13 +4,17 @@ from uuid import uuid4
 
 from src.modules.chats.api.chat_service_api import ChatServiceAPI, get_chat_service_api
 from src.modules.chats.models.message_action_type import MessageActionType
-from src.modules.chats.chat_types.personal.models.personal_access_type import PersonalAccessType
+from src.modules.chats.chat_types.personal.models.personal_access_type import (
+    PersonalAccessType,
+)
 
 
 @pytest.mark.unit
 class TestChatServiceAPI:
     @pytest.mark.asyncio
-    async def test_chat_exists_true(self, chat_service_api, chat_repository, sample_chat_entity):
+    async def test_chat_exists_true(
+        self, chat_service_api, chat_repository, sample_chat_entity
+    ):
         chat_repository.get = AsyncMock(return_value=sample_chat_entity)
 
         result = await chat_service_api.chat_exists(sample_chat_entity.uuid)
@@ -27,25 +31,27 @@ class TestChatServiceAPI:
         assert result is False
 
     @pytest.mark.asyncio
-    async def test_user_in_chat_true(self, chat_service_api, chat_repository, sample_chat_entity):
+    async def test_user_in_chat_true(
+        self, chat_service_api, chat_repository, sample_chat_entity
+    ):
         chat_repository.get = AsyncMock(return_value=sample_chat_entity)
 
         result = await chat_service_api.user_in_chat(
             sample_chat_entity.uuid,
             sample_chat_entity.accesses[0].user_uuid,
-            MessageActionType.GET
+            MessageActionType.GET,
         )
 
         assert result is True
 
     @pytest.mark.asyncio
-    async def test_user_in_chat_false(self, chat_service_api, chat_repository, sample_chat_entity):
+    async def test_user_in_chat_false(
+        self, chat_service_api, chat_repository, sample_chat_entity
+    ):
         chat_repository.get = AsyncMock(return_value=sample_chat_entity)
 
         result = await chat_service_api.user_in_chat(
-            sample_chat_entity.uuid,
-            str(uuid4()),
-            MessageActionType.GET
+            sample_chat_entity.uuid, str(uuid4()), MessageActionType.GET
         )
 
         assert result is False
@@ -55,15 +61,15 @@ class TestChatServiceAPI:
         chat_repository.get = AsyncMock(return_value=None)
 
         result = await chat_service_api.user_in_chat(
-            str(uuid4()),
-            str(uuid4()),
-            MessageActionType.GET
+            str(uuid4()), str(uuid4()), MessageActionType.GET
         )
 
         assert result is False
 
     @pytest.mark.asyncio
-    async def test_get_chat(self, chat_service_api, chat_repository, sample_chat_entity):
+    async def test_get_chat(
+        self, chat_service_api, chat_repository, sample_chat_entity
+    ):
         chat_repository.get = AsyncMock(return_value=sample_chat_entity)
 
         result = await chat_service_api.get_chat(sample_chat_entity.uuid)
@@ -71,7 +77,9 @@ class TestChatServiceAPI:
         assert result == sample_chat_entity
 
     @pytest.mark.asyncio
-    async def test_get_chat_by_uuid(self, chat_service_api, chat_repository, sample_chat_entity):
+    async def test_get_chat_by_uuid(
+        self, chat_service_api, chat_repository, sample_chat_entity
+    ):
         chat_repository.get = AsyncMock(return_value=sample_chat_entity)
 
         result = await chat_service_api.get_chat_by_uuid(sample_chat_entity.uuid)
@@ -95,7 +103,9 @@ class TestChatServiceAPI:
         assert result is False
 
     @pytest.mark.asyncio
-    async def test_get_chat_participants(self, chat_service_api, chat_repository, sample_chat_entity):
+    async def test_get_chat_participants(
+        self, chat_service_api, chat_repository, sample_chat_entity
+    ):
         chat_repository.get = AsyncMock(return_value=sample_chat_entity)
 
         result = await chat_service_api.get_chat_participants(sample_chat_entity.uuid)
@@ -104,7 +114,9 @@ class TestChatServiceAPI:
         assert sample_chat_entity.accesses[0].user_uuid in result
 
     @pytest.mark.asyncio
-    async def test_get_chat_participants_chat_not_found(self, chat_service_api, chat_repository):
+    async def test_get_chat_participants_chat_not_found(
+        self, chat_service_api, chat_repository
+    ):
         chat_repository.get = AsyncMock(return_value=None)
 
         result = await chat_service_api.get_chat_participants(str(uuid4()))
@@ -112,7 +124,9 @@ class TestChatServiceAPI:
         assert result == []
 
     @pytest.mark.asyncio
-    async def test_get_chat_participants_with_get_user_uuid(self, chat_service_api, chat_repository):
+    async def test_get_chat_participants_with_get_user_uuid(
+        self, chat_service_api, chat_repository
+    ):
         mock_access = MagicMock()
         mock_access.get_user_uuid = MagicMock(return_value="test_uuid")
         mock_access.user_uuid = "test_uuid"

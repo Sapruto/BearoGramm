@@ -14,6 +14,7 @@ from ....models.entities.user_entity import UserFields, UserEntity
 
 logger = get_logger(__name__)
 
+
 class UserMapper(BaseMapper[UserEntity, UserORM, UserFields]):
     field_mapping = {
         UserFields.UUID: UserORM.uuid,
@@ -38,19 +39,19 @@ class UserMapper(BaseMapper[UserEntity, UserORM, UserFields]):
         self.hash_salt = Settings.PHONE.HASH_SALT
 
     def _normalize_phone(self, phone: str) -> str:
-        cleaned = ''.join(filter(str.isdigit, phone))
+        cleaned = "".join(filter(str.isdigit, phone))
 
-        if cleaned.startswith('8'):
-            cleaned = '7' + cleaned[1:]
-        if not cleaned.startswith('7'):
-            cleaned = '7' + cleaned
+        if cleaned.startswith("8"):
+            cleaned = "7" + cleaned[1:]
+        if not cleaned.startswith("7"):
+            cleaned = "7" + cleaned
 
         return f"+{cleaned}"
 
     def _hash_phone(self, phone: str) -> str:
         normalized = self._normalize_phone(phone)
         return hashlib.sha256(
-            f"{self.hash_salt}:{normalized}".encode('utf-8')
+            f"{self.hash_salt}:{normalized}".encode("utf-8")
         ).hexdigest()
 
     def _mask_phone(self, phone: str) -> str:
@@ -92,7 +93,7 @@ class UserMapper(BaseMapper[UserEntity, UserORM, UserFields]):
 
         if orm.phone_number_encrypted:
             try:
-                if hasattr(self, '_loop'):
+                if hasattr(self, "_loop"):
                     phone_number = self._loop.run_until_complete(
                         self.encrypter.decrypt_field(orm.phone_number_encrypted)
                     )
@@ -111,19 +112,25 @@ class UserMapper(BaseMapper[UserEntity, UserORM, UserFields]):
             updated_at=orm.updated_at,
         )
 
-    def to_orm_value(self, field: UserFields, value: Any) -> Tuple[InstrumentedAttribute, Any]:
+    def to_orm_value(
+        self, field: UserFields, value: Any
+    ) -> Tuple[InstrumentedAttribute, Any]:
         orm_field = self.to_orm_field(field)
 
         if field == UserFields.PHONE_NUMBER:
             if not isinstance(value, str):
-                raise NotConvertableValue(value, "phone_number", "Phone number must be a string")
+                raise NotConvertableValue(
+                    value, "phone_number", "Phone number must be a string"
+                )
 
             phone_hash = self._hash_phone(value)
             return UserORM.phone_number_hash, phone_hash
 
         return orm_field, value
 
-    def to_entity_value(self, field: InstrumentedAttribute, value: Any) -> Tuple[UserFields, Any]:
+    def to_entity_value(
+        self, field: InstrumentedAttribute, value: Any
+    ) -> Tuple[UserFields, Any]:
         entity_field = self.to_entity_field(field)
 
         if entity_field == UserFields.PHONE_NUMBER:
@@ -154,7 +161,9 @@ class UserMapper(BaseMapper[UserEntity, UserORM, UserFields]):
             if self.get_field_name(orm_attr) == field_name:
                 return entity_enum
 
-        raise ValueError(f"No reverse mapping found for field: {field} (name: {field_name})")
+        raise ValueError(
+            f"No reverse mapping found for field: {field} (name: {field_name})"
+        )
 
     def get_field_name(self, field: InstrumentedAttribute) -> str:
-        return str(field).split('.')[-1]
+        return str(field).split(".")[-1]

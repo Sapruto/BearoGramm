@@ -8,24 +8,27 @@ from src.core.logger import get_logger
 
 logger = get_logger(__name__)
 
+
 class ProcessDataResponse(BaseModel):
     success: bool = Field(...)
     processed_data: List[BaseMessageData] = Field(default_factory=list)
     error_message: Optional[str] = Field(default=None)
 
+
 class DataProcessor:
     def __init__(self, message_registry: Optional[MessageRegistry] = None):
         self.message_registry = message_registry or get_message_registry()
 
-    async def save_data(self, typing_to_data: List[Tuple[str, Any]]) -> ProcessDataResponse:
+    async def save_data(
+        self, typing_to_data: List[Tuple[str, Any]]
+    ) -> ProcessDataResponse:
         processed = []
 
         for data_type, raw_data in typing_to_data:
             data_service = self.message_registry.get_data_service(data_type)
             if not data_service:
                 return ProcessDataResponse(
-                    success=False,
-                    error_message=f"Unknown data type: {data_type}"
+                    success=False, error_message=f"Unknown data type: {data_type}"
                 )
 
             try:
@@ -34,14 +37,10 @@ class DataProcessor:
 
             except Exception as e:
                 return ProcessDataResponse(
-                    success=False,
-                    error_message=f"Error creating {data_type}: {str(e)}"
+                    success=False, error_message=f"Error creating {data_type}: {str(e)}"
                 )
 
-        return ProcessDataResponse(
-            success=True,
-            processed_data=processed
-        )
+        return ProcessDataResponse(success=True, processed_data=processed)
 
     async def delete_data(self, processed_data: List[BaseMessageData]) -> None:
         for data in processed_data:
@@ -57,7 +56,11 @@ class DataProcessor:
             except Exception as e:
                 logger.error(f"Error in unprocess_data: {e}")
 
-    async def update_data(self, old_message_data: List[BaseMessageData], new_typing_to_data: List[Tuple[str, Any]]) -> ProcessDataResponse:
+    async def update_data(
+        self,
+        old_message_data: List[BaseMessageData],
+        new_typing_to_data: List[Tuple[str, Any]],
+    ) -> ProcessDataResponse:
         old_data_copy = [data.model_copy(deep=True) for data in old_message_data]
 
         old_indices_by_type = {}
@@ -103,10 +106,7 @@ class DataProcessor:
                     break
 
             if not rollback_needed:
-                return ProcessDataResponse(
-                    success=True,
-                    processed_data=result_data
-                )
+                return ProcessDataResponse(success=True, processed_data=result_data)
             else:
                 raise ValueError(error_message)
 
@@ -115,14 +115,14 @@ class DataProcessor:
 
             for new_item in processed_new_items:
                 try:
-                    data_service = self.message_registry.get_data_service(new_item.data_type)
+                    data_service = self.message_registry.get_data_service(
+                        new_item.data_type
+                    )
                     if data_service:
                         await data_service.delete_data(new_item)
                 except Exception as rollback_error:
                     logger.error(f"Rollback error: {rollback_error}")
 
             return ProcessDataResponse(
-                success=False,
-                processed_data=old_data_copy,
-                error_message=str(e)
+                success=False, processed_data=old_data_copy, error_message=str(e)
             )

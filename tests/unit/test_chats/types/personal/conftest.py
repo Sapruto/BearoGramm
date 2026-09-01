@@ -6,11 +6,21 @@ from uuid import uuid4
 from src.modules.chats.models.entities.chat_entity import ChatEntity
 from src.modules.chats.models.orm.chat_orm import ChatORM
 from src.modules.chats.core.repositories.mappers.chat_mapper import ChatMapper
-from src.modules.chats.chat_types.personal.models.personal_access_type import PersonalAccessType
-from src.modules.chats.chat_types.personal.models.personal_access_threshold import PersonalAccessThreshold
-from src.modules.chats.chat_types.personal.models.personal_contact import PersonalContact
-from src.modules.chats.chat_types.personal.core.personal_repository import PersonalChatRepository
-from src.modules.chats.chat_types.personal.core.personal_access_service import PersonalAccessService
+from src.modules.chats.chat_types.personal.models.personal_access_type import (
+    PersonalAccessType,
+)
+from src.modules.chats.chat_types.personal.models.personal_access_threshold import (
+    PersonalAccessThreshold,
+)
+from src.modules.chats.chat_types.personal.models.personal_contact import (
+    PersonalContact,
+)
+from src.modules.chats.chat_types.personal.core.personal_repository import (
+    PersonalChatRepository,
+)
+from src.modules.chats.chat_types.personal.core.personal_access_service import (
+    PersonalAccessService,
+)
 from src.general.db.base_manager import BaseManager
 
 
@@ -40,16 +50,13 @@ def sample_personal_access_blocked(sample_user_uuid, sample_companion_uuid):
         user_uuid=sample_user_uuid,
         is_blocked=True,
         blocked_at=datetime.now(timezone.utc),
-        blocked_by=sample_companion_uuid
+        blocked_by=sample_companion_uuid,
     )
 
 
 @pytest.fixture
 def sample_personal_threshold():
-    return PersonalAccessThreshold(
-        is_blocked=False,
-        unread_count=0
-    )
+    return PersonalAccessThreshold(is_blocked=False, unread_count=0)
 
 
 @pytest.fixture
@@ -58,7 +65,7 @@ def sample_personal_contact(sample_chat_uuid, sample_companion_uuid):
         chat_uuid=sample_chat_uuid,
         user_uuid=sample_companion_uuid,
         is_blocked=False,
-        unread_count=0
+        unread_count=0,
     )
 
 
@@ -68,10 +75,10 @@ def sample_chat_entity(sample_chat_uuid, sample_user_uuid, sample_companion_uuid
         uuid=sample_chat_uuid,
         accesses=[
             PersonalAccessType(user_uuid=sample_user_uuid),
-            PersonalAccessType(user_uuid=sample_companion_uuid)
+            PersonalAccessType(user_uuid=sample_companion_uuid),
         ],
         created_at=datetime.now(timezone.utc),
-        updated_at=datetime.now(timezone.utc)
+        updated_at=datetime.now(timezone.utc),
     )
 
 

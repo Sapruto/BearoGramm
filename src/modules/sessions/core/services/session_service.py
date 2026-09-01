@@ -12,8 +12,15 @@ from ...models.dto.session_dto import SessionDTO, CreateSessionDTO, SessionResul
 
 logger = get_logger(__name__)
 
+
 class SessionService:
-    def __init__(self, session_repository: Optional[SessionRepository] = None, token_service: Optional[TokenService] = None, session_ttl_hours: int = 24, max_sessions_per_user: Optional[int] = None):
+    def __init__(
+        self,
+        session_repository: Optional[SessionRepository] = None,
+        token_service: Optional[TokenService] = None,
+        session_ttl_hours: int = 24,
+        max_sessions_per_user: Optional[int] = None,
+    ):
         self._session_repo = session_repository or get_session_repository()
         self._token_service = token_service or get_token_service()
         self._ttl_hours = session_ttl_hours
@@ -22,12 +29,16 @@ class SessionService:
     async def create_session(self, dto: CreateSessionDTO) -> SessionResultDTO:
         try:
             if self._max_sessions:
-                query = RedisQuery[SessionFields]().add_filter(SessionFields.USER_UUID, dto.user_uuid)
+                query = RedisQuery[SessionFields]().add_filter(
+                    SessionFields.USER_UUID, dto.user_uuid
+                )
                 sessions = await self._session_repo.get_all(query)
 
                 if len(sessions) >= self._max_sessions:
                     sessions.sort(key=lambda s: s.expired_at or datetime.min)
-                    delete_query = RedisQuery[SessionFields]().add_filter(SessionFields.TOKEN, sessions[0].token)
+                    delete_query = RedisQuery[SessionFields]().add_filter(
+                        SessionFields.TOKEN, sessions[0].token
+                    )
                     await self._session_repo.delete(delete_query)
 
             session_id = str(uuid.uuid4())
@@ -36,19 +47,16 @@ class SessionService:
             token_data = {
                 "user_uuid": dto.user_uuid,
                 "session_id": session_id,
-                "created_at": now.isoformat()
+                "created_at": now.isoformat(),
             }
 
             token = self._token_service.create_access_token(
-                token_data,
-                expires_delta=timedelta(hours=self._ttl_hours)
+                token_data, expires_delta=timedelta(hours=self._ttl_hours)
             )
 
             expires_at = now + timedelta(hours=self._ttl_hours)
             session = SessionEntity(
-                user_uuid=dto.user_uuid,
-                token=token,
-                expired_at=expires_at
+                user_uuid=dto.user_uuid, token=token, expired_at=expires_at
             )
 
             await self._session_repo.save(session)
@@ -59,7 +67,7 @@ class SessionService:
                 token=token,
                 user_uuid=dto.user_uuid,
                 expires_at=expires_at,
-                expires_in_seconds=self._ttl_hours * 3600
+                expires_in_seconds=self._ttl_hours * 3600,
             )
 
         except Exception as e:
@@ -82,7 +90,9 @@ class SessionService:
 
             now = datetime.now(timezone.utc)
             if session.expired_at and session.expired_at < now:
-                delete_query = RedisQuery[SessionFields]().add_filter(SessionFields.TOKEN, token)
+                delete_query = RedisQuery[SessionFields]().add_filter(
+                    SessionFields.TOKEN, token
+                )
                 await self._session_repo.delete(delete_query)
                 logger.warning(f"Session expired for token")
                 return None
@@ -90,7 +100,7 @@ class SessionService:
             return SessionDTO(
                 token=session.token,
                 user_uuid=session.user_uuid,
-                expired_at=session.expired_at
+                expired_at=session.expired_at,
             )
 
         except Exception as e:
@@ -107,7 +117,9 @@ class SessionService:
             create_dto = CreateSessionDTO(user_uuid=old_session.user_uuid)
             new_session = await self.create_session(create_dto)
 
-            delete_query = RedisQuery[SessionFields]().add_filter(SessionFields.TOKEN, token)
+            delete_query = RedisQuery[SessionFields]().add_filter(
+                SessionFields.TOKEN, token
+            )
             await self._session_repo.delete(delete_query)
 
             logger.info(f"Session refreshed for user {old_session.user_uuid}")
@@ -133,12 +145,16 @@ class SessionService:
 
     async def delete_all_user_sessions(self, user_uuid: str) -> int:
         try:
-            query = RedisQuery[SessionFields]().add_filter(SessionFields.USER_UUID, user_uuid)
+            query = RedisQuery[SessionFields]().add_filter(
+                SessionFields.USER_UUID, user_uuid
+            )
             sessions = await self._session_repo.get_all(query)
 
             deleted = 0
             for session in sessions:
-                delete_query = RedisQuery[SessionFields]().add_filter(SessionFields.TOKEN, session.token)
+                delete_query = RedisQuery[SessionFields]().add_filter(
+                    SessionFields.TOKEN, session.token
+                )
                 if await self._session_repo.delete(delete_query) > 0:
                     deleted += 1
 
@@ -151,14 +167,14 @@ class SessionService:
 
     async def get_user_sessions(self, user_uuid: str) -> List[SessionDTO]:
         try:
-            query = RedisQuery[SessionFields]().add_filter(SessionFields.USER_UUID, user_uuid)
+            query = RedisQuery[SessionFields]().add_filter(
+                SessionFields.USER_UUID, user_uuid
+            )
             sessions = await self._session_repo.get_all(query)
 
             return [
                 SessionDTO(
-                    token=s.token,
-                    user_uuid=s.user_uuid,
-                    expired_at=s.expired_at
+                    token=s.token, user_uuid=s.user_uuid, expired_at=s.expired_at
                 )
                 for s in sessions
             ]
@@ -177,7 +193,7 @@ class SessionService:
             return SessionDTO(
                 token=session.token,
                 user_uuid=session.user_uuid,
-                expired_at=session.expired_at
+                expired_at=session.expired_at,
             )
         except Exception as e:
             logger.error(f"Error getting session by token: {e}")
@@ -192,7 +208,9 @@ class SessionService:
             deleted = 0
             for session in all_sessions:
                 if session.expired_at and session.expired_at < now:
-                    delete_query = RedisQuery[SessionFields]().add_filter(SessionFields.TOKEN, session.token)
+                    delete_query = RedisQuery[SessionFields]().add_filter(
+                        SessionFields.TOKEN, session.token
+                    )
                     if await self._session_repo.delete(delete_query) > 0:
                         deleted += 1
 
@@ -216,7 +234,9 @@ class SessionService:
 
     async def get_active_sessions_count(self, user_uuid: str) -> int:
         try:
-            query = RedisQuery[SessionFields]().add_filter(SessionFields.USER_UUID, user_uuid)
+            query = RedisQuery[SessionFields]().add_filter(
+                SessionFields.USER_UUID, user_uuid
+            )
             sessions = await self._session_repo.get_all(query)
 
             now = datetime.now(timezone.utc)
@@ -225,6 +245,7 @@ class SessionService:
         except Exception as e:
             logger.error(f"Error counting active sessions: {e}")
             return 0
+
 
 def get_session_service() -> SessionService:
     return SessionService()

@@ -5,8 +5,11 @@ from ..base.base_data_service import BaseDataService
 
 from src.general.security.encyptions.encrypter import get_encrypter, Encrypter
 
+
 class TextMessageService(BaseDataService[TextMessageData]):
-    def __init__(self, encrypter: Optional[Encrypter] = None, max_chars: Optional[int] = None):
+    def __init__(
+        self, encrypter: Optional[Encrypter] = None, max_chars: Optional[int] = None
+    ):
         self.encrypter = encrypter or get_encrypter()
         self.max_chars = max_chars or 10000
 
@@ -34,6 +37,7 @@ class TextMessageService(BaseDataService[TextMessageData]):
     async def prepare_to_use(self, data: TextMessageData) -> TextMessageData:
         data.text = await self.encrypter.decrypt(data.text)
         return data
+
 
 def get_text_message_service() -> TextMessageService:
     return TextMessageService()

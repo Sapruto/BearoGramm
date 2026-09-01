@@ -19,7 +19,7 @@ from src.modules.sessions.api.models import (
     CreateSessionRequest,
     CreateSessionResponse,
     ValidateSessionResponse,
-    DeleteSessionResponse
+    DeleteSessionResponse,
 )
 from src.general.security.encyptions.encrypter import Encrypter
 
@@ -30,7 +30,7 @@ def sample_user_entity():
         uuid=str(uuid4()),
         phone_number="+79001234567",
         created_at=datetime.now(),
-        updated_at=datetime.now()
+        updated_at=datetime.now(),
     )
 
 
@@ -42,7 +42,7 @@ def sample_user_orm():
         phone_number_hash="hash_of_phone",
         phone_number_mask="+79***4567",
         created_at=datetime.now(),
-        updated_at=datetime.now()
+        updated_at=datetime.now(),
     )
 
 
@@ -56,7 +56,7 @@ def mock_encrypter():
 
 @pytest.fixture
 def user_mapper(mock_encrypter):
-    with patch.dict('os.environ', {'PHONE_HASH_SALT': 'test_salt'}):
+    with patch.dict("os.environ", {"PHONE_HASH_SALT": "test_salt"}):
         return UserMapper(encrypter=mock_encrypter)
 
 
@@ -78,14 +78,14 @@ def mock_session_service():
         token="test_token_123456",
         user_uuid=str(uuid4()),
         expires_at=datetime.now() + timedelta(minutes=5),
-        expires_in_seconds=300
+        expires_in_seconds=300,
     )
     service.create_session = AsyncMock(return_value=create_response)
 
     validate_response = ValidateSessionResponse(
         is_valid=True,
         user_uuid=str(uuid4()),
-        expired_at=datetime.now() + timedelta(minutes=5)
+        expired_at=datetime.now() + timedelta(minutes=5),
     )
     service.validate_session = AsyncMock(return_value=validate_response)
 
@@ -137,8 +137,7 @@ def user_repository():
 @pytest.fixture
 def verify_service(mock_verify_repo, mock_sms_client):
     return VerifyService(
-        verification_code_repository=mock_verify_repo,
-        sms_api=mock_sms_client
+        verification_code_repository=mock_verify_repo, sms_api=mock_sms_client
     )
 
 
@@ -147,7 +146,7 @@ def user_service(user_repository, verify_service, mock_session_service):
     return UserService(
         user_repository=user_repository,
         verify_service=verify_service,
-        session_service=mock_session_service
+        session_service=mock_session_service,
     )
 
 

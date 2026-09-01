@@ -5,16 +5,30 @@ from src.core.logger import get_logger
 from src.general.repository.redis.redis_query import RedisQuery
 
 from ..client.client_sms_api import ClientSMS, get_client_sms_api
-from ..repositories.verification_code_repository import VerificationCodeRepository, get_verification_code_repository, VerificationCodeEntity, VerificationCodeFields
+from ..repositories.verification_code_repository import (
+    VerificationCodeRepository,
+    get_verification_code_repository,
+    VerificationCodeEntity,
+    VerificationCodeFields,
+)
 
 logger = get_logger(__name__)
 
+
 class VerifyService:
-    def __init__(self, verification_code_repository: Optional[VerificationCodeRepository] = None, sms_api: Optional[ClientSMS] = None,):
-        self.verification_code_repository = verification_code_repository or get_verification_code_repository()
+    def __init__(
+        self,
+        verification_code_repository: Optional[VerificationCodeRepository] = None,
+        sms_api: Optional[ClientSMS] = None,
+    ):
+        self.verification_code_repository = (
+            verification_code_repository or get_verification_code_repository()
+        )
         self.sms_api = sms_api or get_client_sms_api()
 
-    async def send_phone_verify_code(self, user_uuid: str, phone_number: str) -> Optional[str]:
+    async def send_phone_verify_code(
+        self, user_uuid: str, phone_number: str
+    ) -> Optional[str]:
         try:
             query = RedisQuery[VerificationCodeFields]().add_filter(
                 VerificationCodeFields.PHONE, phone_number
@@ -26,7 +40,8 @@ class VerifyService:
                 user_uuid=user_uuid,
                 phone=phone_number,
                 code=code,
-                expired_at=datetime.now() + timedelta(seconds=self.verification_code_repository.ttl),
+                expired_at=datetime.now()
+                + timedelta(seconds=self.verification_code_repository.ttl),
             )
             await self.verification_code_repository.save(entity)
 
@@ -34,7 +49,7 @@ class VerifyService:
             sent = await self.sms_api.send_verify_code(
                 phone_number=phone_number,
                 code=code,
-                time_of_live_per_minuts=ttl_minutes
+                time_of_live_per_minuts=ttl_minutes,
             )
 
             if not sent:
@@ -62,7 +77,8 @@ class VerifyService:
                 user_uuid=user_uuid,
                 phone=phone_number,
                 code=code,
-                expired_at=datetime.now() + timedelta(seconds=self.verification_code_repository.ttl),
+                expired_at=datetime.now()
+                + timedelta(seconds=self.verification_code_repository.ttl),
             )
             await self.verification_code_repository.save(entity)
 
@@ -70,7 +86,7 @@ class VerifyService:
             sent = await self.sms_api.send_login_code(
                 phone_number=phone_number,
                 code=code,
-                time_of_live_per_minuts=ttl_minutes
+                time_of_live_per_minuts=ttl_minutes,
             )
 
             if not sent:
@@ -132,6 +148,7 @@ class VerifyService:
         except Exception as e:
             logger.error(f"Error deleting code: {e}")
             return False
+
 
 def get_verify_service() -> VerifyService:
     return VerifyService()

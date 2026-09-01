@@ -13,7 +13,10 @@ from ...models.entities.call_state_entity import CallStateFields, CallStateEntit
 
 logger = get_logger(__name__)
 
-class CallsStateRepository(BaseRedisRepository[CallsStateMapper, CallStateFields, CallStateEntity]):
+
+class CallsStateRepository(
+    BaseRedisRepository[CallsStateMapper, CallStateFields, CallStateEntity]
+):
     def __init__(self, redis_client: Optional[Redis] = None):
         mapper = CallsStateMapper()
         super().__init__(redis_client or get_redis(), mapper, ttl=86400)
@@ -33,7 +36,9 @@ class CallsStateRepository(BaseRedisRepository[CallsStateMapper, CallStateFields
             if storage_type == "hash":
                 await self.redis.hset(key, mapping=data)
             else:
-                await self.redis.set(key, json.dumps(data, default=self._json_serializer))
+                await self.redis.set(
+                    key, json.dumps(data, default=self._json_serializer)
+                )
 
             await self._set_ttl(key, entity.ttl)
 
@@ -54,6 +59,7 @@ class CallsStateRepository(BaseRedisRepository[CallsStateMapper, CallStateFields
 
     async def pubsub(self) -> PubSub:
         return self.redis.pubsub()
+
 
 def get_calls_state_repository() -> CallsStateRepository:
     return CallsStateRepository()

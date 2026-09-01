@@ -3,7 +3,12 @@ from datetime import datetime, timezone
 from uuid import uuid4
 from pydantic import ValidationError
 
-from src.modules.calls.models.entities.call_state_entity import CallStateEntity, CallStatus, CallType, CallStateFields
+from src.modules.calls.models.entities.call_state_entity import (
+    CallStateEntity,
+    CallStatus,
+    CallType,
+    CallStateFields,
+)
 
 
 @pytest.mark.unit
@@ -18,7 +23,7 @@ class TestCallStateEntity:
             call_type=CallType.P2P,
             sdp_offer="test_offer",
             created_at=now,
-            updated_at=now
+            updated_at=now,
         )
 
         assert entity.user_uuid == sample_user_uuid
@@ -66,7 +71,7 @@ class TestCallStateEntity:
             user_uuid=sample_user_uuid,
             room_id=sample_room_id,
             call_type=CallType.ROOM,
-            status=CallStatus.ACTIVE
+            status=CallStatus.ACTIVE,
         )
         assert entity.ttl == 7200
 
@@ -74,7 +79,7 @@ class TestCallStateEntity:
         entity = CallStateEntity(
             user_uuid=sample_user_uuid,
             call_type=CallType.ROOM,
-            status=CallStatus.ACTIVE
+            status=CallStatus.ACTIVE,
         )
         assert entity.ttl == 7200
 

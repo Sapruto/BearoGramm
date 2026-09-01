@@ -8,7 +8,7 @@ from src.general.db.base_manager import (
     BaseManager,
     OnConflictAction,
     ObjectAlreadyExistsError,
-    InvalidTransactionStateError
+    InvalidTransactionStateError,
 )
 
 Base = declarative_base()
@@ -27,7 +27,7 @@ class TestManager(BaseManager[TestModel]):
 
     @property
     def identifier_field(self):
-        return TestModel.id  # Возвращаем InstrumentedAttribute
+        return TestModel.id
 
 
 @pytest.fixture
@@ -84,7 +84,7 @@ class TestBaseManager:
         mock_result = MagicMock()
         mock_result.scalars.return_value.all.return_value = [
             TestModel(id="1", name="test1"),
-            TestModel(id="2", name="test2")
+            TestModel(id="2", name="test2"),
         ]
         mock_session.execute.return_value = mock_result
 
@@ -132,7 +132,9 @@ class TestBaseManager:
         mock_session.execute.return_value = mock_result
 
         with pytest.raises(ObjectAlreadyExistsError):
-            await manager.create(orm, on_conflict=OnConflictAction.NOTHING, session=mock_session)
+            await manager.create(
+                orm, on_conflict=OnConflictAction.NOTHING, session=mock_session
+            )
 
     @pytest.mark.asyncio
     async def test_create_without_orm(self, manager):
@@ -150,7 +152,7 @@ class TestBaseManager:
             field_identifier=TestModel.id,
             session=mock_session,
             commit=True,
-            name="updated"
+            name="updated",
         )
 
         assert result is not None
@@ -164,10 +166,7 @@ class TestBaseManager:
         mock_session.execute.return_value = mock_result
 
         result = await manager.update(
-            where={TestModel.id: "1"},
-            session=mock_session,
-            commit=True,
-            name="updated"
+            where={TestModel.id: "1"}, session=mock_session, commit=True, name="updated"
         )
 
         assert result is not None
@@ -213,18 +212,13 @@ class TestBaseManager:
     async def test_update_both_where_and_identifier(self, manager):
         with pytest.raises(ValueError):
             await manager.update(
-                identifier="1",
-                field_identifier=TestModel.id,
-                where={TestModel.id: "1"}
+                identifier="1", field_identifier=TestModel.id, where={TestModel.id: "1"}
             )
 
     @pytest.mark.asyncio
     async def test_update_no_data(self, manager):
         with pytest.raises(ValueError):
-            await manager.update(
-                identifier="1",
-                field_identifier=TestModel.id
-            )
+            await manager.update(identifier="1", field_identifier=TestModel.id)
 
     @pytest.mark.asyncio
     async def test_delete_no_where(self, manager):

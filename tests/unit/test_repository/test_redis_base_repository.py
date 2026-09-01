@@ -52,10 +52,7 @@ class TestBaseRedisRepository:
 
     @pytest.mark.asyncio
     async def test_batch_save(self, redis_repository, mock_redis):
-        entities = [
-            MockEntity(id="1", name="test1"),
-            MockEntity(id="2", name="test2")
-        ]
+        entities = [MockEntity(id="1", name="test1"), MockEntity(id="2", name="test2")]
         result = await redis_repository.batch_save(entities)
         assert len(result) == 2
         assert mock_redis.hset.call_count == 2

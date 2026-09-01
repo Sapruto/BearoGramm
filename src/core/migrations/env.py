@@ -29,13 +29,12 @@ settings = Settings.load_from_configs()
 
 sync_url = settings.DATABASE.DATABASE_URL.replace(
     "postgresql+asyncpg://", "postgresql://"
-).replace(
-    "postgresql+psycopg://", "postgresql://"
-)
+).replace("postgresql+psycopg://", "postgresql://")
 
 config.set_main_option("sqlalchemy.url", sync_url)
 
 target_metadata = Base.metadata
+
 
 def run_migrations_offline() -> None:
     url = config.get_main_option("sqlalchemy.url")
@@ -49,16 +48,19 @@ def run_migrations_offline() -> None:
     with context.begin_transaction():
         context.run_migrations()
 
+
 def do_run_migrations(connection: Connection) -> None:
     context.configure(connection=connection, target_metadata=target_metadata)
 
     with context.begin_transaction():
         context.run_migrations()
 
+
 async def run_async_migrations() -> None:
     sync_url = config.get_main_option("sqlalchemy.url")
 
     from sqlalchemy import create_engine
+
     sync_engine = create_engine(
         sync_url,
         poolclass=pool.NullPool,
@@ -67,8 +69,10 @@ async def run_async_migrations() -> None:
     with sync_engine.connect() as connection:
         do_run_migrations(connection)
 
+
 def run_migrations_online() -> None:
     asyncio.run(run_async_migrations())
+
 
 if context.is_offline_mode():
     run_migrations_offline()

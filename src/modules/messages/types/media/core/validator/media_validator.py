@@ -2,20 +2,32 @@ from pathlib import Path
 from typing import Optional, Set, Tuple
 from pydantic import BaseModel, Field
 
+
 class MediaValidatorConfig(BaseModel):
-    max_file_size: int = Field(
-        default=50 * 1024 * 1024,
-        gt=0
-    )
+    max_file_size: int = Field(default=50 * 1024 * 1024, gt=0)
 
     allowed_extensions: Set[str] = Field(
         default={
-            '.jpg', '.jpeg', '.png', '.gif', '.webp', '.svg', '.bmp', '.ico',
-            '.mp4', '.avi', '.mov', '.mkv', '.webm', '.flv', '.m4v'
+            ".jpg",
+            ".jpeg",
+            ".png",
+            ".gif",
+            ".webp",
+            ".svg",
+            ".bmp",
+            ".ico",
+            ".mp4",
+            ".avi",
+            ".mov",
+            ".mkv",
+            ".webm",
+            ".flv",
+            ".m4v",
         }
     )
 
     allowed_mime_types: Optional[Set[str]] = Field(default=None)
+
 
 class MediaValidator:
     def __init__(self, config: Optional[MediaValidatorConfig] = None):
@@ -31,7 +43,7 @@ class MediaValidator:
 
         ext = Path(filename).suffix.lower()
         if ext not in self.config.allowed_extensions:
-            allowed = ', '.join(sorted(self.config.allowed_extensions))
+            allowed = ", ".join(sorted(self.config.allowed_extensions))
             return False, f"Extension '{ext}' not allowed. Allowed: {allowed}"
 
         return True, None
@@ -51,6 +63,7 @@ class MediaValidator:
     def update_config(self, **kwargs) -> None:
         new_config = self.config.model_copy(update=kwargs)
         self.config = new_config
+
 
 def get_default_media_validator() -> MediaValidator:
     return MediaValidator()

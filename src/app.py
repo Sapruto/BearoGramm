@@ -12,6 +12,7 @@ from src.core.database import init_db, close_db
 
 load_dotenv()
 
+
 def include_all_routers(app: FastAPI) -> FastAPI:
     from src.modules.user import auth_router
     from src.modules.chats.chat_types.personal import personal_chats_router
@@ -25,6 +26,7 @@ def include_all_routers(app: FastAPI) -> FastAPI:
 
     return app
 
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     if Settings.DATABASE.INIT_DB == True:
@@ -32,6 +34,7 @@ async def lifespan(app: FastAPI):
 
     yield
     await close_db()
+
 
 def create_app() -> FastAPI:
     BASE_DIR = Path(__file__).parent.parent
@@ -50,7 +53,7 @@ def create_app() -> FastAPI:
     async def http_exception_handler(request: Request, exc: HTTPException):
         return JSONResponse(
             status_code=exc.status_code,
-            content={'error': exc.detail, 'code': exc.status_code}
+            content={"error": exc.detail, "code": exc.status_code},
         )
 
     @app.middleware("http")
@@ -60,8 +63,7 @@ def create_app() -> FastAPI:
         except Exception as e:
             logging.critical(f"Unhandled: {e}", exc_info=True)
             return JSONResponse(
-                status_code=500,
-                content={'error': 'Internal Server Error'}
+                status_code=500, content={"error": "Internal Server Error"}
             )
 
     return app

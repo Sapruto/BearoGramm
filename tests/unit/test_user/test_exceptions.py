@@ -4,7 +4,7 @@ from fastapi import status
 from src.modules.user.api.exceptions import (
     UserHaveNotAccess,
     UserNotFound,
-    InvalidTokenError
+    InvalidTokenError,
 )
 
 

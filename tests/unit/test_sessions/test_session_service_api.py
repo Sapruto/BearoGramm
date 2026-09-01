@@ -10,7 +10,7 @@ from src.modules.sessions.api.models import (
     ValidateSessionResponse,
     RefreshSessionResponse,
     DeleteSessionResponse,
-    UserSessionsResponse
+    UserSessionsResponse,
 )
 from src.modules.sessions.models.dto.session_dto import SessionResultDTO, SessionDTO
 
@@ -26,7 +26,7 @@ class TestSessionAPIService:
             token="test_token",
             user_uuid=user_uuid,
             expires_at=datetime.now(timezone.utc) + timedelta(hours=24),
-            expires_in_seconds=86400
+            expires_in_seconds=86400,
         )
         session_service.create_session = AsyncMock(return_value=result_dto)
 
@@ -45,7 +45,7 @@ class TestSessionAPIService:
         session_dto = SessionDTO(
             token=token,
             user_uuid=user_uuid,
-            expired_at=datetime.now(timezone.utc) + timedelta(hours=24)
+            expired_at=datetime.now(timezone.utc) + timedelta(hours=24),
         )
         session_service.validate_session = AsyncMock(return_value=session_dto)
 
@@ -74,7 +74,7 @@ class TestSessionAPIService:
             token="new_token",
             user_uuid=user_uuid,
             expires_at=datetime.now(timezone.utc) + timedelta(hours=24),
-            expires_in_seconds=86400
+            expires_in_seconds=86400,
         )
         session_service.refresh_session = AsyncMock(return_value=result_dto)
 
@@ -113,8 +113,16 @@ class TestSessionAPIService:
     async def test_get_user_sessions(self, session_api_service, session_service):
         user_uuid = str(uuid4())
         sessions = [
-            SessionDTO(token="token_1", user_uuid=user_uuid, expired_at=datetime.now(timezone.utc)),
-            SessionDTO(token="token_2", user_uuid=user_uuid, expired_at=datetime.now(timezone.utc)),
+            SessionDTO(
+                token="token_1",
+                user_uuid=user_uuid,
+                expired_at=datetime.now(timezone.utc),
+            ),
+            SessionDTO(
+                token="token_2",
+                user_uuid=user_uuid,
+                expired_at=datetime.now(timezone.utc),
+            ),
         ]
         session_service.get_user_sessions = AsyncMock(return_value=sessions)
 
@@ -137,5 +145,6 @@ class TestSessionAPIService:
     @pytest.mark.asyncio
     async def test_get_session_service_api(self):
         from src.modules.sessions.api.session_service_api import get_session_service_api
+
         service = get_session_service_api()
         assert isinstance(service, SessionAPIService)

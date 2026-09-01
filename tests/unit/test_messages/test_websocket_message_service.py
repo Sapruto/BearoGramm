@@ -4,7 +4,7 @@ import json
 
 from src.modules.messages.core.services.websocket_message_service import (
     WebSocketMessageService,
-    get_websocket_message_service
+    get_websocket_message_service,
 )
 
 
@@ -17,7 +17,9 @@ class TestWebSocketMessageService:
         repo.set_user_offline = AsyncMock(return_value=True)
         repo.publish_notification = AsyncMock()
         repo.publish_to_chat = AsyncMock()
-        repo.get_notification_channel = AsyncMock(return_value="user:notifications:test")
+        repo.get_notification_channel = AsyncMock(
+            return_value="user:notifications:test"
+        )
         repo.redis = MagicMock()
         repo.redis.pubsub = MagicMock()
         return repo
@@ -25,8 +27,7 @@ class TestWebSocketMessageService:
     @pytest.fixture
     def service(self, mock_state_repo):
         return WebSocketMessageService(
-            state_repository=mock_state_repo,
-            time_of_expire_per_seconds=3600
+            state_repository=mock_state_repo, time_of_expire_per_seconds=3600
         )
 
     @pytest.mark.asyncio
@@ -48,14 +49,18 @@ class TestWebSocketMessageService:
         notification = {"type": "test"}
         await service.notify_user("test_uuid", notification)
 
-        mock_state_repo.publish_notification.assert_called_once_with("test_uuid", notification)
+        mock_state_repo.publish_notification.assert_called_once_with(
+            "test_uuid", notification
+        )
 
     @pytest.mark.asyncio
     async def test_notify_chat_participants(self, service, mock_state_repo):
         notification = {"type": "test"}
         await service.notify_chat_participants("chat_uuid", notification)
 
-        mock_state_repo.publish_to_chat.assert_called_once_with("chat_uuid", notification)
+        mock_state_repo.publish_to_chat.assert_called_once_with(
+            "chat_uuid", notification
+        )
 
     @pytest.mark.asyncio
     async def test_parse_websocket_data_writing(self, service, mock_state_repo):
@@ -73,7 +78,7 @@ class TestWebSocketMessageService:
 
         await service._parse_websocket_data(data, "user_uuid", send_message)
 
-        send_message.assert_called_once_with(json.dumps({'type': 'pong'}))
+        send_message.assert_called_once_with(json.dumps({"type": "pong"}))
 
     @pytest.mark.asyncio
     async def test_parse_websocket_data_invalid_json(self, service, mock_state_repo):
@@ -99,7 +104,10 @@ class TestWebSocketMessageService:
     async def test_listen_messages(self, service, mock_state_repo):
         send_message = AsyncMock()
         receive_message = AsyncMock()
-        receive_message.side_effect = [json.dumps({"type": "ping"}), Exception("Closed")]
+        receive_message.side_effect = [
+            json.dumps({"type": "ping"}),
+            Exception("Closed"),
+        ]
 
         mock_pubsub = MagicMock()
         mock_pubsub.subscribe = AsyncMock()
@@ -107,7 +115,7 @@ class TestWebSocketMessageService:
         mock_pubsub.unsubscribe = AsyncMock()
         mock_state_repo.redis.pubsub.return_value = mock_pubsub
 
-        with patch('asyncio.create_task') as mock_create_task:
+        with patch("asyncio.create_task") as mock_create_task:
             mock_task = MagicMock()
             mock_task.done = MagicMock(return_value=True)
             mock_create_task.return_value = mock_task

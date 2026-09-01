@@ -2,7 +2,7 @@ import pytest
 
 from src.modules.messages.models.entities.websocket_state_entity import (
     WebSocketStateEntity,
-    WebSocketStateFields
+    WebSocketStateFields,
 )
 
 
@@ -10,9 +10,7 @@ from src.modules.messages.models.entities.websocket_state_entity import (
 class TestWebSocketStateEntity:
     def test_websocket_state_entity_creation(self):
         entity = WebSocketStateEntity(
-            user_uuid="test_uuid",
-            online=True,
-            last_activity=True
+            user_uuid="test_uuid", online=True, last_activity=True
         )
 
         assert entity.user_uuid == "test_uuid"
@@ -21,9 +19,7 @@ class TestWebSocketStateEntity:
 
     def test_websocket_state_entity_offline(self):
         entity = WebSocketStateEntity(
-            user_uuid="test_uuid",
-            online=False,
-            last_activity=False
+            user_uuid="test_uuid", online=False, last_activity=False
         )
 
         assert entity.online is False

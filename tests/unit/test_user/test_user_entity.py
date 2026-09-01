@@ -13,10 +13,7 @@ class TestUserEntity:
         now = datetime.now()
 
         user = UserEntity(
-            uuid=user_uuid,
-            phone_number="+79001234567",
-            created_at=now,
-            updated_at=now
+            uuid=user_uuid, phone_number="+79001234567", created_at=now, updated_at=now
         )
 
         assert user.uuid == user_uuid

@@ -2,7 +2,10 @@ import pytest
 from abc import ABC
 from pydantic import BaseModel
 
-from src.modules.chats.chat_types.base.base_access_type import BaseAccessType, definite_access_type
+from src.modules.chats.chat_types.base.base_access_type import (
+    BaseAccessType,
+    definite_access_type,
+)
 from src.modules.chats.chat_types.base.base_access_threshold import BaseAccessThreshold
 
 
@@ -33,6 +36,7 @@ class TestBaseAccessType:
 
     def test_base_access_type_requires_abstract_methods(self):
         with pytest.raises(TypeError):
+
             class InvalidAccessType(BaseAccessType):
                 pass
 
@@ -40,9 +44,9 @@ class TestBaseAccessType:
 
     def test_base_access_type_abstract_methods_implemented(self):
         access = MockAccessType(user_uuid="test_uuid")
-        assert hasattr(access, 'get_threshold')
-        assert hasattr(access, 'get_raw_data')
-        assert hasattr(access, 'get_type')
+        assert hasattr(access, "get_threshold")
+        assert hasattr(access, "get_raw_data")
+        assert hasattr(access, "get_type")
 
     def test_get_threshold_returns_correct_type(self):
         access = MockAccessType(user_uuid="test_uuid")

@@ -37,6 +37,7 @@ class TestBaseRepository:
     async def test_delete(self, sql_repository, manager):
         manager.delete.return_value = 1
         from src.general.repository.sql.sql_query import SqlQuery
+
         query = SqlQuery[MockFields]()
         query.add_filter(MockFields.ID, "1")
         result = await sql_repository.delete(query)
@@ -47,6 +48,7 @@ class TestBaseRepository:
     async def test_get(self, sql_repository, manager):
         manager.get_all.return_value = [MockORM(id="1", name="test")]
         from src.general.repository.sql.sql_query import SqlQuery
+
         query = SqlQuery[MockFields]()
         query.add_filter(MockFields.ID, "1")
         result = await sql_repository.get(query)
@@ -57,9 +59,10 @@ class TestBaseRepository:
     async def test_get_all(self, sql_repository, manager):
         manager.get_all.return_value = [
             MockORM(id="1", name="test1"),
-            MockORM(id="2", name="test2")
+            MockORM(id="2", name="test2"),
         ]
         from src.general.repository.sql.sql_query import SqlQuery
+
         query = SqlQuery[MockFields]()
         result = await sql_repository.get_all(query)
         assert len(result) == 2
@@ -69,6 +72,7 @@ class TestBaseRepository:
     async def test_count(self, sql_repository, manager):
         manager.count.return_value = 5
         from src.general.repository.sql.sql_query import SqlQuery
+
         query = SqlQuery[MockFields]()
         result = await sql_repository.count(query)
         assert result == 5

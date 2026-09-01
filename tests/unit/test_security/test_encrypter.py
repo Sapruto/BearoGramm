@@ -11,17 +11,14 @@ from src.general.security.encyptions.encrypter import (
     KeyConfig,
     EncryptedData,
     generate_key_pair,
-    get_encrypter
+    get_encrypter,
 )
 
 
 @pytest.mark.unit
 class TestEncryptionMetadata:
     def test_metadata_creation(self):
-        metadata = EncryptionMetadata(
-            key_id="test_key",
-            nonce="test_nonce"
-        )
+        metadata = EncryptionMetadata(key_id="test_key", nonce="test_nonce")
         assert metadata.key_id == "test_key"
         assert metadata.nonce == "test_nonce"
         assert metadata.salt is None
@@ -29,9 +26,7 @@ class TestEncryptionMetadata:
 
     def test_metadata_with_salt(self):
         metadata = EncryptionMetadata(
-            key_id="test_key",
-            salt="test_salt",
-            nonce="test_nonce"
+            key_id="test_key", salt="test_salt", nonce="test_nonce"
         )
         assert metadata.salt == "test_salt"
 
@@ -40,9 +35,7 @@ class TestEncryptionMetadata:
 class TestKeyConfig:
     def test_key_config_creation(self):
         config = KeyConfig(
-            key_id="test_key",
-            master_key_b64="dGVzdF9rZXk=",
-            iterations=600000
+            key_id="test_key", master_key_b64="dGVzdF9rZXk=", iterations=600000
         )
         assert config.key_id == "test_key"
         assert config.master_key_b64 == "dGVzdF9rZXk="
@@ -50,17 +43,12 @@ class TestKeyConfig:
         assert config.is_active is True
 
     def test_master_key_property(self):
-        config = KeyConfig(
-            key_id="test_key",
-            master_key_b64="dGVzdF9rZXk="
-        )
+        config = KeyConfig(key_id="test_key", master_key_b64="dGVzdF9rZXk=")
         assert config.master_key == b"test_key"
 
     def test_salt_property(self):
         config = KeyConfig(
-            key_id="test_key",
-            master_key_b64="dGVzdF9rZXk=",
-            salt_b64="dGVzdF9zYWx0"
+            key_id="test_key", master_key_b64="dGVzdF9rZXk=", salt_b64="dGVzdF9zYWx0"
         )
         assert config.salt == b"test_salt"
 
@@ -93,12 +81,19 @@ class TestEncryptedData:
 class TestEncrypter:
     @pytest.fixture
     def encrypter(self):
-        with patch.dict('os.environ', {'MASTER_KEY': base64.b64encode(b"test_master_key_32_bytes").decode('utf-8')}):
+        with patch.dict(
+            "os.environ",
+            {
+                "MASTER_KEY": base64.b64encode(b"test_master_key_32_bytes").decode(
+                    "utf-8"
+                )
+            },
+        ):
             return Encrypter()
 
     @pytest.fixture
     def encrypter_with_keys(self):
-        master_key = base64.b64encode(b"test_master_key_32_bytes").decode('utf-8')
+        master_key = base64.b64encode(b"test_master_key_32_bytes").decode("utf-8")
         return Encrypter(keys_config={"default": master_key})
 
     @pytest.mark.asyncio
@@ -163,11 +158,10 @@ class TestEncrypter:
             "id": "1",
             "name": "John",
             "email": "john@example.com",
-            "phone": "123456"
+            "phone": "123456",
         }
         encrypted_data = await encrypter.encrypt_sensitive_data(
-            data,
-            encrypt_fields=["email", "phone"]
+            data, encrypt_fields=["email", "phone"]
         )
         assert encrypted_data["id"] == "1"
         assert encrypted_data["name"] == "John"
@@ -184,12 +178,10 @@ class TestEncrypter:
     async def test_decrypt_sensitive_data(self, encrypter):
         data = {"id": "1", "name": "John"}
         encrypted_data = await encrypter.encrypt_sensitive_data(
-            data,
-            encrypt_fields=["name"]
+            data, encrypt_fields=["name"]
         )
         decrypted_data = await encrypter.decrypt_sensitive_data(
-            encrypted_data,
-            decrypt_fields=["name"]
+            encrypted_data, decrypt_fields=["name"]
         )
         assert decrypted_data["id"] == "1"
         assert decrypted_data["name"] == "John"
@@ -201,13 +193,13 @@ class TestEncrypter:
         assert result == data
 
     def test_add_key(self, encrypter):
-        new_key = base64.b64encode(b"new_master_key_32_bytes").decode('utf-8')
+        new_key = base64.b64encode(b"new_master_key_32_bytes").decode("utf-8")
         key_id = encrypter.add_key(new_key)
         assert key_id in encrypter._keys
         assert key_id in encrypter._ciphers
 
     def test_add_key_with_id(self, encrypter):
-        new_key = base64.b64encode(b"new_master_key_32_bytes").decode('utf-8')
+        new_key = base64.b64encode(b"new_master_key_32_bytes").decode("utf-8")
         key_id = encrypter.add_key(new_key, "custom_key")
         assert key_id == "custom_key"
         assert key_id in encrypter._keys
@@ -219,8 +211,7 @@ class TestEncrypter:
 
     def test_rotate_default_key_to_existing(self, encrypter):
         encrypter.add_key(
-            base64.b64encode(b"new_master_key_32_bytes").decode('utf-8'),
-            "new_key"
+            base64.b64encode(b"new_master_key_32_bytes").decode("utf-8"), "new_key"
         )
         encrypter.rotate_default_key("new_key")
         assert encrypter._default_key_id == "new_key"
@@ -238,26 +229,34 @@ class TestEncrypter:
         encrypter = get_encrypter()
         assert isinstance(encrypter, Encrypter)
 
-    @patch.dict('os.environ', {})
+    @patch.dict("os.environ", {})
     def test_encrypter_generates_default_key(self):
         encrypter = Encrypter()
         assert len(encrypter._keys) >= 1
         assert encrypter._default_key_id is not None
 
-    @patch.dict('os.environ', {'MASTER_KEY': base64.b64encode(b"test_key").decode('utf-8')})
+    @patch.dict(
+        "os.environ", {"MASTER_KEY": base64.b64encode(b"test_key").decode("utf-8")}
+    )
     def test_encrypter_loads_from_env(self):
         encrypter = Encrypter()
         assert "default" in encrypter._keys
 
-    @patch.dict('os.environ', {
-        'MASTER_KEY': base64.b64encode(b"test_key").decode('utf-8'),
-        'ROTATION_KEYS': json.dumps({"rot1": base64.b64encode(b"rot_key").decode('utf-8')})
-    })
-
-    @patch('src.general.security.encyptions.encrypter.Settings')
+    @patch.dict(
+        "os.environ",
+        {
+            "MASTER_KEY": base64.b64encode(b"test_key").decode("utf-8"),
+            "ROTATION_KEYS": json.dumps(
+                {"rot1": base64.b64encode(b"rot_key").decode("utf-8")}
+            ),
+        },
+    )
+    @patch("src.general.security.encyptions.encrypter.Settings")
     def test_encrypter_loads_rotation_keys(self, mock_settings):
         mock_settings.ENCRYPTER.ROTATION_KEYS = '{"rot1": "rot_key_b64"}'
-        mock_settings.ENCRYPTER.MASTER_KEY = base64.b64encode(b"test_key").decode('utf-8')
+        mock_settings.ENCRYPTER.MASTER_KEY = base64.b64encode(b"test_key").decode(
+            "utf-8"
+        )
         encrypter = Encrypter()
         assert "default" in encrypter._keys
         assert "rot1" in encrypter._keys
@@ -275,8 +274,8 @@ class TestEncrypter:
         original = "Hello World"
         encrypted = await encrypter.encrypt(original)
 
-        json_data = base64.b64decode(encrypted.encode('utf-8'))
-        encrypted_package = EncryptedData.model_validate_json(json_data.decode('utf-8'))
+        json_data = base64.b64decode(encrypted.encode("utf-8"))
+        encrypted_package = EncryptedData.model_validate_json(json_data.decode("utf-8"))
 
         assert encrypted_package.data is not None
         assert encrypted_package.metadata.key_id is not None
@@ -289,7 +288,7 @@ class TestEncrypter:
             "id": "1",
             "name": "John",
             "email": "john@example.com",
-            "phone": "123456"
+            "phone": "123456",
         }
         encrypted_data = await encrypter.encrypt_sensitive_data(data)
         assert encrypted_data["email"] != "john@example.com"
@@ -297,8 +296,7 @@ class TestEncrypter:
 
     def test_key_config_encoders(self):
         config = KeyConfig(
-            key_id="test",
-            master_key_b64=base64.b64encode(b"test").decode('utf-8')
+            key_id="test", master_key_b64=base64.b64encode(b"test").decode("utf-8")
         )
         json_data = config.model_dump_json()
         assert "master_key_b64" in json_data

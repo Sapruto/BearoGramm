@@ -6,7 +6,7 @@ from src.modules.messages.types.message_registry import (
     get_message_registry,
     init_message_registry,
     _registry,
-    _is_init
+    _is_init,
 )
 from src.modules.messages.types.base.base_data_service import BaseDataService
 
@@ -75,16 +75,20 @@ class TestMessageRegistry:
         assert len(registry._registry) == 1
 
     def test_get_message_registry_init(self):
-        with patch('src.modules.messages.types.message_registry._is_init', False):
-            with patch('src.modules.messages.types.message_registry.init_message_registry') as mock_init:
+        with patch("src.modules.messages.types.message_registry._is_init", False):
+            with patch(
+                "src.modules.messages.types.message_registry.init_message_registry"
+            ) as mock_init:
                 result = get_message_registry()
 
                 mock_init.assert_called_once()
                 assert result is not None
 
     def test_get_message_registry_already_init(self):
-        with patch('src.modules.messages.types.message_registry._is_init', True):
-            with patch('src.modules.messages.types.message_registry.init_message_registry') as mock_init:
+        with patch("src.modules.messages.types.message_registry._is_init", True):
+            with patch(
+                "src.modules.messages.types.message_registry.init_message_registry"
+            ) as mock_init:
                 result = get_message_registry()
 
                 mock_init.assert_not_called()

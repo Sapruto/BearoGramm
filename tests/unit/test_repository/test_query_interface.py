@@ -24,5 +24,5 @@ class TestQueryInterface:
 
     def test_query_interface_instantiation(self):
         query = MockQuery()
-        assert hasattr(query, 'model_dump')
-        assert hasattr(query, 'model_dump_json')
+        assert hasattr(query, "model_dump")
+        assert hasattr(query, "model_dump_json")

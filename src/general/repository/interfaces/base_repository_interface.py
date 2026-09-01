@@ -6,6 +6,7 @@ from ...types_var import Entity, Fields
 
 QueryType = TypeVar("QueryType", bound=QueryInterface)
 
+
 class BaseRepositoryInterface(Generic[QueryType, Fields, Entity], ABC):
     @abstractmethod
     async def save(self, entity: Entity) -> Entity:
@@ -16,7 +17,9 @@ class BaseRepositoryInterface(Generic[QueryType, Fields, Entity], ABC):
         pass
 
     @abstractmethod
-    async def get_by_field(self, value: Any, field: Fields, select_field: Optional[Fields] = None) -> Optional[Entity]:
+    async def get_by_field(
+        self, value: Any, field: Fields, select_field: Optional[Fields] = None
+    ) -> Optional[Entity]:
         pass
 
     @abstractmethod

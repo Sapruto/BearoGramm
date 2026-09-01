@@ -6,6 +6,7 @@ from src.core.logger import get_logger
 
 logger = get_logger(__name__)
 
+
 class ClientSMSRu:
     def __init__(self, max_retries: int = 3, retry_delay: int = 1):
         self.api_key = Settings.PHONE.ASYNC_CLIENT_API_ID
@@ -24,11 +25,12 @@ class ClientSMSRu:
                 if not self._client:
                     raise ValueError("SMS client not initialized")
 
-                logger.debug(f"Attempt {attempt}/{self.max_retries} to send SMS to {phone_number}")
+                logger.debug(
+                    f"Attempt {attempt}/{self.max_retries} to send SMS to {phone_number}"
+                )
 
                 response = await self._client.send(
-                    numbers=phone_number,
-                    message=message
+                    numbers=phone_number, message=message
                 )
 
                 if response and response.get("status") == "OK":
@@ -55,16 +57,26 @@ class ClientSMSRu:
             await self._send_with_retry(phone_number, message)
             return True
         except Exception as e:
-            logger.error(f"Error sending SMS to {phone_number} after {self.max_retries} retries: {e}", exc_info=True)
+            logger.error(
+                f"Error sending SMS to {phone_number} after {self.max_retries} retries: {e}",
+                exc_info=True,
+            )
             return False
 
-    async def send_verify_code(self, phone_number: str, code: str, time_of_live_per_minuts: int) -> bool:
+    async def send_verify_code(
+        self, phone_number: str, code: str, time_of_live_per_minuts: int
+    ) -> bool:
         message = f"Ваш код подтверждения: {code}. Действителен {time_of_live_per_minuts} минут."
         return await self.send_sms(phone_number, message)
 
-    async def send_login_code(self, phone_number: str, code: str, time_of_live_per_minuts: int) -> bool:
-        message = f"Код для входа: {code}. Действителен {time_of_live_per_minuts} минут."
+    async def send_login_code(
+        self, phone_number: str, code: str, time_of_live_per_minuts: int
+    ) -> bool:
+        message = (
+            f"Код для входа: {code}. Действителен {time_of_live_per_minuts} минут."
+        )
         return await self.send_sms(phone_number, message)
+
 
 def get_client_smsru() -> ClientSMSRu:
     return ClientSMSRu()

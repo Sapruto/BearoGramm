@@ -6,7 +6,7 @@ import io
 import re
 from contextlib import redirect_stdout, redirect_stderr
 
-sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
+sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8")
 
 project_root = Path(__file__).parent.parent
 src_path = project_root / "src"
@@ -30,6 +30,7 @@ CATEGORIES = {
     "9": {"name": "ALL TESTS", "path": "tests/unit"},
 }
 
+
 def print_categories():
     print("\n" + "=" * 60)
     print("SELECT TEST CATEGORY")
@@ -41,6 +42,7 @@ def print_categories():
     print(f"  0. Exit")
     print("=" * 60)
 
+
 def parse_test_results(output):
     passed = 0
     failed = 0
@@ -48,34 +50,35 @@ def parse_test_results(output):
     skipped = 0
 
     patterns = {
-        'passed': r'(\d+)\s+passed',
-        'failed': r'(\d+)\s+failed',
-        'errors': r'(\d+)\s+errors',
-        'skipped': r'(\d+)\s+skipped',
+        "passed": r"(\d+)\s+passed",
+        "failed": r"(\d+)\s+failed",
+        "errors": r"(\d+)\s+errors",
+        "skipped": r"(\d+)\s+skipped",
     }
 
     for key, pattern in patterns.items():
         match = re.search(pattern, output)
         if match:
             value = int(match.group(1))
-            if key == 'passed':
+            if key == "passed":
                 passed = value
-            elif key == 'failed':
+            elif key == "failed":
                 failed = value
-            elif key == 'errors':
+            elif key == "errors":
                 errors = value
-            elif key == 'skipped':
+            elif key == "skipped":
                 skipped = value
 
     total = passed + failed + errors + skipped
 
     return {
-        'total': total,
-        'passed': passed,
-        'failed': failed,
-        'errors': errors,
-        'skipped': skipped
+        "total": total,
+        "passed": passed,
+        "failed": failed,
+        "errors": errors,
+        "skipped": skipped,
     }
+
 
 def run_tests(path):
     print(f"\nRunning: {path}")
@@ -91,6 +94,7 @@ def run_tests(path):
     stats = parse_test_results(output)
 
     return result, output, stats
+
 
 if __name__ == "__main__":
     if len(sys.argv) > 1:

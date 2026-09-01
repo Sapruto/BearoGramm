@@ -1,7 +1,11 @@
 from typing import Dict, Any, Tuple
 from src.general.repository.redis.redis_base_mapper import BaseRedisMapper
 
-from ....models.entities.websocket_state_entity import WebSocketStateFields, WebSocketStateEntity
+from ....models.entities.websocket_state_entity import (
+    WebSocketStateFields,
+    WebSocketStateEntity,
+)
+
 
 class WebSocketStateMapper(BaseRedisMapper[WebSocketStateEntity, WebSocketStateFields]):
     key_prefix = "ws:user"
@@ -30,14 +34,18 @@ class WebSocketStateMapper(BaseRedisMapper[WebSocketStateEntity, WebSocketStateF
             last_activity=data.get("last_activity", "false").lower() == "true",
         )
 
-    def to_redis_value(self, field: WebSocketStateFields, value: Any) -> Tuple[str, Any]:
+    def to_redis_value(
+        self, field: WebSocketStateFields, value: Any
+    ) -> Tuple[str, Any]:
         redis_field = self.to_redis_field(field)
 
         if isinstance(value, bool):
             return redis_field, "true" if value else "false"
         return redis_field, str(value) if value else ""
 
-    def to_entity_value(self, redis_field: str, value: Any) -> Tuple[WebSocketStateFields, Any]:
+    def to_entity_value(
+        self, redis_field: str, value: Any
+    ) -> Tuple[WebSocketStateFields, Any]:
         field = self.to_entity_field(redis_field)
 
         if isinstance(value, str):
@@ -48,4 +56,6 @@ class WebSocketStateMapper(BaseRedisMapper[WebSocketStateEntity, WebSocketStateF
         return self.field_mapping.get(field, field.value)
 
     def to_entity_field(self, redis_field: str) -> WebSocketStateFields:
-        return self.reverse_field_mapping.get(redis_field, WebSocketStateFields.USER_UUID)
+        return self.reverse_field_mapping.get(
+            redis_field, WebSocketStateFields.USER_UUID
+        )

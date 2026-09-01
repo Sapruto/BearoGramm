@@ -14,11 +14,13 @@ from src.core.logger import get_logger
 
 logger = get_logger(__name__)
 
+
 class VerificationCodeEntity(BaseModel):
     user_uuid: str
     phone: str
     code: str
     expired_at: datetime
+
 
 class VerificationCodeFields(str, Enum):
     USER_UUID = "user_uuid"
@@ -26,7 +28,10 @@ class VerificationCodeFields(str, Enum):
     CODE = "code"
     EXPIRED_AT = "expired_at"
 
-class VerificationCodeMapper(BaseRedisMapper[VerificationCodeEntity, VerificationCodeFields]):
+
+class VerificationCodeMapper(
+    BaseRedisMapper[VerificationCodeEntity, VerificationCodeFields]
+):
     key_prefix = "verification_code"
     storage_type = "hash"
 
@@ -50,7 +55,9 @@ class VerificationCodeMapper(BaseRedisMapper[VerificationCodeEntity, Verificatio
             user_uuid=data.get("user_uuid", ""),
             phone=data.get("phone", ""),
             code=data.get("code", ""),
-            expired_at=datetime.fromisoformat(data.get("expired_at", datetime.now().isoformat())),
+            expired_at=datetime.fromisoformat(
+                data.get("expired_at", datetime.now().isoformat())
+            ),
         )
 
     def to_redis_value(self, field: VerificationCodeFields, value) -> tuple[str, any]:
@@ -59,7 +66,9 @@ class VerificationCodeMapper(BaseRedisMapper[VerificationCodeEntity, Verificatio
             return redis_field, value.isoformat()
         return redis_field, str(value) if value is not None else ""
 
-    def to_entity_value(self, redis_field: str, value) -> tuple[VerificationCodeFields, any]:
+    def to_entity_value(
+        self, redis_field: str, value
+    ) -> tuple[VerificationCodeFields, any]:
         entity_field = self.to_entity_field(redis_field)
         if value is None:
             return entity_field, None
@@ -87,7 +96,12 @@ class VerificationCodeMapper(BaseRedisMapper[VerificationCodeEntity, Verificatio
     def get_id_from_entity(self, entity: VerificationCodeEntity) -> Optional[any]:
         return entity.phone
 
-class VerificationCodeRepository(BaseRedisRepository[VerificationCodeMapper, VerificationCodeFields, VerificationCodeEntity]):
+
+class VerificationCodeRepository(
+    BaseRedisRepository[
+        VerificationCodeMapper, VerificationCodeFields, VerificationCodeEntity
+    ]
+):
     def __init__(self, ttl: int = 300):
         super().__init__(get_redis(), VerificationCodeMapper(), ttl)
         self.ttl = ttl
@@ -96,12 +110,13 @@ class VerificationCodeRepository(BaseRedisRepository[VerificationCodeMapper, Ver
         return hashlib.sha256(phone.encode()).hexdigest()[:16]
 
     def _get_key(self, entity_id) -> str:
-        if isinstance(entity_id, str) and entity_id.startswith('+'):
+        if isinstance(entity_id, str) and entity_id.startswith("+"):
             entity_id = self._hash(entity_id)
         return super()._get_key(entity_id)
 
     def gen_code(self) -> str:
-        return ''.join(str(random.randint(0, 9)) for _ in range(5))
+        return "".join(str(random.randint(0, 9)) for _ in range(5))
+
 
 def get_verification_code_repository() -> VerificationCodeRepository:
     return VerificationCodeRepository()

@@ -2,21 +2,23 @@ from enum import Enum
 
 from src.core.settings import Settings
 
+
 class PersonalChatsRoutes(str, Enum):
-    base = '/personal/chats'
-    create = '/create'
-    get = '/{chat_uuid}'
-    list = '/list'
-    contacts = '/contacts'
-    find = '/find'
-    add_user = '/{chat_uuid}/users'
-    remove_user = '/{chat_uuid}/users/{user_uuid}'
-    block = '/{chat_uuid}/block'
-    unblock = '/{chat_uuid}/unblock'
-    delete = '/{chat_uuid}'
+    base = "/personal/chats"
+    create = "/create"
+    get = "/{chat_uuid}"
+    list = "/list"
+    contacts = "/contacts"
+    find = "/find"
+    add_user = "/{chat_uuid}/users"
+    remove_user = "/{chat_uuid}/users/{user_uuid}"
+    block = "/{chat_uuid}/block"
+    unblock = "/{chat_uuid}/unblock"
+    delete = "/{chat_uuid}"
 
     def __str__(self):
         return self.value
+
 
 class PersonalChatsRoutesURL(str, Enum):
     create = f"{Settings.BASE_URL}{PersonalChatsRoutes.create}"

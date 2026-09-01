@@ -3,5 +3,6 @@ from .api.personal_chats_router_names import PersonalChatsRoutes, PersonalChatsR
 
 __all__ = [
     "personal_chats_router",
-    "PersonalChatsRoutes", "PersonalChatsRoutesURL",
+    "PersonalChatsRoutes",
+    "PersonalChatsRoutesURL",
 ]

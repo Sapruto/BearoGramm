@@ -18,17 +18,23 @@ from src.core.logger import get_logger
 
 logger = get_logger(__name__)
 
+
 class EncryptionMetadata(BaseModel):
     key_id: str
     salt: Optional[str] = None
     nonce: str
-    timestamp: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    timestamp: str = Field(
+        default_factory=lambda: datetime.now(timezone.utc).isoformat()
+    )
+
 
 class KeyConfig(BaseModel):
     key_id: str
     master_key_b64: str
     salt_b64: Optional[str] = None
-    created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    created_at: str = Field(
+        default_factory=lambda: datetime.now(timezone.utc).isoformat()
+    )
     iterations: int = 600000
     is_active: bool = True
 
@@ -42,10 +48,10 @@ class KeyConfig(BaseModel):
             return base64.b64decode(self.salt_b64)
         return None
 
-    model_config = {"json_encoders": {
-            bytes: lambda v: base64.b64encode(v).decode('utf-8')
-        }
+    model_config = {
+        "json_encoders": {bytes: lambda v: base64.b64encode(v).decode("utf-8")}
     }
+
 
 class EncryptedData(BaseModel):
     data: str
@@ -55,11 +61,21 @@ class EncryptedData(BaseModel):
         return self.model_dump_json()
 
     @classmethod
-    def from_json(cls, json_str: str) -> 'EncryptedData':
+    def from_json(cls, json_str: str) -> "EncryptedData":
         return cls.model_validate_json(json_str)
 
+
 class Encrypter:
-    def __init__(self, keys_config: Optional[Dict[str, Union[str, bytes]]] = None, default_key_id: Optional[str] = None, encrypted_fields: Optional[List[str]] = None, salt_length: int = 32, nonce_length: int = 12, iterations: int = 600000, enable_rotation: bool = True):
+    def __init__(
+        self,
+        keys_config: Optional[Dict[str, Union[str, bytes]]] = None,
+        default_key_id: Optional[str] = None,
+        encrypted_fields: Optional[List[str]] = None,
+        salt_length: int = 32,
+        nonce_length: int = 12,
+        iterations: int = 600000,
+        enable_rotation: bool = True,
+    ):
         self.salt_length = salt_length
         self.nonce_length = nonce_length
         self.iterations = iterations
@@ -93,14 +109,16 @@ class Encrypter:
                     master_key_b64 = master_key
                     master_key_bytes = base64.b64decode(master_key)
                 except Exception:
-                    master_key_b64 = base64.b64encode(master_key.encode('utf-8')).decode('utf-8')
-                    master_key_bytes = master_key.encode('utf-8')
+                    master_key_b64 = base64.b64encode(
+                        master_key.encode("utf-8")
+                    ).decode("utf-8")
+                    master_key_bytes = master_key.encode("utf-8")
             else:
-                master_key_b64 = base64.b64encode(master_key).decode('utf-8')
+                master_key_b64 = base64.b64encode(master_key).decode("utf-8")
                 master_key_bytes = master_key
 
             salt = os.urandom(self.salt_length)
-            salt_b64 = base64.b64encode(salt).decode('utf-8')
+            salt_b64 = base64.b64encode(salt).decode("utf-8")
 
             derived_key = self._derive_key(master_key_bytes, salt)
 
@@ -108,7 +126,7 @@ class Encrypter:
                 key_id=key_id,
                 master_key_b64=master_key_b64,
                 salt_b64=salt_b64,
-                iterations=self.iterations
+                iterations=self.iterations,
             )
             self._ciphers[key_id] = AESGCM(derived_key)
 
@@ -128,16 +146,16 @@ class Encrypter:
     def _generate_default_key(self):
         key_id = f"key_{int(datetime.now().timestamp())}"
         master_key = secrets.token_bytes(32)
-        master_key_b64 = base64.b64encode(master_key).decode('utf-8')
+        master_key_b64 = base64.b64encode(master_key).decode("utf-8")
         salt = os.urandom(self.salt_length)
-        salt_b64 = base64.b64encode(salt).decode('utf-8')
+        salt_b64 = base64.b64encode(salt).decode("utf-8")
         derived_key = self._derive_key(master_key, salt)
 
         self._keys[key_id] = KeyConfig(
             key_id=key_id,
             master_key_b64=master_key_b64,
             salt_b64=salt_b64,
-            iterations=self.iterations
+            iterations=self.iterations,
         )
         self._ciphers[key_id] = AESGCM(derived_key)
         self._default_key_id = key_id
@@ -154,7 +172,7 @@ class Encrypter:
             length=32,
             salt=salt,
             iterations=self.iterations,
-            backend=default_backend()
+            backend=default_backend(),
         )
         return kdf.derive(master_key)
 
@@ -163,25 +181,24 @@ class Encrypter:
 
     async def _decrypt_legacy(self, to_decrypt: str) -> Optional[str]:
         try:
-            encrypted_data = base64.b64decode(to_decrypt.encode('utf-8'))
+            encrypted_data = base64.b64decode(to_decrypt.encode("utf-8"))
             nonce = base64.b64decode(Settings.ENCRYPTER.ENCRYPT_NONCE)
             if len(nonce) != 12:
                 raise ValueError("Invalid nonce length")
 
             cipher = self._ciphers[self._default_key_id]
             result = await asyncio.to_thread(
-                cipher.decrypt,
-                nonce,
-                encrypted_data,
-                None
+                cipher.decrypt, nonce, encrypted_data, None
             )
-            return result.decode('utf-8')
+            return result.decode("utf-8")
 
         except Exception as e:
             logger.error(f"Legacy decryption failed: {e}")
             raise
 
-    async def encrypt(self, to_encrypt: Any, key_id: Optional[str] = None, use_salt: bool = True) -> Optional[str]:
+    async def encrypt(
+        self, to_encrypt: Any, key_id: Optional[str] = None, use_salt: bool = True
+    ) -> Optional[str]:
         if to_encrypt is None:
             return None
 
@@ -198,26 +215,22 @@ class Encrypter:
         nonce = self._generate_nonce()
 
         encrypted_data = await asyncio.to_thread(
-            cipher.encrypt,
-            nonce,
-            to_encrypt.encode('utf-8'),
-            None
+            cipher.encrypt, nonce, to_encrypt.encode("utf-8"), None
         )
 
         metadata = EncryptionMetadata(
             key_id=key_id,
             salt=key_config.salt_b64 if use_salt else None,
-            nonce=base64.b64encode(nonce).decode('utf-8')
+            nonce=base64.b64encode(nonce).decode("utf-8"),
         )
 
         encrypted_package = EncryptedData(
-            data=base64.b64encode(encrypted_data).decode('utf-8'),
-            metadata=metadata
+            data=base64.b64encode(encrypted_data).decode("utf-8"), metadata=metadata
         )
 
-        return base64.b64encode(
-            encrypted_package.to_json().encode('utf-8')
-        ).decode('utf-8')
+        return base64.b64encode(encrypted_package.to_json().encode("utf-8")).decode(
+            "utf-8"
+        )
 
     async def decrypt(self, to_decrypt: Any) -> Optional[str]:
         if to_decrypt is None:
@@ -227,8 +240,10 @@ class Encrypter:
             to_decrypt = str(to_decrypt)
 
         try:
-            json_data = base64.b64decode(to_decrypt.encode('utf-8'))
-            encrypted_package = EncryptedData.model_validate_json(json_data.decode('utf-8'))
+            json_data = base64.b64decode(to_decrypt.encode("utf-8"))
+            encrypted_package = EncryptedData.model_validate_json(
+                json_data.decode("utf-8")
+            )
 
             key_id = encrypted_package.metadata.key_id
             if key_id not in self._ciphers:
@@ -236,27 +251,22 @@ class Encrypter:
 
             cipher = self._ciphers[key_id]
 
-            encrypted_data = base64.b64decode(
-                encrypted_package.data.encode('utf-8')
-            )
-            nonce = base64.b64decode(
-                encrypted_package.metadata.nonce.encode('utf-8')
-            )
+            encrypted_data = base64.b64decode(encrypted_package.data.encode("utf-8"))
+            nonce = base64.b64decode(encrypted_package.metadata.nonce.encode("utf-8"))
 
             result = await asyncio.to_thread(
-                cipher.decrypt,
-                nonce,
-                encrypted_data,
-                None
+                cipher.decrypt, nonce, encrypted_data, None
             )
 
-            return result.decode('utf-8')
+            return result.decode("utf-8")
 
         except Exception as e:
             logger.error(f"Decryption failed: {e}")
             return await self._decrypt_legacy(to_decrypt)
 
-    async def encrypt_field( self, value: Any, key_id: Optional[str] = None) -> Optional[str]:
+    async def encrypt_field(
+        self, value: Any, key_id: Optional[str] = None
+    ) -> Optional[str]:
         if value is None:
             return None
         return await self.encrypt(value, key_id)
@@ -266,7 +276,12 @@ class Encrypter:
             return None
         return await self.decrypt(value)
 
-    async def encrypt_sensitive_data(self, data: Dict, encrypt_fields: Optional[List[str]] = None, key_id: Optional[str] = None) -> Dict:
+    async def encrypt_sensitive_data(
+        self,
+        data: Dict,
+        encrypt_fields: Optional[List[str]] = None,
+        key_id: Optional[str] = None,
+    ) -> Dict:
         encrypt_fields = encrypt_fields or self.encrypted_fields
         result = data.copy()
 
@@ -276,7 +291,9 @@ class Encrypter:
 
         return result
 
-    async def decrypt_sensitive_data(self, data: Dict, decrypt_fields: Optional[List[str]] = None) -> Dict:
+    async def decrypt_sensitive_data(
+        self, data: Dict, decrypt_fields: Optional[List[str]] = None
+    ) -> Dict:
         decrypt_fields = decrypt_fields or self.encrypted_fields
         result = data.copy()
 
@@ -290,7 +307,9 @@ class Encrypter:
 
         return result
 
-    def add_key(self, master_key: Union[str, bytes], key_id: Optional[str] = None) -> str:
+    def add_key(
+        self, master_key: Union[str, bytes], key_id: Optional[str] = None
+    ) -> str:
         if key_id is None:
             key_id = f"key_{int(datetime.now().timestamp())}"
 
@@ -315,7 +334,9 @@ class Encrypter:
 
         return await self.encrypt(decrypted)
 
+
 _encrypter_instance: Optional[Encrypter] = None
+
 
 def get_encrypter() -> Encrypter:
     global _encrypter_instance
@@ -323,19 +344,21 @@ def get_encrypter() -> Encrypter:
         _encrypter_instance = Encrypter()
     return _encrypter_instance
 
+
 class GenerateKeyPairResult(BaseModel):
     master_key: str
     encrypt_salt: str
     nonce_length: int
     iterations: int
 
+
 def generate_key_pair() -> GenerateKeyPairResult:
     master_key = secrets.token_bytes(32)
     salt = os.urandom(32)
 
     return GenerateKeyPairResult(
-        master_key=base64.b64encode(master_key).decode('utf-8'),
-        encrypt_salt=base64.b64encode(salt).decode('utf-8'),
+        master_key=base64.b64encode(master_key).decode("utf-8"),
+        encrypt_salt=base64.b64encode(salt).decode("utf-8"),
         nonce_length=12,
-        iteration=600000
+        iteration=600000,
     )

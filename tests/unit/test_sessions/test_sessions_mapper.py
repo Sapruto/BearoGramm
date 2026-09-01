@@ -3,7 +3,10 @@ from datetime import datetime, timedelta, timezone
 from uuid import uuid4
 
 from src.modules.sessions.core.repositories.mappers.sessions_mapper import SessionMapper
-from src.modules.sessions.models.entities.session_entity import SessionEntity, SessionFields
+from src.modules.sessions.models.entities.session_entity import (
+    SessionEntity,
+    SessionFields,
+)
 
 
 @pytest.mark.unit
@@ -23,7 +26,7 @@ class TestSessionMapper:
         redis_data = {
             "user_uuid": user_uuid,
             "token": token,
-            "expired_at": expired_at.isoformat()
+            "expired_at": expired_at.isoformat(),
         }
 
         entity = session_mapper.to_entity(redis_data)
@@ -36,10 +39,7 @@ class TestSessionMapper:
         user_uuid = str(uuid4())
         token = "test_token"
 
-        redis_data = {
-            "user_uuid": user_uuid,
-            "token": token
-        }
+        redis_data = {"user_uuid": user_uuid, "token": token}
 
         entity = session_mapper.to_entity(redis_data)
 
@@ -49,49 +49,33 @@ class TestSessionMapper:
 
     def test_to_redis_value(self, session_mapper):
         field, value = session_mapper.to_redis_value(
-            SessionFields.USER_UUID,
-            "test_uuid"
+            SessionFields.USER_UUID, "test_uuid"
         )
         assert field == "user_uuid"
         assert value == "test_uuid"
 
-        field, value = session_mapper.to_redis_value(
-            SessionFields.TOKEN,
-            "test_token"
-        )
+        field, value = session_mapper.to_redis_value(SessionFields.TOKEN, "test_token")
         assert field == "token"
         assert value == "test_token"
 
     def test_to_redis_value_expired_at(self, session_mapper):
         now = datetime.now(timezone.utc)
-        field, value = session_mapper.to_redis_value(
-            SessionFields.EXPIRED_AT,
-            now
-        )
+        field, value = session_mapper.to_redis_value(SessionFields.EXPIRED_AT, now)
         assert field == "expired_at"
         assert value == now.isoformat()
 
     def test_to_entity_value(self, session_mapper):
-        field, value = session_mapper.to_entity_value(
-            "user_uuid",
-            "test_uuid"
-        )
+        field, value = session_mapper.to_entity_value("user_uuid", "test_uuid")
         assert field == SessionFields.USER_UUID
         assert value == "test_uuid"
 
-        field, value = session_mapper.to_entity_value(
-            "token",
-            "test_token"
-        )
+        field, value = session_mapper.to_entity_value("token", "test_token")
         assert field == SessionFields.TOKEN
         assert value == "test_token"
 
     def test_to_entity_value_expired_at(self, session_mapper):
         now = datetime.now(timezone.utc)
-        field, value = session_mapper.to_entity_value(
-            "expired_at",
-            now.isoformat()
-        )
+        field, value = session_mapper.to_entity_value("expired_at", now.isoformat())
         assert field == SessionFields.EXPIRED_AT
         assert value == now
 
@@ -99,7 +83,10 @@ class TestSessionMapper:
         assert session_mapper.get_id_field() == SessionFields.TOKEN
 
     def test_get_id_from_entity(self, session_mapper, sample_session_entity):
-        assert session_mapper.get_id_from_entity(sample_session_entity) == sample_session_entity.token
+        assert (
+            session_mapper.get_id_from_entity(sample_session_entity)
+            == sample_session_entity.token
+        )
 
     def test_field_mapping(self, session_mapper):
         assert session_mapper.field_mapping[SessionFields.USER_UUID] == "user_uuid"

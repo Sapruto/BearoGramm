@@ -4,10 +4,18 @@ import sys
 from datetime import datetime
 from src.core.paths import LOGS_ROOT
 
-LOG_FORMAT = "%(asctime)s - %(name)s - %(levelname)s - %(filename)s:%(lineno)d - %(message)s"
+LOG_FORMAT = (
+    "%(asctime)s - %(name)s - %(levelname)s - %(filename)s:%(lineno)d - %(message)s"
+)
 DATE_FORMAT = "%Y-%m-%d %H:%M:%S"
 
-def setup_logger(name: str = "core", log_file: str = None, level: int = logging.DEBUG, console_level: int = logging.INFO) -> logging.Logger:
+
+def setup_logger(
+    name: str = "core",
+    log_file: str = None,
+    level: int = logging.DEBUG,
+    console_level: int = logging.INFO,
+) -> logging.Logger:
     logger = logging.getLogger(name)
     logger.setLevel(logging.DEBUG)
 
@@ -26,10 +34,7 @@ def setup_logger(name: str = "core", log_file: str = None, level: int = logging.
 
     file_path = LOGS_ROOT / log_file
     file_handler = logging.handlers.RotatingFileHandler(
-        file_path,
-        maxBytes=10_485_760,
-        backupCount=5,
-        encoding='utf-8'
+        file_path, maxBytes=10_485_760, backupCount=5, encoding="utf-8"
     )
     file_handler.setLevel(level)
     file_handler.setFormatter(formatter)
@@ -39,7 +44,7 @@ def setup_logger(name: str = "core", log_file: str = None, level: int = logging.
         LOGS_ROOT / f"errors_{datetime.now().strftime('%Y%m%d')}.log",
         maxBytes=5_242_880,
         backupCount=3,
-        encoding='utf-8'
+        encoding="utf-8",
     )
     error_handler.setLevel(logging.ERROR)
     error_handler.setFormatter(formatter)
@@ -47,7 +52,9 @@ def setup_logger(name: str = "core", log_file: str = None, level: int = logging.
 
     return logger
 
+
 default_logger = setup_logger("core")
+
 
 def get_logger(name: str = None) -> logging.Logger:
     if name is None:

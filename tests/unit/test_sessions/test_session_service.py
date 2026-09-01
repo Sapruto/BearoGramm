@@ -27,14 +27,16 @@ class TestSessionService:
         assert result.expires_in_seconds > 0
 
     @pytest.mark.asyncio
-    async def test_create_session_with_max_sessions(self, session_service, session_repository):
+    async def test_create_session_with_max_sessions(
+        self, session_service, session_repository
+    ):
         user_uuid = str(uuid4())
 
         existing_sessions = [
             SessionEntity(
                 user_uuid=user_uuid,
                 token=f"token_{i}",
-                expired_at=datetime.now(timezone.utc) + timedelta(hours=1)
+                expired_at=datetime.now(timezone.utc) + timedelta(hours=1),
             )
             for i in range(5)
         ]
@@ -58,14 +60,16 @@ class TestSessionService:
             await session_service.create_session(dto)
 
     @pytest.mark.asyncio
-    async def test_validate_session_valid(self, session_service, session_repository, token_service):
+    async def test_validate_session_valid(
+        self, session_service, session_repository, token_service
+    ):
         user_uuid = str(uuid4())
         token = "valid_token"
 
         session = SessionEntity(
             user_uuid=user_uuid,
             token=token,
-            expired_at=datetime.now(timezone.utc) + timedelta(hours=24)
+            expired_at=datetime.now(timezone.utc) + timedelta(hours=24),
         )
 
         session_repository.get = AsyncMock(return_value=session)
@@ -86,7 +90,9 @@ class TestSessionService:
         assert result is None
 
     @pytest.mark.asyncio
-    async def test_validate_session_not_found(self, session_service, session_repository, token_service):
+    async def test_validate_session_not_found(
+        self, session_service, session_repository, token_service
+    ):
         token = "valid_token"
         token_service.verify_token = MagicMock(return_value={"user_uuid": str(uuid4())})
         session_repository.get = AsyncMock(return_value=None)
@@ -96,14 +102,16 @@ class TestSessionService:
         assert result is None
 
     @pytest.mark.asyncio
-    async def test_validate_session_expired(self, session_service, session_repository, token_service):
+    async def test_validate_session_expired(
+        self, session_service, session_repository, token_service
+    ):
         user_uuid = str(uuid4())
         token = "expired_token"
 
         session = SessionEntity(
             user_uuid=user_uuid,
             token=token,
-            expired_at=datetime.now(timezone.utc) - timedelta(hours=1)
+            expired_at=datetime.now(timezone.utc) - timedelta(hours=1),
         )
 
         session_repository.get = AsyncMock(return_value=session)
@@ -169,7 +177,11 @@ class TestSessionService:
     async def test_delete_all_user_sessions(self, session_service, session_repository):
         user_uuid = str(uuid4())
         sessions = [
-            SessionEntity(user_uuid=user_uuid, token=f"token_{i}", expired_at=datetime.now(timezone.utc))
+            SessionEntity(
+                user_uuid=user_uuid,
+                token=f"token_{i}",
+                expired_at=datetime.now(timezone.utc),
+            )
             for i in range(3)
         ]
 
@@ -181,7 +193,9 @@ class TestSessionService:
         assert result == 3
 
     @pytest.mark.asyncio
-    async def test_delete_all_user_sessions_empty(self, session_service, session_repository):
+    async def test_delete_all_user_sessions_empty(
+        self, session_service, session_repository
+    ):
         session_repository.get_all = AsyncMock(return_value=[])
 
         result = await session_service.delete_all_user_sessions(str(uuid4()))
@@ -192,7 +206,11 @@ class TestSessionService:
     async def test_get_user_sessions(self, session_service, session_repository):
         user_uuid = str(uuid4())
         sessions = [
-            SessionEntity(user_uuid=user_uuid, token=f"token_{i}", expired_at=datetime.now(timezone.utc))
+            SessionEntity(
+                user_uuid=user_uuid,
+                token=f"token_{i}",
+                expired_at=datetime.now(timezone.utc),
+            )
             for i in range(3)
         ]
 
@@ -204,7 +222,9 @@ class TestSessionService:
         assert all(s.user_uuid == user_uuid for s in result)
 
     @pytest.mark.asyncio
-    async def test_get_user_sessions_exception(self, session_service, session_repository):
+    async def test_get_user_sessions_exception(
+        self, session_service, session_repository
+    ):
         session_repository.get_all = AsyncMock(side_effect=Exception("Redis error"))
 
         result = await session_service.get_user_sessions(str(uuid4()))
@@ -217,7 +237,7 @@ class TestSessionService:
         session = SessionEntity(
             user_uuid=str(uuid4()),
             token=token,
-            expired_at=datetime.now(timezone.utc) + timedelta(hours=24)
+            expired_at=datetime.now(timezone.utc) + timedelta(hours=24),
         )
 
         session_repository.get = AsyncMock(return_value=session)
@@ -228,7 +248,9 @@ class TestSessionService:
         assert result.token == token
 
     @pytest.mark.asyncio
-    async def test_get_session_by_token_not_found(self, session_service, session_repository):
+    async def test_get_session_by_token_not_found(
+        self, session_service, session_repository
+    ):
         session_repository.get = AsyncMock(return_value=None)
 
         result = await session_service.get_session_by_token("invalid")
@@ -241,7 +263,7 @@ class TestSessionService:
             SessionEntity(
                 user_uuid=str(uuid4()),
                 token=f"token_{i}",
-                expired_at=datetime.now(timezone.utc) - timedelta(hours=1)
+                expired_at=datetime.now(timezone.utc) - timedelta(hours=1),
             )
             for i in range(3)
         ]
@@ -249,7 +271,7 @@ class TestSessionService:
             SessionEntity(
                 user_uuid=str(uuid4()),
                 token=f"token_{i}",
-                expired_at=datetime.now(timezone.utc) + timedelta(hours=1)
+                expired_at=datetime.now(timezone.utc) + timedelta(hours=1),
             )
             for i in range(2)
         ]
@@ -282,12 +304,21 @@ class TestSessionService:
     async def test_get_active_sessions_count(self, session_service, session_repository):
         user_uuid = str(uuid4())
         sessions = [
-            SessionEntity(user_uuid=user_uuid, token="token_1",
-                          expired_at=datetime.now(timezone.utc) + timedelta(hours=1)),
-            SessionEntity(user_uuid=user_uuid, token="token_2",
-                          expired_at=datetime.now(timezone.utc) + timedelta(hours=2)),
-            SessionEntity(user_uuid=user_uuid, token="token_3",
-                          expired_at=datetime.now(timezone.utc) - timedelta(hours=1)),
+            SessionEntity(
+                user_uuid=user_uuid,
+                token="token_1",
+                expired_at=datetime.now(timezone.utc) + timedelta(hours=1),
+            ),
+            SessionEntity(
+                user_uuid=user_uuid,
+                token="token_2",
+                expired_at=datetime.now(timezone.utc) + timedelta(hours=2),
+            ),
+            SessionEntity(
+                user_uuid=user_uuid,
+                token="token_3",
+                expired_at=datetime.now(timezone.utc) - timedelta(hours=1),
+            ),
         ]
 
         session_repository.get_all = AsyncMock(return_value=sessions)
@@ -297,7 +328,9 @@ class TestSessionService:
         assert result == 2
 
     @pytest.mark.asyncio
-    async def test_get_active_sessions_count_exception(self, session_service, session_repository):
+    async def test_get_active_sessions_count_exception(
+        self, session_service, session_repository
+    ):
         session_repository.get_all = AsyncMock(side_effect=Exception("Redis error"))
 
         result = await session_service.get_active_sessions_count(str(uuid4()))

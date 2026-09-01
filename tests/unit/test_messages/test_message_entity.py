@@ -2,7 +2,10 @@ import pytest
 from datetime import datetime, timezone
 from uuid import uuid4
 
-from src.modules.messages.models.entities.message_entity import MessageEntity, MessageFields
+from src.modules.messages.models.entities.message_entity import (
+    MessageEntity,
+    MessageFields,
+)
 from src.modules.messages.types.text.text_message_data import TextMessageData
 
 
@@ -19,7 +22,7 @@ class TestMessageEntity:
             chat_uuid=chat_uuid,
             user_uuid=user_uuid,
             created_at=now,
-            updated_at=now
+            updated_at=now,
         )
 
         assert entity.uuid is not None
@@ -29,10 +32,7 @@ class TestMessageEntity:
         assert entity.user_uuid == user_uuid
 
     def test_message_entity_optional_fields(self):
-        entity = MessageEntity(
-            chat_uuid=str(uuid4()),
-            user_uuid=str(uuid4())
-        )
+        entity = MessageEntity(chat_uuid=str(uuid4()), user_uuid=str(uuid4()))
 
         assert entity.uuid is None
         assert entity.message_data == []
@@ -40,10 +40,7 @@ class TestMessageEntity:
         assert entity.updated_at is None
 
     def test_message_entity_add_content(self, sample_text_data):
-        entity = MessageEntity(
-            chat_uuid=str(uuid4()),
-            user_uuid=str(uuid4())
-        )
+        entity = MessageEntity(chat_uuid=str(uuid4()), user_uuid=str(uuid4()))
 
         entity.add_content(sample_text_data)
         assert len(entity.message_data) == 1
@@ -53,7 +50,7 @@ class TestMessageEntity:
         entity = MessageEntity(
             chat_uuid=str(uuid4()),
             user_uuid=str(uuid4()),
-            message_data=[sample_text_data]
+            message_data=[sample_text_data],
         )
 
         entity.remove_content(sample_text_data)
