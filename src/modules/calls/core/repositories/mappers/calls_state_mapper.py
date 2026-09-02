@@ -87,7 +87,7 @@ class CallsStateMapper(BaseRedisMapper[CallStateEntity, CallStateFields]):
             callee_uuid=data.get("callee_uuid") or None,
             created_at=created_at,
             updated_at=updated_at,
-            call_type=call_type,  # 👈
+            call_type=call_type,
         )
 
     def to_redis_value(self, field: CallStateFields, value: Any) -> Tuple[str, Any]:

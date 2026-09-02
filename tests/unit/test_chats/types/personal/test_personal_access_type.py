@@ -2,11 +2,11 @@ import pytest
 from datetime import datetime
 from uuid import uuid4
 
-from src.modules.chats.chat_types.personal.models.personal_access_type import (
+from src.modules.chats.chat_types.personal.personal_models.personal_access_type import (
     PersonalAccessType,
     PERSONAL_TYPE,
 )
-from src.modules.chats.chat_types.personal.models.personal_access_threshold import (
+from src.modules.chats.chat_types.personal.personal_models.personal_access_threshold import (
     PersonalAccessThreshold,
 )
 from src.modules.chats.chat_types.base.base_access_type import BaseAccessType

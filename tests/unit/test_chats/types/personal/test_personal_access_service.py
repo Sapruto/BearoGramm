@@ -8,7 +8,7 @@ from src.modules.chats.chat_types.personal.core.personal_access_service import (
     get_personal_access_service,
 )
 from src.modules.chats.models.entities.chat_entity import ChatEntity
-from src.modules.chats.chat_types.personal.models.personal_access_type import (
+from src.modules.chats.chat_types.personal.personal_models.personal_access_type import (
     PersonalAccessType,
 )
 
@@ -26,7 +26,7 @@ class TestPersonalAccessService:
         personal_repository.find_between_users = AsyncMock(return_value=None)
 
         from src.modules.chats.models.entities.chat_entity import ChatEntity
-        from src.modules.chats.chat_types.personal.models.personal_access_type import (
+        from src.modules.chats.chat_types.personal.personal_models.personal_access_type import (
             PersonalAccessType,
         )
 
@@ -208,7 +208,7 @@ class TestPersonalAccessService:
         sample_user_uuid,
         sample_companion_uuid,
     ):
-        from src.modules.chats.chat_types.personal.models.personal_contact import (
+        from src.modules.chats.chat_types.personal.personal_models.personal_contact import (
             PersonalContact,
         )
 

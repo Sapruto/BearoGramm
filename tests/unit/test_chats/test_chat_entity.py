@@ -4,7 +4,7 @@ from uuid import uuid4
 from pydantic import ValidationError
 
 from src.modules.chats.models.entities.chat_entity import ChatEntity, ChatFields
-from src.modules.chats.chat_types.personal.models.personal_access_type import (
+from src.modules.chats.chat_types.personal.personal_models.personal_access_type import (
     PersonalAccessType,
     PERSONAL_TYPE,
 )

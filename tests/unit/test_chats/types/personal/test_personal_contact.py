@@ -2,7 +2,7 @@ import pytest
 from datetime import datetime
 from uuid import uuid4
 
-from src.modules.chats.chat_types.personal.models.personal_contact import (
+from src.modules.chats.chat_types.personal.personal_models.personal_contact import (
     PersonalContact,
 )
 

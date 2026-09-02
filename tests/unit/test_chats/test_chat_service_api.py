@@ -4,7 +4,7 @@ from uuid import uuid4
 
 from src.modules.chats.api.chat_service_api import ChatServiceAPI, get_chat_service_api
 from src.modules.chats.models.message_action_type import MessageActionType
-from src.modules.chats.chat_types.personal.models.personal_access_type import (
+from src.modules.chats.chat_types.personal.personal_models.personal_access_type import (
     PersonalAccessType,
 )
 

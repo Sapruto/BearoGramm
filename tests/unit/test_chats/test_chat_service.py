@@ -4,7 +4,7 @@ import pytest
 from unittest.mock import AsyncMock, MagicMock
 
 from src.modules.chats.core.services.chat_service import ChatService, get_chat_service
-from src.modules.chats.chat_types.personal.models.personal_access_type import (
+from src.modules.chats.chat_types.personal.personal_models.personal_access_type import (
     PersonalAccessType,
 )
 

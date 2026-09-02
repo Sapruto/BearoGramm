@@ -9,13 +9,13 @@ from src.modules.chats.core.repositories.mappers.chat_mapper import ChatMapper
 from src.modules.chats.core.repositories.chat_repository import ChatRepository
 from src.modules.chats.core.services.chat_service import ChatService
 from src.modules.chats.api.chat_service_api import ChatServiceAPI
-from src.modules.chats.chat_types.personal.models.personal_access_type import (
+from src.modules.chats.chat_types.personal.personal_models.personal_access_type import (
     PersonalAccessType,
 )
-from src.modules.chats.chat_types.personal.models.personal_access_threshold import (
+from src.modules.chats.chat_types.personal.personal_models.personal_access_threshold import (
     PersonalAccessThreshold,
 )
-from src.modules.chats.chat_types.personal.models.personal_contact import (
+from src.modules.chats.chat_types.personal.personal_models.personal_contact import (
     PersonalContact,
 )
 from src.modules.chats.chat_types.personal.core.personal_repository import (

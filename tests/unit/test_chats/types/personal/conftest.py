@@ -6,13 +6,13 @@ from uuid import uuid4
 from src.modules.chats.models.entities.chat_entity import ChatEntity
 from src.modules.chats.models.orm.chat_orm import ChatORM
 from src.modules.chats.core.repositories.mappers.chat_mapper import ChatMapper
-from src.modules.chats.chat_types.personal.models.personal_access_type import (
+from src.modules.chats.chat_types.personal.personal_models.personal_access_type import (
     PersonalAccessType,
 )
-from src.modules.chats.chat_types.personal.models.personal_access_threshold import (
+from src.modules.chats.chat_types.personal.personal_models.personal_access_threshold import (
     PersonalAccessThreshold,
 )
-from src.modules.chats.chat_types.personal.models.personal_contact import (
+from src.modules.chats.chat_types.personal.personal_models.personal_contact import (
     PersonalContact,
 )
 from src.modules.chats.chat_types.personal.core.personal_repository import (
