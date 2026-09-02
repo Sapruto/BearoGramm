@@ -1,7 +1,6 @@
 from functools import wraps
 from typing import Optional, Callable, TypeVar
-from fastapi import Request, HTTPException, status, WebSocket
-import json
+from fastapi import Request, HTTPException, status
 
 from src.modules.sessions import SessionAPIService, get_session_service_api
 from src.core.logger import get_logger

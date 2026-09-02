@@ -11,7 +11,6 @@ class PersonalChatResponse(BaseModel):
     partner_uuid: str
     created_at: datetime
     updated_at: datetime
-    metadata: Optional[Dict[str, Any]] = Field(default_factory=dict)
 
 
 class PersonalChatPreview(BaseModel):

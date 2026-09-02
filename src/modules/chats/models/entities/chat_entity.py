@@ -3,7 +3,7 @@ from enum import Enum
 from typing import Optional, List
 from datetime import datetime
 
-from ...chat_types.chat_factory import ChatType
+from ...chat_types.chat_types import ChatType
 
 
 class ChatFields(str, Enum):
@@ -13,6 +13,8 @@ class ChatFields(str, Enum):
 
     CREATED_AT = "created_at"
     UPDATED_AT = "updated_at"
+
+    ACCESSES = "accesses"
 
     def __str__(self):
         return self.value
@@ -26,4 +28,4 @@ class ChatEntity(BaseModel):
     created_at: Optional[datetime] = Field(default=None)
     updated_at: Optional[datetime] = Field(default=None)
 
-    accesses: Optional[List["AccessEntity"]] = Field(default=None)
+    accesses: Optional[List["ParticipantEntity"]] = Field(default=None)

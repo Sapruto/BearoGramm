@@ -5,7 +5,7 @@ from uuid import uuid4
 from datetime import datetime
 from typing import List
 
-from ...chat_types.chat_factory import ChatType
+from ...chat_types.chat_types import ChatType
 
 
 class ChatORM(Base):
@@ -34,4 +34,4 @@ class ChatORM(Base):
         order_by="MessageORM.created_at.desc()",
     )
 
-    __table_args__ = Index("idx_chats_type", "chat_type")
+    __table_args__ = (Index("idx_chats_type", "chat_type"),)

@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 
-from src.modules.user import get_current_user
+from src.modules.user import get_current_user_depends
 
 from .personal_chat_service import PersonalChatService, get_personal_chat_service
 from .personal_models import (
@@ -20,17 +20,17 @@ from ..base.exceptions import (
 )
 
 
-router = APIRouter(prefix="/personal", tags=["Personal Chats"])
+personal_chats_router = APIRouter(prefix="/api/personal")
 
 
-@router.post(
-    "/create",
+@personal_chats_router.post(
+    path="/create",
     response_model=PersonalChatResponse,
     status_code=status.HTTP_201_CREATED
 )
 async def create_personal_chat(
         request: PersonalChatCreateRequest,
-        current_user=Depends(get_current_user),
+        current_user = Depends(get_current_user_depends()),
         service: PersonalChatService = Depends(get_personal_chat_service)
 ) -> PersonalChatResponse:
     try:
@@ -55,13 +55,13 @@ async def create_personal_chat(
         )
 
 
-@router.get(
+@personal_chats_router.get(
     "/{chat_uuid}",
     response_model=PersonalChatResponse
 )
 async def get_personal_chat(
         chat_uuid: str,
-        current_user=Depends(get_current_user),
+        current_user = Depends(get_current_user_depends()),
         service: PersonalChatService = Depends(get_personal_chat_service)
 ) -> PersonalChatResponse:
     try:
@@ -83,14 +83,14 @@ async def get_personal_chat(
         )
 
 
-@router.get(
+@personal_chats_router.get(
     "/",
     response_model=PersonalChatListResponse
 )
 async def get_personal_chats(
         limit: int = Query(50, ge=1, le=100),
         offset: int = Query(0, ge=0),
-        current_user=Depends(get_current_user),
+        current_user = Depends(get_current_user_depends()),
         service: PersonalChatService = Depends(get_personal_chat_service)
 ) -> PersonalChatListResponse:
     try:
@@ -113,13 +113,13 @@ async def get_personal_chats(
         )
 
 
-@router.delete(
+@personal_chats_router.delete(
     "/{chat_uuid}",
     response_model=DeleteChatResponse
 )
 async def delete_personal_chat(
         chat_uuid: str,
-        current_user=Depends(get_current_user),
+        current_user = Depends(get_current_user_depends()),
         service: PersonalChatService = Depends(get_personal_chat_service)
 ) -> DeleteChatResponse:
     try:
@@ -157,13 +157,13 @@ async def delete_personal_chat(
         )
 
 
-@router.get(
+@personal_chats_router.get(
     "/{chat_uuid}/partner",
     response_model=PartnerResponse
 )
 async def get_chat_partner(
         chat_uuid: str,
-        current_user=Depends(get_current_user),
+        current_user = Depends(get_current_user_depends()),
         service: PersonalChatService = Depends(get_personal_chat_service)
 ) -> PartnerResponse:
     try:
@@ -189,13 +189,13 @@ async def get_chat_partner(
         )
 
 
-@router.get(
+@personal_chats_router.get(
     "/{chat_uuid}/exists",
     response_model=ParticipantCheckResponse
 )
 async def check_participant(
         chat_uuid: str,
-        current_user=Depends(get_current_user),
+        current_user= Depends(get_current_user_depends()),
         service: PersonalChatService = Depends(get_personal_chat_service)
 ) -> ParticipantCheckResponse:
     try:

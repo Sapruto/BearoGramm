@@ -4,7 +4,7 @@ from enum import Enum
 from typing import Dict, Optional
 from datetime import datetime
 
-from ..enums import ResourceType,
+from ..enums import ResourceType
 
 
 class ParticipantFields(str, Enum):
