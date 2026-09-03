@@ -1,12 +1,11 @@
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy import JSON, Uuid, DateTime, String, ForeignKey, text, func, Index
+from typing import List, Optional
 
 from uuid import uuid4
 from datetime import datetime
-from typing import List, Optional
 
 from src.core.database import Base
-
 from ...types.base.base_message_data import base_message_data_type
 
 
@@ -33,11 +32,23 @@ class MessageORM(Base):
         index=True,
     )
     user_uuid: Mapped[str] = mapped_column(
-        String(36), ForeignKey("user.uuid"), nullable=False, index=True
+        String(36),
+        ForeignKey("users.uuid", ondelete="SET NULL"),
+        nullable=True,
+        index=True
     )
 
     chat: Mapped["ChatORM"] = relationship(
-        "ChatORM", back_populates="messages", lazy="selectin"
+        "ChatORM",
+        back_populates="messages",
+        lazy="selectin"
+    )
+
+    user: Mapped["UserORM"] = relationship(
+        "UserORM",
+        back_populates="messages",
+        lazy="selectin",
+        foreign_keys=[user_uuid]
     )
 
     __table_args__ = (
@@ -53,4 +64,6 @@ class MessageORM(Base):
             text("(message_data->>'data_type')"),
             postgresql_using="btree",
         ),
+        Index("idx_message_chat_user", "chat_uuid", "user_uuid"),
+        Index("idx_message_chat_created", "chat_uuid", "created_at"),
     )

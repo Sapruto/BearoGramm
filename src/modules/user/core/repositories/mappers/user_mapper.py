@@ -60,22 +60,28 @@ class UserMapper(BaseMapper[UserEntity, UserORM, UserFields]):
             return f"{normalized[:2]}***{normalized[-4:]}"
         return phone
 
+    def _run_async(self, coro):
+        try:
+            loop = asyncio.get_running_loop()
+            if loop.is_running():
+                import concurrent.futures
+                with concurrent.futures.ThreadPoolExecutor() as executor:
+                    future = executor.submit(asyncio.run, coro)
+                    return future.result()
+            else:
+                return loop.run_until_complete(coro)
+        except RuntimeError:
+            return asyncio.run(coro)
+
     def to_orm(self, entity: UserEntity) -> UserORM:
         phone_encrypted = None
         phone_hash = None
         phone_mask = None
 
         if entity.phone_number:
-            try:
-                loop = asyncio.get_event_loop()
-                phone_encrypted = loop.run_until_complete(
-                    self.encrypter.encrypt_field(entity.phone_number)
-                )
-            except RuntimeError:
-                phone_encrypted = asyncio.run(
-                    self.encrypter.encrypt_field(entity.phone_number)
-                )
-
+            phone_encrypted = self._run_async(
+                self.encrypter.encrypt_field(entity.phone_number)
+            )
             phone_hash = self._hash_phone(entity.phone_number)
             phone_mask = self._mask_phone(entity.phone_number)
 
@@ -93,14 +99,9 @@ class UserMapper(BaseMapper[UserEntity, UserORM, UserFields]):
 
         if orm.phone_number_encrypted:
             try:
-                if hasattr(self, "_loop"):
-                    phone_number = self._loop.run_until_complete(
-                        self.encrypter.decrypt_field(orm.phone_number_encrypted)
-                    )
-                else:
-                    phone_number = asyncio.run(
-                        self.encrypter.decrypt_field(orm.phone_number_encrypted)
-                    )
+                phone_number = self._run_async(
+                    self.encrypter.decrypt_field(orm.phone_number_encrypted)
+                )
             except Exception as e:
                 logger.error(f"Failed to decrypt phone: {e}")
                 phone_number = None
@@ -112,9 +113,7 @@ class UserMapper(BaseMapper[UserEntity, UserORM, UserFields]):
             updated_at=orm.updated_at,
         )
 
-    def to_orm_value(
-        self, field: UserFields, value: Any
-    ) -> Tuple[InstrumentedAttribute, Any]:
+    def to_orm_value(self, field: UserFields, value: Any) -> Tuple[InstrumentedAttribute, Any]:
         orm_field = self.to_orm_field(field)
 
         if field == UserFields.PHONE_NUMBER:
@@ -128,16 +127,14 @@ class UserMapper(BaseMapper[UserEntity, UserORM, UserFields]):
 
         return orm_field, value
 
-    def to_entity_value(
-        self, field: InstrumentedAttribute, value: Any
-    ) -> Tuple[UserFields, Any]:
+    def to_entity_value(self, field: InstrumentedAttribute, value: Any) -> Tuple[UserFields, Any]:
         entity_field = self.to_entity_field(field)
 
         if entity_field == UserFields.PHONE_NUMBER:
             if value is None:
                 return entity_field, None
             try:
-                decrypted = asyncio.run(self.encrypter.decrypt_field(value))
+                decrypted = self._run_async(self.encrypter.decrypt_field(value))
                 return entity_field, decrypted
             except Exception as e:
                 logger.error(f"Failed to decrypt phone in to_entity_value: {e}")

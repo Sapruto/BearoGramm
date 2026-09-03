@@ -17,6 +17,7 @@ from .models.enums import (
     PermissionType,
 )
 from .models.entities.permission import Permission
+from .models.entities.participant_entity import ParticipantEntity
 
 __all__ = [
     "PermissionService",
@@ -35,4 +36,5 @@ __all__ = [
     "ChannelAction",
     "ActionType",
     "PermissionType",
+    "ParticipantEntity",
 ]

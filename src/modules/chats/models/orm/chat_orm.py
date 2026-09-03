@@ -20,12 +20,6 @@ class ChatORM(Base):
     )
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=True)
 
-    accesses: Mapped[List["ParticipantORM"]] = relationship(
-        "ParticipantORM",
-        back_populates="chat",
-        lazy="selectin",
-        cascade="all, delete-orphan",
-    )
     messages: Mapped[List["MessageORM"]] = relationship(
         "MessageORM",
         back_populates="chat",

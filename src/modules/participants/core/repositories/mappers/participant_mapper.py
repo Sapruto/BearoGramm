@@ -16,6 +16,14 @@ class ParticipantMapper(BaseMapper[ParticipantEntity, ParticipantORM, Participan
         ParticipantFields.PERMISSIONS: ParticipantORM.permissions,
     }
 
+    reverse_field_mapping = {
+        ParticipantORM.uuid: ParticipantFields.UUID,
+        ParticipantORM.user_uuid: ParticipantFields.USER_UUID,
+        ParticipantORM.resource_uuid: ParticipantFields.RESOURCE_UUID,
+        ParticipantORM.resource_type: ParticipantFields.RESOURCE_TYPE,
+        ParticipantORM.permissions: ParticipantFields.PERMISSIONS,
+    }
+
     def to_orm(self, entity: ParticipantEntity) -> ParticipantORM:
         return ParticipantORM(
             uuid=entity.uuid,

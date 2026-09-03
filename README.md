@@ -34,3 +34,5 @@ Create your own `.env` file based on `.env.example`
 ```sh
 python run.py
 ```
+
+### NO F*CK WE NEED A COOL INFO ON THIS README!

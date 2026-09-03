@@ -1,7 +1,8 @@
 from src.core.database import Base
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy import String, DateTime, func, Uuid
 
+from typing import List
 from uuid import uuid4
 from datetime import datetime
 
@@ -24,4 +25,12 @@ class UserORM(Base):
     )
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, default=func.now(), onupdate=func.now()
+    )
+
+    messages: Mapped[List["MessageORM"]] = relationship(
+        "MessageORM",
+        back_populates="user",
+        lazy="selectin",
+        cascade="all, delete-orphan",
+        foreign_keys="MessageORM.user_uuid"
     )

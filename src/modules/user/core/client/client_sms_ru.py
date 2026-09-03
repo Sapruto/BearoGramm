@@ -4,10 +4,12 @@ from smsru_api import AsyncClient
 from src.core.settings import Settings
 from src.core.logger import get_logger
 
+from .client_interface import ClientInterface
+
 logger = get_logger(__name__)
 
 
-class ClientSMSRu:
+class ClientSMSRu(ClientInterface):
     def __init__(self, max_retries: int = 3, retry_delay: int = 1):
         self.api_key = Settings.PHONE.ASYNC_CLIENT_API_ID
         if not self.api_key:
@@ -62,20 +64,6 @@ class ClientSMSRu:
                 exc_info=True,
             )
             return False
-
-    async def send_verify_code(
-        self, phone_number: str, code: str, time_of_live_per_minuts: int
-    ) -> bool:
-        message = f"Ваш код подтверждения: {code}. Действителен {time_of_live_per_minuts} минут."
-        return await self.send_sms(phone_number, message)
-
-    async def send_login_code(
-        self, phone_number: str, code: str, time_of_live_per_minuts: int
-    ) -> bool:
-        message = (
-            f"Код для входа: {code}. Действителен {time_of_live_per_minuts} минут."
-        )
-        return await self.send_sms(phone_number, message)
 
 
 def get_client_smsru() -> ClientSMSRu:

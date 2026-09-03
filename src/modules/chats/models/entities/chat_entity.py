@@ -14,8 +14,6 @@ class ChatFields(str, Enum):
     CREATED_AT = "created_at"
     UPDATED_AT = "updated_at"
 
-    ACCESSES = "accesses"
-
     def __str__(self):
         return self.value
 
@@ -27,5 +25,3 @@ class ChatEntity(BaseModel):
 
     created_at: Optional[datetime] = Field(default=None)
     updated_at: Optional[datetime] = Field(default=None)
-
-    accesses: Optional[List["ParticipantEntity"]] = Field(default=None)

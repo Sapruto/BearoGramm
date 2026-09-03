@@ -152,6 +152,8 @@ class SettingsModel(BaseSettings):
     ENCRYPTER: EncrypterSettings = Field(default_factory=EncrypterSettings)
     PHONE: PhoneSettings = Field(default_factory=PhoneSettings)
 
+    CLIENT_SMS_TYPE: str = "test"
+
     @field_validator("BASE_URL")
     @classmethod
     def validate_base_url(cls, v: str, info) -> str:

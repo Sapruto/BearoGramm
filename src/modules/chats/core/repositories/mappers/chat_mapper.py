@@ -8,20 +8,21 @@ from src.core.logger import get_logger
 from ....models.orm.chat_orm import ChatORM
 from ....models.entities.chat_entity import ChatFields, ChatEntity
 
+
 logger = get_logger(__name__)
 
 
 class ChatMapper(BaseMapper[ChatEntity, ChatORM, ChatFields]):
     field_mapping = {
         ChatFields.UUID: ChatORM.uuid,
-        ChatFields.ACCESSES: ChatORM.accesses,
+        ChatFields.CHAT_TYPE: ChatORM.chat_type,
         ChatFields.CREATED_AT: ChatORM.created_at,
         ChatFields.UPDATED_AT: ChatORM.updated_at,
     }
 
     reverse_field_mapping = {
         ChatORM.uuid: ChatFields.UUID,
-        ChatORM.accesses: ChatFields.ACCESSES,
+        ChatORM.chat_type: ChatFields.CHAT_TYPE,
         ChatORM.created_at: ChatFields.CREATED_AT,
         ChatORM.updated_at: ChatFields.UPDATED_AT,
     }
@@ -47,25 +48,12 @@ class ChatMapper(BaseMapper[ChatEntity, ChatORM, ChatFields]):
     ) -> Tuple[InstrumentedAttribute, Any]:
         orm_field = self.to_orm_field(field)
 
-        if field == ChatFields.ACCESSES:
-            if not isinstance(value, list):
-                raise NotConvertableValue(value, "accesses", "Accesses must be a list")
-            return ChatORM.accesses, value
-
         return orm_field, value
 
     def to_entity_value(
         self, field: InstrumentedAttribute, value: Any
     ) -> Tuple[ChatFields, Any]:
         entity_field = self.to_entity_field(field)
-
-        if entity_field == ChatFields.ACCESSES:
-            if value is None:
-                return entity_field, []
-            if not isinstance(value, list):
-                logger.warning(f"Expected list for ACCESSES, got {type(value)}")
-                return entity_field, []
-            return entity_field, value
 
         return entity_field, value
 

@@ -27,7 +27,7 @@
         "DB_MAX_OVERFLOW": 20,
         "DB_POOL_TIMEOUT": 30,
         "POOL_RECYCLE": 3600,
-        "INIT_DB": false
+        "INIT_DB": true
     },
     "MEDIA_STORAGE": {
         "UPLOAD_DIR": "uploads",
@@ -37,5 +37,6 @@
             "S3_BUCKET_NAME": "your-bucket",
             "S3_REGION": "ru1"
         }
-    }
+    },
+    "CLIENT_SMS_TYPE": "test"
 }

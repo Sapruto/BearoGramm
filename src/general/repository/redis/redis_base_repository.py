@@ -52,7 +52,7 @@ class BaseRedisRepository(
     def _get_entity_id(self, entity: EntityType) -> Any:
         return self._mapper.get_id_from_entity(entity)
 
-    async def _set_ttl(self, key: str, ttl: int):
+    async def _set_ttl(self, key: str, ttl: Optional[int] = None):
         if ttl:
             await self.redis.expire(key, ttl)
         if self.default_ttl:
