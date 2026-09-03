@@ -6,6 +6,7 @@ from ...models.entities.user_entity import UserEntity, UserFields
 from ...models.dto.requests import SendCodeRequest, VerifyCodeRequest
 from ...models.dto.responses import SendCodeResponse, VerifyCodeResponse
 
+from src.general.repository.sql.sql_query import SqlQuery
 from src.core.logger import get_logger
 from src.modules.sessions import (
     SessionAPIService,
@@ -41,7 +42,7 @@ class UserService:
                 new_user = UserEntity(phone_number=phone_number)
                 user = await self.user_repository.save(new_user)
 
-                if not isinstance(user, UserEntity):
+                if not user:
                     return SendCodeResponse(
                         success=False, error_message="Failed to create user"
                     )
@@ -75,8 +76,8 @@ class UserService:
                     success=False, error_message="Invalid or expired code"
                 )
 
-            user = await self.user_repository.get_by_field(
-                value=phone_number, field=UserFields.PHONE_NUMBER
+            user = await self.user_repository.get(
+                SqlQuery[UserFields]().add_filter(field=UserFields.PHONE_NUMBER, value=phone_number)
             )
 
             if not user:
