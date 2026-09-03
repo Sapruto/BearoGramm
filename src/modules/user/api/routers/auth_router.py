@@ -16,10 +16,10 @@ from ...models.dto.requests import SendCodeRequest, VerifyCodeRequest
 from ...models.dto.responses import SendCodeResponse, VerifyCodeResponse
 
 
-user_router = APIRouter(prefix="/api/users", tags=["users"])
+auth_router = APIRouter(prefix=AuthRoutes.base, tags=["auth"])
 
 
-@user_router.post(
+@auth_router.post(
     AuthRoutes.send_code,
     response_model=SendCodeResponse,
     status_code=status.HTTP_200_OK
@@ -76,7 +76,7 @@ async def send_code(
         )
 
 
-@user_router.post(
+@auth_router.post(
     AuthRoutes.verify_phone,
     response_model=VerifyCodeResponse,
     status_code=status.HTTP_200_OK
