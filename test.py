@@ -1,6 +1,6 @@
 import httpx
 
-res = httpx.post("http://127.0.0.1:5000/api/auth/get_login_token",
+res = httpx.post("http://127.0.0.1:5000/api/auth/send_verify_code",
                 json = {"phone_number": "+79256496767"}
 )
 print(res.json())
