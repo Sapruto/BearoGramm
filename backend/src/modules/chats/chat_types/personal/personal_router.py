@@ -11,7 +11,7 @@ from .personal_models import (
     DeleteChatResponse,
     PersonalChatListResponse
 )
-from .personal_exceptions import CannotChatWithSelfError
+from .personal_exceptions import CannotChatWithSelfError, NotFoundUser
 from ..base.exceptions import (
     UserNotParticipantError,
     PermissionDeniedError,
@@ -36,9 +36,14 @@ async def create_personal_chat(
     try:
         return await service.get_or_create(
             user_uuid=current_user.uuid,
-            other_user_uuid=request.other_user_uuid
+            other_user_phone=request.other_user_phone
         )
     except CannotChatWithSelfError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e)
+        )
+    except NotFoundUser as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=str(e)

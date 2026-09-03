@@ -1,10 +1,11 @@
 from typing import Optional, List, Tuple, Dict, Any
 
 from src.general.repository.sql.sql_query import SqlQuery
+from src.modules.user import UserServiceAPI, get_user_service_api
 from src.modules.participants import Permission, PermissionService, ChatAction, MessageAction
 
 from .personal_models import PersonalChatResponse, PersonalChatPreview
-from .personal_exceptions import CannotChatWithSelfError
+from .personal_exceptions import CannotChatWithSelfError, NotFoundUser
 from ..base.base_chat_service import BaseChatService
 from ..base.exceptions import (
     UserNotParticipantError,
@@ -22,7 +23,9 @@ class PersonalChatService(BaseChatService):
             self,
             repository: Optional[ChatRepository] = None,
             permission_service: Optional[PermissionService] = None,
+            user_service: Optional[UserServiceAPI] = None,
     ):
+        self.user_service = user_service or get_user_service_api()
         super().__init__(repository, permission_service)
 
     def _get_chat_type(self) -> str:
@@ -53,8 +56,13 @@ class PersonalChatService(BaseChatService):
     async def get_or_create(
             self,
             user_uuid: str,
-            other_user_uuid: str
+            other_user_phone: str
     ) -> PersonalChatResponse:
+        user = self.user_service.get_user_by_phone(other_user_phone)
+        if not user:
+            raise NotFoundUser()
+        other_user_uuid = user.uuid
+
         if user_uuid == other_user_uuid:
             raise CannotChatWithSelfError()
 

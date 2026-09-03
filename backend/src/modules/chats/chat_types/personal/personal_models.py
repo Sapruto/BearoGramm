@@ -21,7 +21,7 @@ class PersonalChatPreview(BaseModel):
 
 
 class PersonalChatCreateRequest(BaseModel):
-    other_user_uuid: str
+    other_user_phone: str
 
 
 class PersonalChatListResponse(BaseModel):
