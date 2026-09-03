@@ -27,4 +27,4 @@ async def get_login_token(
 async def verify_phone(
     request: VerifyCodeRequest, service: UserService = Depends(get_user_service)
 ):
-    return await service.verify_phone(request.phone_number)
+    return await service.verify_phone(request)
