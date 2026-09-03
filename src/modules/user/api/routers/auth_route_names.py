@@ -5,7 +5,7 @@ from src.core.settings import Settings
 
 class AuthRoutes(str, Enum):
     base = "/api/auth"
-    send_code = "/send_code"
+    send_code = "/send_verify_code"
     verify_phone = "/verify_phone"
 
     def __str__(self):

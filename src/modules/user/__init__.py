@@ -4,7 +4,6 @@ from .api.imports.models import (
     UserSessionsAPIModel,
     UserSessionResponseAPIModel,
 )
-from .api.routers.auth_router import auth_router
 from .api.routers.auth_route_names import AuthRoutes, AuthRoutesURL
 from .api.routers.login_required import (
     login_required,
@@ -12,7 +11,7 @@ from .api.routers.login_required import (
     get_current_user,
     authenticate_by_token,
 )
-from .api.exceptions import UserHaveNotAccess, UserNotFound, InvalidTokenError
+from src.modules.user.api.imports.exceptions import UserHaveNotAccess, UserNotFound, InvalidTokenError
 
 from .models.entities.user_entity import UserEntity
 

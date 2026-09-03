@@ -2,6 +2,16 @@ from typing import Optional
 
 from .verify_service import VerifyService, get_verify_service
 from ..repositories.user_repository import UserRepository, get_user_repository
+from ..exceptions import (
+    FailedToCreateUser,
+    FailedToSendCode,
+    FailedToGetLoginToken,
+    InvalidOrExpiredCode,
+    UserNotFound,
+    VerificationFailed,
+    SessionCreationFailed,
+    InvalidPhoneNumber,
+)
 from ...models.entities.user_entity import UserEntity, UserFields
 from ...models.dto.requests import SendCodeRequest, VerifyCodeRequest
 from ...models.dto.responses import SendCodeResponse, VerifyCodeResponse
@@ -33,6 +43,8 @@ class UserService:
     ) -> SendCodeResponse:
         try:
             phone_number = request.phone_number.strip()
+            if not phone_number:
+                raise InvalidPhoneNumber(phone_number)
 
             user = await self.user_repository.get_by_field(
                 value=phone_number, field=UserFields.PHONE_NUMBER
@@ -43,61 +55,66 @@ class UserService:
                 user = await self.user_repository.save(new_user)
 
                 if not user:
-                    return SendCodeResponse(
-                        success=False, error_message="Failed to create user"
-                    )
+                    raise FailedToCreateUser(phone_number, "Repository returned None")
 
             code = await self.verify_service.send_login_code(
                 user_uuid=str(user.uuid), phone_number=phone_number
             )
 
             if not code:
-                return SendCodeResponse(
-                    success=False, error_message="Failed to send code"
-                )
+                raise FailedToSendCode(phone_number, str(user.uuid), "Verify service returned None")
 
-            return SendCodeResponse(success=True)
+            return SendCodeResponse()
+
+        except (InvalidPhoneNumber, FailedToCreateUser, FailedToSendCode):
+            raise
 
         except Exception as e:
-            logger.error(f"Error in get_login_token: {e}")
-            return SendCodeResponse(
-                success=False, error_message="Failed to get login token"
-            )
+            logger.error(f"Error in send_code_and_register_if_not: {e}")
+            raise FailedToGetLoginToken(request.phone_number, str(e))
 
     async def verify_phone(self, request: VerifyCodeRequest) -> VerifyCodeResponse:
         try:
             phone_number = request.phone_number.strip()
             code = request.code.strip()
 
+            if not phone_number:
+                raise InvalidPhoneNumber(phone_number)
+            if not code:
+                raise InvalidOrExpiredCode(phone_number)
+
             is_valid = await self.verify_service.verify_code(code)
 
             if not is_valid:
-                return VerifyCodeResponse(
-                    success=False, error_message="Invalid or expired code"
-                )
+                raise InvalidOrExpiredCode(phone_number)
 
             user = await self.user_repository.get(
                 SqlQuery[UserFields]().add_filter(field=UserFields.PHONE_NUMBER, value=phone_number)
             )
 
             if not user:
-                return VerifyCodeResponse(success=False, error_message="User not found")
+                raise UserNotFound(phone_number)
 
             await self.verify_service.delete_code(code)
 
             session = await self.session_service.create_session(
                 CreateSessionRequest(user_uuid=str(user.uuid))
             )
+            if not session:
+                raise SessionCreationFailed(str(user.uuid), "Session service returned None")
 
-            return VerifyCodeResponse(
-                success=True, token=session.token, user_uuid=str(user.uuid)
-            )
+            return VerifyCodeResponse(token=session.token, user_uuid=str(user.uuid), user=user)
+
+        except (InvalidPhoneNumber,
+            InvalidOrExpiredCode,
+            UserNotFound,
+            SessionCreationFailed,
+        ):
+            raise
 
         except Exception as e:
             logger.error(f"Error in verify_phone: {e}")
-            return VerifyCodeResponse(
-                success=False, error_message="Verification failed"
-            )
+            raise VerificationFailed(request.phone_number, str(e))
 
 
 def get_user_service() -> UserService:
