@@ -9,14 +9,14 @@ auth_router = APIRouter(prefix=AuthRoutes.base)
 
 
 @auth_router.post(
-    AuthRoutes.get_login_token,
+    AuthRoutes.send_code,
     response_model=SendCodeResponse,
     status_code=status.HTTP_200_OK,
 )
-async def get_login_token(
+async def send_code(
     request: SendCodeRequest, service: UserService = Depends(get_user_service)
 ):
-    return await service.get_login_token_and_register_if_not(request)
+    return await service.send_code_and_register_if_not(request)
 
 
 @auth_router.post(

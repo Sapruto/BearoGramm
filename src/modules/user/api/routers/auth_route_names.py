@@ -5,7 +5,7 @@ from src.core.settings import Settings
 
 class AuthRoutes(str, Enum):
     base = "/api/auth"
-    get_login_token = "/get_login_token"
+    send_code = "/send_code"
     verify_phone = "/verify_phone"
 
     def __str__(self):
@@ -13,7 +13,7 @@ class AuthRoutes(str, Enum):
 
 
 class AuthRoutesURL(str, Enum):
-    get_login_token = f"{Settings.BASE_URL}{AuthRoutes.get_login_token}"
+    send_code = f"{Settings.BASE_URL}{AuthRoutes.send_code}"
     verify_phone = f"{Settings.BASE_URL}{AuthRoutes.verify_phone}"
 
     def __str__(self):

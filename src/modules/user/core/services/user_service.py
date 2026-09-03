@@ -28,7 +28,7 @@ class UserService:
         self.verify_service = verify_service or get_verify_service()
         self.session_service = session_service or get_session_service_api()
 
-    async def get_login_token_and_register_if_not(
+    async def send_code_and_register_if_not(
         self, request: SendCodeRequest
     ) -> SendCodeResponse:
         try:
