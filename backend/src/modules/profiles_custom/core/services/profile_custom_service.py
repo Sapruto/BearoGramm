@@ -1,5 +1,7 @@
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, List
 from uuid import uuid4
+
+from sqlalchemy import or_
 
 from src.general.processors.data_processor import DataProcessor
 from src.general.repository.sql.sql_query import SqlQuery
@@ -89,6 +91,19 @@ class ProfileCustomService:
             raise ProfileCustomDataError("Failed to delete profile")
 
         return True
+
+    async def get_by_user_uuids(
+            self,
+            user_uuids: List[str],
+    ) -> Dict[str, ProfileCustomEntity]:
+        profiles = await self.repository.get_by_user_uuids(user_uuids)
+
+        result = {}
+        for profile in profiles:
+            if profile.user_uuid:
+                result[profile.user_uuid] = profile
+
+        return result
 
 
 def get_profile_custom_service() -> ProfileCustomService:

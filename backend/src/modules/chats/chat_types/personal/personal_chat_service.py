@@ -1,6 +1,7 @@
 from typing import Optional, List, Tuple, Dict, Any
 
 from src.general.repository.sql.sql_query import SqlQuery
+from src.modules.profiles_custom import ProfileCustomService, get_profile_custom_service
 from src.modules.user import UserServiceAPI, get_user_service_api
 from src.modules.participants import Permission, PermissionService, ChatAction, MessageAction
 
@@ -24,8 +25,10 @@ class PersonalChatService(BaseChatService):
             repository: Optional[PersonalRepository] = None,
             permission_service: Optional[PermissionService] = None,
             user_service: Optional[UserServiceAPI] = None,
+            profile_service: Optional[ProfileCustomService] = None,
     ):
         self.user_service = user_service or get_user_service_api()
+        self.profile_service = profile_service or get_profile_custom_service()
         super().__init__(repository or get_personal_repository(), permission_service)
 
     def _get_chat_type(self) -> str:
@@ -104,12 +107,14 @@ class PersonalChatService(BaseChatService):
                 partner_uuid = p.user_uuid
                 break
 
+        profiles = self.profile_service.get_by_user_uuids([user_uuid, partner_uuid])
+
         return PersonalChatResponse(
             uuid=chat.uuid,
             partner_uuid=partner_uuid,
             created_at=chat.created_at,
             updated_at=chat.updated_at,
-            metadata=chat.metadata if hasattr(chat, 'metadata') else {}
+            profiles=profiles
         )
 
     async def get_user_chats(

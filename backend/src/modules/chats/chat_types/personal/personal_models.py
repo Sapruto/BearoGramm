@@ -1,21 +1,24 @@
-from typing import List
+from typing import Dict, List, Optional
 from pydantic import BaseModel
 from datetime import datetime
 
+from src.modules.profiles_custom import ProfileCustomEntity
 from ..chat_types import ChatType
 
 
 class PersonalChatResponse(BaseModel):
     uuid: str
-    chat_type: str = ChatType.PERSONAL.value
+    chat_type: str = ChatType.PERSONAL
     partner_uuid: str
     created_at: datetime
     updated_at: datetime
 
+    profiles: Optional[Dict[str, ProfileCustomEntity]] = None
+
 
 class PersonalChatPreview(BaseModel):
     uuid: str
-    chat_type: str = ChatType.PERSONAL.value
+    chat_type: str = ChatType.PERSONAL
     partner_uuid: str
     updated_at: datetime
 
