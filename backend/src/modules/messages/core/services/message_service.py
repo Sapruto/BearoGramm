@@ -4,7 +4,7 @@ from .websocket_message_service import (
     WebSocketMessageService,
     get_websocket_message_service,
 )
-from .data_processor import DataProcessor
+from src.general.processors.data_processor import DataProcessor
 from ..repositories.message_repository import MessageRepository, get_message_repository
 from ...models.dto.requests import (
     SendMessageRequest,

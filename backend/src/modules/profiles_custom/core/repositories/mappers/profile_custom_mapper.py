@@ -1,4 +1,4 @@
-from typing import Any, Tuple, List, Optional
+from typing import Any, Tuple, Dict, List, Optional
 from sqlalchemy.orm import InstrumentedAttribute
 
 from src.general.repository.sql.sql_base_mapper import BaseMapper
@@ -66,19 +66,19 @@ class ProfileCustomMapper(BaseMapper[ProfileCustomEntity, ProfileCustomORM, Prof
                 prepared.append(data)
         return prepared
 
-    def _validate_profile_data(self, value: Any) -> List[base_data_type]:
-        if not isinstance(value, list):
+    def _validate_profile_data(self, value: Any) -> Dict[str, Any]:
+        if not isinstance(value, dict):
             raise NotConvertableValue(
-                value, "profile_data", "Profile data must be a list"
+                value, "profile_data", "Profile data must be a dict"
             )
         return value
 
-    def _normalize_profile_data(self, value: Any) -> List[base_data_type]:
+    def _normalize_profile_data(self, value: Any) -> Dict[str, Any]:
         if value is None:
-            return []
-        if not isinstance(value, list):
-            logger.warning(f"Expected list for DATA, got {type(value)}")
-            return []
+            return {}
+        if not isinstance(value, dict):
+            logger.warning(f"Expected dict for DATA, got {type(value)}")
+            return {}
         return value
 
     async def prepare_data_to_save(
@@ -102,7 +102,7 @@ class ProfileCustomMapper(BaseMapper[ProfileCustomEntity, ProfileCustomORM, Prof
     def to_entity(self, orm: ProfileCustomORM) -> ProfileCustomEntity:
         return ProfileCustomEntity(
             uuid=orm.uuid,
-            data=orm.data,
+            data=orm.data or {},
             updated_at=orm.updated_at,
             user_uuid=orm.user_uuid,
         )

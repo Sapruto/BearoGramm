@@ -34,3 +34,11 @@ class UserORM(Base):
         cascade="all, delete-orphan",
         foreign_keys="MessageORM.user_uuid"
     )
+
+    custom_profile: Mapped[List["ProfileCustomORM"]] = relationship(
+        "ProfileCustomORM",
+        back_populates="user",
+        lazy="selectin",
+        cascade="all, delete-orphan",
+        foreign_keys="ProfileCustomORM.user_uuid"
+    )

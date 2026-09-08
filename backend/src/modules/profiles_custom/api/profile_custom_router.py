@@ -1,4 +1,3 @@
-from typing import List, Tuple, Any
 from fastapi import APIRouter, Depends, HTTPException, status
 
 from src.modules.user import get_current_user_depends
@@ -9,169 +8,181 @@ from ..core.exceptions import (
     ProfileCustomAlreadyExistsError,
 )
 from ..core.services.profile_custom_service import ProfileCustomService, get_profile_custom_service
-from ..models.entities.profile_custom_entity import ProfileCustomEntity
-
+from ..models.dto.profile_custom_requests import (
+    CreateProfileRequest,
+    UpdateProfileRequest,
+)
+from ..models.dto.profile_custom_responses import (
+    CreateProfileResponse,
+    GetProfileResponse,
+    UpdateProfileResponse,
+    DeleteProfileResponse,
+    ProfileCustomResponse,
+)
 
 profile_custom_router = APIRouter(prefix="/api/profile-custom", tags=["profile_custom"])
 
 
-@profile_custom_router.get(
-    "/get_my_profile",
-    response_model=ProfileCustomEntity,
-    status_code=status.HTTP_200_OK
-)
+@profile_custom_router.get("/get_my_profile", response_model=GetProfileResponse)
 async def get_my_profile(
-    current_user = Depends(get_current_user_depends()),
-    service: ProfileCustomService = Depends(get_profile_custom_service)
-) -> ProfileCustomEntity:
+        current_user=Depends(get_current_user_depends()),
+        service: ProfileCustomService = Depends(get_profile_custom_service)
+) -> GetProfileResponse:
     try:
         profile = await service.get(user_uuid=current_user.uuid)
         if not profile:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Profile not found"
+            return GetProfileResponse(success=False)
+
+        return GetProfileResponse(
+            success=True,
+            profile=ProfileCustomResponse(
+                uuid=profile.uuid,
+                data=profile.data,
+                updated_at=profile.updated_at,
+                user_uuid=profile.user_uuid
             )
-        return profile
-    except Exception as e:
+        )
+    except Exception:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to get profile: {str(e)}"
+            detail="Failed to get profile"
         )
 
 
-@profile_custom_router.post(
-    "/create_profile",
-    response_model=ProfileCustomEntity,
-    status_code=status.HTTP_201_CREATED
-)
+@profile_custom_router.post("/create_profile", response_model=CreateProfileResponse,
+                            status_code=status.HTTP_201_CREATED)
 async def create_profile(
-    typing_to_data: List[Tuple[str, Any]],
-    current_user = Depends(get_current_user_depends()),
-    service: ProfileCustomService = Depends(get_profile_custom_service)
-) -> ProfileCustomEntity:
+        request: CreateProfileRequest,
+        current_user=Depends(get_current_user_depends()),
+        service: ProfileCustomService = Depends(get_profile_custom_service)
+) -> CreateProfileResponse:
     try:
-        return await service.create(
-            typing_to_data=typing_to_data,
-            user_uuid=current_user.uuid
+        profile = await service.create(
+            data=request.data,
+            user_uuid=request.user_uuid or current_user.uuid,
+            profile_uuid=request.profile_uuid
+        )
+
+        return CreateProfileResponse(
+            success=True,
+            message="Profile created successfully",
+            profile=ProfileCustomResponse(
+                uuid=profile.uuid,
+                data=profile.data,
+                updated_at=profile.updated_at,
+                user_uuid=profile.user_uuid
+            )
         )
     except ProfileCustomAlreadyExistsError as e:
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail=str(e)
-        )
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(e))
     except ProfileCustomDataError as e:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(e)
-        )
-    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+    except Exception:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to create profile: {str(e)}"
+            detail="Failed to create profile"
         )
 
 
-@profile_custom_router.put(
-    "/update_profile",
-    response_model=ProfileCustomEntity,
-    status_code=status.HTTP_200_OK
-)
+@profile_custom_router.put("/update_profile", response_model=UpdateProfileResponse)
 async def update_profile(
-    typing_to_data: List[Tuple[str, Any]],
-    current_user = Depends(get_current_user_depends()),
-    service: ProfileCustomService = Depends(get_profile_custom_service)
-) -> ProfileCustomEntity:
+        request: UpdateProfileRequest,
+        current_user=Depends(get_current_user_depends()),
+        service: ProfileCustomService = Depends(get_profile_custom_service)
+) -> UpdateProfileResponse:
     try:
-        return await service.update_by_user(
+        profile = await service.update_by_user(
             user_uuid=current_user.uuid,
-            typing_to_data=typing_to_data
+            data=request.data
+        )
+
+        return UpdateProfileResponse(
+            success=True,
+            message="Profile updated successfully",
+            profile=ProfileCustomResponse(
+                uuid=profile.uuid,
+                data=profile.data,
+                updated_at=profile.updated_at,
+                user_uuid=profile.user_uuid
+            )
         )
     except ProfileCustomNotFoundError as e:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=str(e)
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
     except ProfileCustomDataError as e:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(e)
-        )
-    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+    except Exception:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to update profile: {str(e)}"
+            detail="Failed to update profile"
         )
 
 
-@profile_custom_router.delete(
-    "/delete_profile",
-    response_model=dict,
-    status_code=status.HTTP_200_OK
-)
+@profile_custom_router.delete("/delete_profile", response_model=DeleteProfileResponse)
 async def delete_profile(
-    current_user = Depends(get_current_user_depends()),
-    service: ProfileCustomService = Depends(get_profile_custom_service)
-) -> dict:
+        current_user=Depends(get_current_user_depends()),
+        service: ProfileCustomService = Depends(get_profile_custom_service)
+) -> DeleteProfileResponse:
     try:
         await service.delete_by_user(current_user.uuid)
-        return {"message": "Profile deleted successfully"}
+        return DeleteProfileResponse(success=True, message="Profile deleted successfully")
     except ProfileCustomNotFoundError as e:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=str(e)
-        )
-    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+    except Exception:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to delete profile: {str(e)}"
+            detail="Failed to delete profile"
         )
 
 
-@profile_custom_router.get(
-    "/{profile_uuid}",
-    response_model=ProfileCustomEntity,
-    status_code=status.HTTP_200_OK
-)
+@profile_custom_router.get("/{profile_uuid}", response_model=GetProfileResponse)
 async def get_profile(
-    profile_uuid: str,
-    current_user = Depends(get_current_user_depends()),
-    service: ProfileCustomService = Depends(get_profile_custom_service)
-) -> ProfileCustomEntity:
+        profile_uuid: str,
+        current_user=Depends(get_current_user_depends()),
+        service: ProfileCustomService = Depends(get_profile_custom_service)
+) -> GetProfileResponse:
     try:
         profile = await service.get(profile_uuid=profile_uuid)
         if not profile:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"Profile {profile_uuid} not found"
+            return GetProfileResponse(success=False)
+
+        return GetProfileResponse(
+            success=True,
+            profile=ProfileCustomResponse(
+                uuid=profile.uuid,
+                data=profile.data,
+                updated_at=profile.updated_at,
+                user_uuid=profile.user_uuid
             )
-        return profile
-    except Exception as e:
+        )
+    except Exception:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to get profile: {str(e)}"
+            detail="Failed to get profile"
         )
 
 
-@profile_custom_router.get(
-    "/user/{user_uuid}",
-    response_model=ProfileCustomEntity,
-    status_code=status.HTTP_200_OK
-)
+@profile_custom_router.get("/user/{user_uuid}", response_model=GetProfileResponse)
 async def get_profile_by_user(
-    user_uuid: str,
-    current_user = Depends(get_current_user_depends()),
-    service: ProfileCustomService = Depends(get_profile_custom_service)
-) -> ProfileCustomEntity:
+        user_uuid: str,
+        current_user=Depends(get_current_user_depends()),
+        service: ProfileCustomService = Depends(get_profile_custom_service)
+) -> GetProfileResponse:
     try:
-        profile = await service.get(user_uuid=current_user.user_uuid)
+        profile = await service.get(user_uuid=user_uuid)
         if not profile:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"Profile for user {user_uuid} not found"
+            return GetProfileResponse(success=False)
+
+        return GetProfileResponse(
+            success=True,
+            profile=ProfileCustomResponse(
+                uuid=profile.uuid,
+                data=profile.data,
+                updated_at=profile.updated_at,
+                user_uuid=profile.user_uuid
             )
-        return profile
-    except Exception as e:
+        )
+    except Exception:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to get profile: {str(e)}"
+            detail="Failed to get profile"
         )
