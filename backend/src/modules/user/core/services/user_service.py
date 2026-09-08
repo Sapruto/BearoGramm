@@ -46,16 +46,20 @@ class UserService:
             if not phone_number:
                 raise InvalidPhoneNumber(phone_number)
 
-            user = await self.user_repository.get_by_field(
-                value=phone_number, field=UserFields.PHONE_NUMBER
+            user = await self.user_repository.get(
+                SqlQuery[UserFields]().add_filter(value=phone_number, field=UserFields.PHONE_NUMBER)
             )
 
             if not user:
                 new_user = UserEntity(phone_number=phone_number)
                 user = await self.user_repository.save(new_user)
 
+                print(f'REGISGTERING {phone_number}')
+
                 if not user:
                     raise FailedToCreateUser(phone_number, "Repository returned None")
+            else:
+                print(f'logining {phone_number}')
 
             code = await self.verify_service.send_login_code(
                 user_uuid=str(user.uuid), phone_number=phone_number

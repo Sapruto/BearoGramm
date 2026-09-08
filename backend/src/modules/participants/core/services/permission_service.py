@@ -20,11 +20,11 @@ class PermissionService:
         self.participant_repository = participant_repository or ParticipantRepository()
 
     async def create(
-        self,
-        user_uuid: str,
-        resource_uuid: str,
-        resource_type: ResourceType,
-        permissions: Optional[List[Permission]] = None
+            self,
+            user_uuid: str,
+            resource_uuid: str,
+            resource_type: ResourceType,
+            permissions: Optional[List[Permission]] = None
     ) -> ParticipantEntity:
         existing = await self.participant_repository.find_user_resource(
             user_uuid, resource_uuid, resource_type
@@ -35,11 +35,11 @@ class PermissionService:
             )
 
         perms_dict = {p.action.value: p.enabled for p in permissions} if permissions else {}
-        entity = ParticipantEntity.create(
+        entity = ParticipantEntity(
             user_uuid=user_uuid,
             resource_uuid=resource_uuid,
             resource_type=resource_type,
-            permissions=perms_dict
+            permissions=perms_dict,
         )
         return await self.participant_repository.save(entity)
 

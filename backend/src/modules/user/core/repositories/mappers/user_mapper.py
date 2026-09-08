@@ -2,6 +2,7 @@ from typing import Any, Tuple, Optional
 from sqlalchemy.orm import InstrumentedAttribute
 import asyncio
 import hashlib
+import concurrent.futures
 
 from src.general.security.encyptions.encrypter import Encrypter, get_encrypter
 from src.general.repository.sql.sql_base_mapper import BaseMapper
@@ -63,15 +64,15 @@ class UserMapper(BaseMapper[UserEntity, UserORM, UserFields]):
     def _run_async(self, coro):
         try:
             loop = asyncio.get_running_loop()
-            if loop.is_running():
-                import concurrent.futures
-                with concurrent.futures.ThreadPoolExecutor() as executor:
-                    future = executor.submit(asyncio.run, coro)
-                    return future.result()
-            else:
-                return loop.run_until_complete(coro)
         except RuntimeError:
             return asyncio.run(coro)
+
+        if loop.is_running():
+            with concurrent.futures.ThreadPoolExecutor() as executor:
+                future = executor.submit(asyncio.run, coro)
+                return future.result()
+        else:
+            return loop.run_until_complete(coro)
 
     def to_orm(self, entity: UserEntity) -> UserORM:
         phone_encrypted = None

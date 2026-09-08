@@ -68,6 +68,7 @@ class EncryptedData(BaseModel):
 class Encrypter:
     def __init__(
         self,
+        salt: Optional[bytes] = None,
         keys_config: Optional[Dict[str, Union[str, bytes]]] = None,
         default_key_id: Optional[str] = None,
         encrypted_fields: Optional[List[str]] = None,
@@ -77,6 +78,7 @@ class Encrypter:
         enable_rotation: bool = True,
     ):
         self.salt_length = salt_length
+        self.salt = salt or Settings.ENCRYPTER.HASH_SALT
         self.nonce_length = nonce_length
         self.iterations = iterations
         self.enable_rotation = enable_rotation
@@ -117,10 +119,9 @@ class Encrypter:
                 master_key_b64 = base64.b64encode(master_key).decode("utf-8")
                 master_key_bytes = master_key
 
-            salt = os.urandom(self.salt_length)
-            salt_b64 = base64.b64encode(salt).decode("utf-8")
+            salt_b64 = base64.b64encode(self.salt).decode("utf-8")
 
-            derived_key = self._derive_key(master_key_bytes, salt)
+            derived_key = self._derive_key(master_key_bytes, self.salt)
 
             self._keys[key_id] = KeyConfig(
                 key_id=key_id,

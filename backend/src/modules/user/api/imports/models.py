@@ -6,7 +6,6 @@ from datetime import datetime
 class UserAPIModel(BaseModel):
     uuid: str
     phone_number: str
-    phone_verified: bool
     created_at: datetime
     updated_at: datetime
 

@@ -55,7 +55,7 @@ async def call(websocket: WebSocket):
 
 
 @calls_router.websocket(CallsRoutes.listen_calls)
-async def listen_calls(websocket: WebSocket, phone_number: str):
+async def listen_calls(websocket: WebSocket):
     closed = False
     try:
         await websocket.accept()

@@ -22,7 +22,7 @@ from ..models.dto.responses import (
 
 logger = get_logger(__name__)
 
-message_router = APIRouter(prefix=MessageRoutes.base)
+message_router = APIRouter(prefix=MessageRoutes.base, tags=["messages"])
 
 
 @message_router.websocket(MessageRoutes.listen_messages_websocket)

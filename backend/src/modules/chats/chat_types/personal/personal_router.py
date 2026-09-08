@@ -16,11 +16,12 @@ from ..base.exceptions import (
     UserNotParticipantError,
     PermissionDeniedError,
     ChatNotFoundError,
-    InvalidParticipantsError
+    InvalidParticipantsError,
+NotFoundUser
 )
 
 
-personal_chats_router = APIRouter(prefix="/api/personal")
+personal_chats_router = APIRouter(prefix="/api/personal", tags=["personal_chat"])
 
 
 @personal_chats_router.post(
@@ -155,6 +156,7 @@ async def delete_personal_chat(
             status_code=status.HTTP_403_FORBIDDEN,
             detail=str(e)
         )
+    except UserNotFound
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
