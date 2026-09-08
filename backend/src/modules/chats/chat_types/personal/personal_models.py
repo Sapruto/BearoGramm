@@ -1,5 +1,5 @@
-from typing import Optional, List, Dict, Any
-from pydantic import BaseModel, Field
+from typing import List
+from pydantic import BaseModel
 from datetime import datetime
 
 from ..chat_types import ChatType
