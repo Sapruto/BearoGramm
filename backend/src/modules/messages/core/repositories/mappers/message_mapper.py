@@ -5,10 +5,11 @@ from src.general.repository.sql.sql_base_mapper import BaseMapper
 from src.general.repository.exception import NotConvertableValue
 from src.core.logger import get_logger
 
+from src.general.processors.base.base_data import BaseData
+from src.general.processors.processor_registry import ProcessorRegistry, get_processor_registry
+
 from ....models.orm.message_orm import MessageORM
 from ....models.entities.message_entity import MessageFields, MessageEntity
-from ....types.base.base_message_data import BaseMessageData
-from ....types.message_registry import MessageRegistry, get_message_registry
 
 logger = get_logger(__name__)
 
@@ -32,12 +33,12 @@ class MessageMapper(BaseMapper[MessageEntity, MessageORM, MessageFields]):
         MessageORM.user_uuid: MessageFields.USER_UUID,
     }
 
-    def __init__(self, message_registry: Optional[MessageRegistry] = None):
-        self.message_registry = message_registry or get_message_registry()
+    def __init__(self, message_registry: Optional[ProcessorRegistry] = None):
+        self.message_registry = message_registry or get_processor_registry()
 
     async def _prepare_list_to_save(
-        self, message_data: List[BaseMessageData]
-    ) -> List[BaseMessageData]:
+        self, message_data: List[BaseData]
+    ) -> List[BaseData]:
         prepared = []
         for data in message_data:
             service = self.message_registry.get_data_service(data.data_type)
@@ -53,8 +54,8 @@ class MessageMapper(BaseMapper[MessageEntity, MessageORM, MessageFields]):
         return prepared
 
     async def _prepare_list_to_use(
-        self, message_data: List[BaseMessageData]
-    ) -> List[BaseMessageData]:
+        self, message_data: List[BaseData]
+    ) -> List[BaseData]:
         prepared = []
         for data in message_data:
             service = self.message_registry.get_data_service(data.data_type)
@@ -69,14 +70,14 @@ class MessageMapper(BaseMapper[MessageEntity, MessageORM, MessageFields]):
                 prepared.append(data)
         return prepared
 
-    def _validate_message_data(self, value: Any) -> List[BaseMessageData]:
+    def _validate_message_data(self, value: Any) -> List[BaseData]:
         if not isinstance(value, list):
             raise NotConvertableValue(
                 value, "message_data", "Message data must be a list"
             )
         return value
 
-    def _normalize_message_data(self, value: Any) -> List[BaseMessageData]:
+    def _normalize_message_data(self, value: Any) -> List[BaseData]:
         if value is None:
             return []
         if not isinstance(value, list):
@@ -85,13 +86,13 @@ class MessageMapper(BaseMapper[MessageEntity, MessageORM, MessageFields]):
         return value
 
     async def prepare_data_to_save(
-        self, message_data: List[BaseMessageData]
-    ) -> List[BaseMessageData]:
+        self, message_data: List[BaseData]
+    ) -> List[BaseData]:
         return await self._prepare_list_to_save(message_data)
 
     async def prepare_data_to_use(
-        self, message_data: List[BaseMessageData]
-    ) -> List[BaseMessageData]:
+        self, message_data: List[BaseData]
+    ) -> List[BaseData]:
         return await self._prepare_list_to_use(message_data)
 
     def to_orm(self, entity: MessageEntity) -> MessageORM:

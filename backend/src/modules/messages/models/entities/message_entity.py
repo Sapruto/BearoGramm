@@ -4,7 +4,7 @@ from enum import Enum
 from datetime import datetime
 from typing import List, Optional, Any
 
-from ...types.base.base_message_data import base_message_data_type
+from src.general.processors.base.base_data import base_data_type
 
 
 class MessageFields(str, Enum):
@@ -25,7 +25,7 @@ class MessageFields(str, Enum):
 class MessageEntity(BaseModel):
     uuid: Optional[str] = Field(default=None)
 
-    message_data: List[base_message_data_type] = Field(default=[])
+    message_data: List[base_data_type] = Field(default=[])
 
     created_at: Optional[datetime] = Field(default=None)
     updated_at: Optional[datetime] = Field(default=None)
@@ -33,9 +33,9 @@ class MessageEntity(BaseModel):
     chat_uuid: Optional[str] = Field(default=None)
     user_uuid: Optional[str] = Field(default=None)
 
-    def add_content(self, new_data: base_message_data_type) -> None:
+    def add_content(self, new_data: base_data_type) -> None:
         self.message_data.append(new_data)
 
-    def remove_content(self, delete_data: base_message_data_type) -> None:
+    def remove_content(self, delete_data: base_data_type) -> None:
         if delete_data in self.message_data:
             self.message_data.remove(delete_data)

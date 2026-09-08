@@ -6,7 +6,7 @@ from uuid import uuid4
 from datetime import datetime
 
 from src.core.database import Base
-from ...types.base.base_message_data import base_message_data_type
+from src.general.processors.base.base_data import base_data_type
 
 
 class MessageORM(Base):
@@ -16,7 +16,7 @@ class MessageORM(Base):
         Uuid(as_uuid=False), primary_key=True, default=lambda: str(uuid4())
     )
 
-    message_data: Mapped[List[base_message_data_type]] = mapped_column(JSON)
+    message_data: Mapped[List[base_data_type]] = mapped_column(JSON)
 
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, default=func.now()
