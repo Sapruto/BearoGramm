@@ -31,7 +31,7 @@ class PersonalRepository(ChatRepository):
                 ParticipantORM.user_uuid.in_(user_uuids)
             )
             .group_by(ChatORM.uuid)
-            .having(func.count(ParticipantORM.user_uuid) == len(user_uuids))
+            .having(len(user_uuids) == func.count(ParticipantORM.user_uuid))
         )
 
         result = await self._session.execute(stmt)
