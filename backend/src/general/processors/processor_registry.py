@@ -1,15 +1,15 @@
 from typing import Dict, Optional
-from .base.base_data_processor import BaseDataService
+from .base.base_data_processor import BaseDataProcessor
 
 
 class ProcessorRegistry:
     def __init__(self):
-        self._registry: Dict[str, BaseDataService] = {}
+        self._registry: Dict[str, BaseDataProcessor] = {}
 
-    def register(self, data_type: str, service: BaseDataService) -> None:
+    def register(self, data_type: str, service: BaseDataProcessor) -> None:
         self._registry[data_type] = service
 
-    def get_data_service(self, data_type: str) -> Optional[BaseDataService]:
+    def get_data_service(self, data_type: str) -> Optional[BaseDataProcessor]:
         return self._registry.get(data_type)
 
 
