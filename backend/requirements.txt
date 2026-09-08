@@ -25,3 +25,5 @@ pytest-cov==6.0.0
 httpx==0.28.1
 
 greenlet==3.5.5
+
+boto3==1.43.85
