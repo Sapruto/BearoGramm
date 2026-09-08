@@ -30,7 +30,7 @@ class ChatMapper(BaseMapper[ChatEntity, ChatORM, ChatFields]):
     def to_orm(self, entity: ChatEntity) -> ChatORM:
         return ChatORM(
             uuid=entity.uuid,
-            accesses=entity.accesses,
+            chat_type=entity.chat_type,
             created_at=entity.created_at,
             updated_at=entity.updated_at,
         )
@@ -38,7 +38,6 @@ class ChatMapper(BaseMapper[ChatEntity, ChatORM, ChatFields]):
     def to_entity(self, orm: ChatORM) -> ChatEntity:
         return ChatEntity(
             uuid=orm.uuid,
-            accesses=orm.accesses,
             created_at=orm.created_at,
             updated_at=orm.updated_at,
         )

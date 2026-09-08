@@ -95,7 +95,7 @@ class BaseChatService(ABC):
 
         chat = ChatEntity(
             uuid=str(uuid4()),
-            access_type=self._get_chat_type(),
+            chat_type=self._get_chat_type(),
             created_at=datetime.now(),
             updated_at=datetime.now(),
         )

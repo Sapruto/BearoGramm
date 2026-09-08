@@ -46,8 +46,8 @@ class UserService:
             if not phone_number:
                 raise InvalidPhoneNumber(phone_number)
 
-            user = await self.user_repository.get_by_field(
-                value=phone_number, field=UserFields.PHONE_NUMBER
+            user = await self.user_repository.get(
+                SqlQuery[UserFields]().add_filter(value=phone_number, field=UserFields.PHONE_NUMBER)
             )
 
             if not user:

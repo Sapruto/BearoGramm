@@ -16,11 +16,11 @@ from ..base.exceptions import (
     UserNotParticipantError,
     PermissionDeniedError,
     ChatNotFoundError,
-    InvalidParticipantsError
+    InvalidParticipantsError,
 )
 
 
-personal_chats_router = APIRouter(prefix="/api/personal")
+personal_chats_router = APIRouter(prefix="/api/personal", tags=["personal_chat"])
 
 
 @personal_chats_router.post(
@@ -154,6 +154,11 @@ async def delete_personal_chat(
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail=str(e)
+        )
+    except NotFoundUser as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Failed to found user: {e}"
         )
     except Exception as e:
         raise HTTPException(

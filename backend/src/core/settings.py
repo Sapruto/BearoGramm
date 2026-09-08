@@ -128,6 +128,7 @@ class EncrypterSettings(BaseSettings):
     MASTER_KEY: Optional[str] = None
     ROTATION_KEYS: Optional[str] = None
     ENCRYPT_NONCE: Optional[str] = None
+    HASH_SALT: Optional[bytes] = None
 
     model_config = {"extra": "ignore"}
 

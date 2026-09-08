@@ -43,6 +43,7 @@ const AuthVerifyPage = () => {
                     setToken(data.token);
                     navigate("/", { replace: true })
                     toast.success("Successfully signed in!")
+                    console.log(data.token);
                 }
             }
         )

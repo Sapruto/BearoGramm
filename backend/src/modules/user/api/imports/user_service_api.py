@@ -1,5 +1,6 @@
 from typing import Optional
 
+from src.general.repository.sql.sql_query import SqlQuery
 from src.modules.sessions import SessionAPIService, get_session_service_api
 from src.core.logger import get_logger
 
@@ -41,8 +42,8 @@ class UserServiceAPI:
 
     async def get_user_by_phone(self, phone_number: str) -> Optional[UserAPIModel]:
         try:
-            user = await self.user_repository.get_by_field(
-                value=phone_number, field=UserFields.PHONE_NUMBER
+            user = await self.user_repository.get(
+                SqlQuery[UserFields]().add_filter(value=phone_number, field=UserFields.PHONE_NUMBER)
             )
 
             if not user:

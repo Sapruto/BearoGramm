@@ -7,9 +7,10 @@ from ...models.orm.chat_orm import ChatORM
 class ChatManager(BaseManager[ChatORM]):
     def __init__(self):
         super().__init__(
-            ChatORM, [ChatORM.uuid, ChatORM.access_type, ChatORM.created_at]
+            ChatORM, [ChatORM.uuid, ChatORM.chat_type, ChatORM.created_at]
         )
 
+    @property
     def identifier_field(self) -> InstrumentedAttribute:
         return ChatORM.uuid
 
