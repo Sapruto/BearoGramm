@@ -17,7 +17,7 @@ class PersonalRepository(ChatRepository):
         if len(user_uuids) != 2:
             return None
 
-        async with super().manager.__get_session() as session:
+        async with self.manager.__get_session() as session:
             stmt = (
                 select(ChatORM)
                 .join(
@@ -32,11 +32,11 @@ class PersonalRepository(ChatRepository):
                     ParticipantORM.user_uuid.in_(user_uuids)
                 )
                 .group_by(ChatORM.uuid)
-                .having(len(user_uuids) == func.count(ParticipantORM.user_uuid))
+                .having(func.count(ParticipantORM.user_uuid) == len(user_uuids))
             )
 
             result = await session.execute(stmt)
-        chat_orm = result.scalar_one_or_none()
+            chat_orm = result.scalar_one_or_none()
 
         if not chat_orm:
             return None
