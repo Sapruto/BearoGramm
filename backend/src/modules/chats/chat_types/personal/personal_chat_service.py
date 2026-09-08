@@ -6,7 +6,7 @@ from src.modules.user import UserServiceAPI, get_user_service_api
 from src.modules.participants import Permission, PermissionService, ChatAction, MessageAction
 
 from .personal_models import PersonalChatResponse, PersonalChatPreview
-from .personal_exceptions import CannotChatWithSelfError, NotFoundUser
+from .personal_exceptions import CannotChatWithSelfError, NotFoundUser, ChatIsExisting
 from .personal_repository import get_personal_repository, PersonalRepository
 from ..base.base_chat_service import BaseChatService
 from ..base.exceptions import (
@@ -56,7 +56,7 @@ class PersonalChatService(BaseChatService):
             Permission(action=MessageAction.DELETE, enabled=True),
         ]
 
-    async def get_or_create(
+    async def create(
             self,
             user_uuid: str,
             other_user_phone: str
@@ -71,12 +71,7 @@ class PersonalChatService(BaseChatService):
 
         existing = await self._repository.get_personal_chat_by_participants([user_uuid, other_user_uuid])
         if existing:
-            return PersonalChatResponse(
-                uuid=existing.uuid,
-                partner_uuid=other_user_uuid,
-                created_at=existing.created_at,
-                updated_at=existing.updated_at
-            )
+            raise ChatIsExisting()
 
         chat = await self.create_chat(user_uuid=user_uuid, uuids=[user_uuid, other_user_uuid])
 

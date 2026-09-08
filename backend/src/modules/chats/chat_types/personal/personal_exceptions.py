@@ -15,3 +15,7 @@ class CannotChatWithSelfError(PersonalChatError):
 class NotFoundUser(PersonalChatError):
     def __init__(self):
         super().__init__("Not found user by phone.")
+
+class ChatIsExisting(PersonalChatError):
+    def __init__(self):
+        super().__init__("Chat is existing.")

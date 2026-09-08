@@ -9,9 +9,9 @@ from .personal_models import (
     PartnerResponse,
     ParticipantCheckResponse,
     DeleteChatResponse,
-    PersonalChatListResponse
+    PersonalChatListResponse,
 )
-from .personal_exceptions import CannotChatWithSelfError, NotFoundUser
+from .personal_exceptions import CannotChatWithSelfError, NotFoundUser, ChatIsExisting
 from ..base.exceptions import (
     UserNotParticipantError,
     PermissionDeniedError,
@@ -34,7 +34,7 @@ async def create_personal_chat(
         service: PersonalChatService = Depends(get_personal_chat_service)
 ) -> PersonalChatResponse:
     try:
-        return await service.get_or_create(
+        return await service.create(
             user_uuid=current_user.uuid,
             other_user_phone=request.other_user_phone
         )
@@ -49,6 +49,11 @@ async def create_personal_chat(
             detail=str(e)
         )
     except InvalidParticipantsError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e)
+        )
+    except ChatIsExisting as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=str(e)
