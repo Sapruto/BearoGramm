@@ -17,7 +17,7 @@ class PersonalRepository(ChatRepository):
         if len(user_uuids) != 2:
             return None
 
-        async with self.manager.__get_session() as session:
+        async with super().manager.__get_session() as session:
             stmt = (
                 select(ChatORM)
                 .join(
