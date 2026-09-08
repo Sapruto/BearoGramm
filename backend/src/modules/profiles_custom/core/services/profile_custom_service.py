@@ -1,5 +1,7 @@
-from typing import Optional, List, Tuple, Any
+from typing import Optional, Dict, Any, List
 from uuid import uuid4
+
+from sqlalchemy import or_
 
 from src.general.processors.data_processor import DataProcessor
 from src.general.repository.sql.sql_query import SqlQuery
@@ -20,14 +22,10 @@ class ProfileCustomService:
 
     async def create(
         self,
-        typing_to_data: List[Tuple[str, Any]],
+        data: Dict[str, Any],
         user_uuid: Optional[str] = None,
         profile_uuid: Optional[str] = None,
     ) -> ProfileCustomEntity:
-        process_result = await self.data_processor.save_data(typing_to_data)
-        if not process_result.success:
-            raise ProfileCustomDataError(process_result.error or "Failed to process profile data")
-
         try:
             if user_uuid:
                 query = SqlQuery[ProfileCustomFields]()
@@ -38,7 +36,7 @@ class ProfileCustomService:
 
             entity = ProfileCustomEntity(
                 uuid=profile_uuid or str(uuid4()),
-                data=process_result.processed_data,
+                data=data,
                 user_uuid=user_uuid,
             )
 
@@ -49,7 +47,6 @@ class ProfileCustomService:
             return created
 
         except Exception:
-            await self.data_processor.delete_data(process_result.processed_data)
             raise
 
     async def get(
@@ -67,20 +64,13 @@ class ProfileCustomService:
     async def update_by_user(
         self,
         user_uuid: str,
-        typing_to_data: List[Tuple[str, Any]],
+        data: Dict[str, Any],
     ) -> ProfileCustomEntity:
         entity = await self.get(user_uuid=user_uuid)
         if not entity:
             raise ProfileCustomNotFoundError(f"Profile for user {user_uuid} not found")
 
-        process_result = await self.data_processor.update_data(
-            old_data=entity.data,
-            new_typing_to_data=typing_to_data,
-        )
-        if not process_result.success:
-            raise ProfileCustomDataError(process_result.error or "Failed to process profile data")
-
-        entity.data = process_result.processed_data
+        entity.data = data
 
         updated = await self.repository.update(entity)
         if not updated:
@@ -100,10 +90,20 @@ class ProfileCustomService:
         if deleted == 0:
             raise ProfileCustomDataError("Failed to delete profile")
 
-        if entity.data:
-            await self.data_processor.delete_data(entity.data)
-
         return True
+
+    async def get_by_user_uuids(
+            self,
+            user_uuids: List[str],
+    ) -> Dict[str, ProfileCustomEntity]:
+        profiles = await self.repository.get_by_user_uuids(user_uuids)
+
+        result = {}
+        for profile in profiles:
+            if profile.user_uuid:
+                result[profile.user_uuid] = profile
+
+        return result
 
 
 def get_profile_custom_service() -> ProfileCustomService:

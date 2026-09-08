@@ -1,12 +1,11 @@
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy import JSON, Uuid, DateTime, String, ForeignKey, Index
-from typing import List, Optional
+from typing import Optional, Dict, Any
 
 from uuid import uuid4
 from datetime import datetime
 
 from src.core.database import Base
-from src.general.processors.base.base_data import base_data_type
 
 
 class ProfileCustomORM(Base):
@@ -18,7 +17,7 @@ class ProfileCustomORM(Base):
         default=lambda: str(uuid4())
     )
 
-    data: Mapped[List[base_data_type]] = mapped_column(JSON)
+    data: Mapped[Dict[str, Any]] = mapped_column(JSON)
 
     updated_at: Mapped[Optional[datetime]] = mapped_column(
         DateTime(timezone=True), nullable=True
