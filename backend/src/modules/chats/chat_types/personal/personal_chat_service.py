@@ -6,6 +6,7 @@ from src.modules.participants import Permission, PermissionService, ChatAction, 
 
 from .personal_models import PersonalChatResponse, PersonalChatPreview
 from .personal_exceptions import CannotChatWithSelfError, NotFoundUser
+from .personal_repository import get_personal_repository, PersonalRepository
 from ..base.base_chat_service import BaseChatService
 from ..base.exceptions import (
     UserNotParticipantError,
@@ -14,19 +15,18 @@ from ..base.exceptions import (
     ChatNotFoundError,
 )
 from ..chat_types import ChatType
-from ...core.repositories.chat_repository import ChatRepository
 from ...models.entities.chat_entity import ChatFields
 
 
 class PersonalChatService(BaseChatService):
     def __init__(
             self,
-            repository: Optional[ChatRepository] = None,
+            repository: Optional[PersonalRepository] = None,
             permission_service: Optional[PermissionService] = None,
             user_service: Optional[UserServiceAPI] = None,
     ):
         self.user_service = user_service or get_user_service_api()
-        super().__init__(repository, permission_service)
+        super().__init__(repository or get_personal_repository(), permission_service)
 
     def _get_chat_type(self) -> str:
         return ChatType.PERSONAL.value
@@ -66,14 +66,22 @@ class PersonalChatService(BaseChatService):
         if user_uuid == other_user_uuid:
             raise CannotChatWithSelfError()
 
+        existing = await self._repository.get_personal_chat_by_participants([user_uuid, other_user_uuid])
+        if existing:
+            return PersonalChatResponse(
+                uuid=existing.uuid,
+                partner_uuid=other_user_uuid,
+                created_at=existing.created_at,
+                updated_at=existing.updated_at
+            )
+
         chat = await self.create_chat(user_uuid=user_uuid, uuids=[user_uuid, other_user_uuid])
 
         return PersonalChatResponse(
             uuid=chat.uuid,
             partner_uuid=other_user_uuid,
             created_at=chat.created_at,
-            updated_at=chat.updated_at,
-            metadata=chat.metadata if hasattr(chat, 'metadata') else {}
+            updated_at=chat.updated_at
         )
 
     async def get_chat(
