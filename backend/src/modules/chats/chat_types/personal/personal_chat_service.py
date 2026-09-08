@@ -66,16 +66,6 @@ class PersonalChatService(BaseChatService):
         if user_uuid == other_user_uuid:
             raise CannotChatWithSelfError()
 
-        '''existing = await self._repository.permission_service([user_uuid, other_user_uuid])
-        if existing:
-            return PersonalChatResponse(
-                uuid=existing.uuid,
-                partner_uuid=other_user_uuid,
-                created_at=existing.created_at,
-                updated_at=existing.updated_at,
-                metadata=existing.metadata if hasattr(existing, 'metadata') else {}
-            )'''
-
         chat = await self.create_chat(user_uuid=user_uuid, uuids=[user_uuid, other_user_uuid])
 
         return PersonalChatResponse(
@@ -159,9 +149,9 @@ class PersonalChatService(BaseChatService):
             raise PermissionDeniedError(user_uuid, "DELETE", chat_uuid)
 
         query = SqlQuery[ChatFields]().add_filter(value=chat_uuid, field=ChatFields.UUID)
-        exist = await self._repoistory.get(query)
+        exist = await self._repository.get(query)
         if not exist:
-            raise NotFoundUser
+            raise NotFoundUser()
 
         query = SqlQuery[ChatFields]().add_filter(ChatFields.UUID, chat_uuid)
         deleted_count: int = await self._repository.delete(query)

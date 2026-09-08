@@ -17,7 +17,6 @@ from ..base.exceptions import (
     PermissionDeniedError,
     ChatNotFoundError,
     InvalidParticipantsError,
-NotFoundUser
 )
 
 
@@ -156,7 +155,11 @@ async def delete_personal_chat(
             status_code=status.HTTP_403_FORBIDDEN,
             detail=str(e)
         )
-    except UserNotFound
+    except NotFoundUser as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Failed to found user: {e}"
+        )
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,

@@ -54,12 +54,8 @@ class UserService:
                 new_user = UserEntity(phone_number=phone_number)
                 user = await self.user_repository.save(new_user)
 
-                print(f'REGISGTERING {phone_number}')
-
                 if not user:
                     raise FailedToCreateUser(phone_number, "Repository returned None")
-            else:
-                print(f'logining {phone_number}')
 
             code = await self.verify_service.send_login_code(
                 user_uuid=str(user.uuid), phone_number=phone_number
