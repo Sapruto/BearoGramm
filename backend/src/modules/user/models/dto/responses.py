@@ -7,6 +7,7 @@ from ..entities.user_entity import UserEntity
 
 class SendCodeResponse(BaseModel):
     success: bool = Field(default=True)
+    is_logining: bool = Field(default=True)
 
 
 class VerifyCodeResponse(BaseModel):

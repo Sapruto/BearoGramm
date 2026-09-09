@@ -49,8 +49,10 @@ class UserService:
             user = await self.user_repository.get(
                 SqlQuery[UserFields]().add_filter(value=phone_number, field=UserFields.PHONE_NUMBER)
             )
-
+            is_logining = True
             if not user:
+                is_logining = False
+
                 new_user = UserEntity(phone_number=phone_number)
                 user = await self.user_repository.save(new_user)
 
@@ -64,7 +66,7 @@ class UserService:
             if not code:
                 raise FailedToSendCode(phone_number, str(user.uuid), "Verify service returned None")
 
-            return SendCodeResponse()
+            return SendCodeResponse(is_logining=is_logining)
 
         except (InvalidPhoneNumber, FailedToCreateUser, FailedToSendCode):
             raise
