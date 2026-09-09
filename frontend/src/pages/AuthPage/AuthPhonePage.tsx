@@ -3,6 +3,7 @@ import { matchIsValidTel } from 'mui-tel-input';
 import { useEffect, useState } from "react";
 import { useNavigate } from 'react-router-dom';
 import { useSendCode } from '../../shared/hooks/auth/useSendCode';
+import { withPreventDefault } from '../../shared/lib/withPreventDefault';
 import { useAuthStore } from '../../store/authStore';
 import PhoneNumberInput from "./PhoneNumberInput";
 
@@ -38,7 +39,7 @@ const AuthPhonePage = () => {
 
     return (
         <div className="min-h-screen flex items-center justify-center bg-[#0a0a0b]">
-            <div className="w-120 bg-[#131316] border border-[#1f1f23] rounded-2xl px-14 py-12">
+            <form onSubmit={withPreventDefault(handleSendCode)} className="w-120 bg-[#131316] border border-[#1f1f23] rounded-2xl px-14 py-12">
                 <div className="w-12 h-12 rounded-full bg-[#14243d] flex items-center justify-center mb-6">
                     <svg viewBox="0 0 24 24" fill="none" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5.5 h-5.5 stroke-[#5b9bd8]">
                         <rect x="7" y="2" width="10" height="20" rx="2" />
@@ -60,14 +61,14 @@ const AuthPhonePage = () => {
                 />
 
                 <button
-                    onClick={handleSendCode}
+                    type='submit'
                     disabled={isPending}
                     className="w-full h-10.5 mt-6 rounded-[10px] bg-[#f4f4f5] text-[#0a0a0b] text-[15px] font-medium hover:bg-[#d4d4d8] transition-colors"
                 >
                     {/* {isPending ? "Sending..." : "Send code"}*/} {/* Flickering on low latency */}
                     Send code
                 </button>
-            </div>
+            </form>
         </div>
     )
 }

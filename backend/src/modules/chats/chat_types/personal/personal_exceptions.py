@@ -10,12 +10,12 @@ class PersonalChatNotFoundError(PersonalChatError):
 
 class CannotChatWithSelfError(PersonalChatError):
     def __init__(self):
-        super().__init__("Cannot create personal chat with yourself")
+        super().__init__("You can't start a chat with yourself")
 
 class NotFoundUser(PersonalChatError):
     def __init__(self):
-        super().__init__("Not found user by phone.")
+        super().__init__("User not found")
 
 class ChatIsExisting(PersonalChatError):
     def __init__(self):
-        super().__init__("Chat is existing.")
+        super().__init__("The chat already exists")

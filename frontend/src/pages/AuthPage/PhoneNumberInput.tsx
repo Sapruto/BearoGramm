@@ -71,6 +71,7 @@ const PhoneNumberInput = ({ value, onChange, error, onValidate }: Props) => {
             className='w-full'
             key={inputKey}
             inputRef={inputRef}
+            autoFocus
             value={value}
             onChange={handleChange}
             onBlur={() => validate(value)}

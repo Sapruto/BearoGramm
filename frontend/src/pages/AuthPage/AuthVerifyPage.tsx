@@ -5,7 +5,9 @@ import { useEffect, useState } from "react";
 import toast from 'react-hot-toast';
 import { useNavigate } from "react-router-dom";
 import { useVerifyCode } from '../../shared/hooks/auth/useVerifyCode';
+import { withPreventDefault } from '../../shared/lib/withPreventDefault';
 import { useAuthStore } from "../../store/authStore";
+
 const AuthVerifyPage = () => {
     const navigate = useNavigate();
     const { phone, setToken } = useAuthStore();
@@ -29,30 +31,37 @@ const AuthVerifyPage = () => {
     }, [phone])
 
     const handleChange = (newValue: string) => {
-        setOtp(newValue)
-    }
+        setOtp(newValue);
 
-    const handleVerify = () => {
-        if (otp.length !== 5)
-            return;
+        if (newValue.length === 5 && newValue != otp) {
+            submitCode(newValue);
+        }
+    };
 
+    const submitCode = (code: string) => {
         verifyCode(
-            { phone_number: phone, code: otp },
+            { phone_number: phone, code },
             {
                 onSuccess: (data) => {
                     setToken(data.token);
-                    navigate("/", { replace: true })
-                    toast.success("Successfully signed in!")
-                    console.log(data.token);
+                    navigate("/", { replace: true });
+                    toast.success("Successfully signed in!");
+
+                    console.log(`Signed in ${phoneFormatted}, token: ${data.token}`);
+                    navigator.clipboard.writeText(data.token);
                 }
             }
-        )
-    }
+        );
+    };
 
+    const handleVerify = () => {
+        if (otp.length !== 5) return;
+        submitCode(otp);
+    };
 
     return (
         <div className="min-h-screen flex items-center justify-center bg-[#0a0a0b]">
-            <div className="w-120 bg-[#131316] border border-[#1f1f23] rounded-2xl px-14 py-12">
+            <form onSubmit={withPreventDefault(handleVerify)} className="w-120 bg-[#131316] border border-[#1f1f23] rounded-2xl px-14 py-12">
                 <div className="w-12 h-12 rounded-full bg-[#132414] flex items-center justify-center mb-6">
                     <ShieldCheck size={22} className="stroke-[#6fbf6f]" />
                 </div>
@@ -63,6 +72,7 @@ const AuthVerifyPage = () => {
                 </p>
 
                 <MuiOtpInput
+                    autoFocus
                     length={5}
                     value={otp}
                     onChange={handleChange}
@@ -83,7 +93,7 @@ const AuthVerifyPage = () => {
                 </p> */}
 
                 <button
-                    onClick={handleVerify}
+                    type='submit'
                     disabled={isPending}
                     className="w-full h-10.5 mb-2 rounded-[10px] bg-[#f4f4f5] text-[#0a0a0b] text-[15px] font-medium hover:bg-[#d4d4d8] transition-colors"
                 >
@@ -97,7 +107,7 @@ const AuthVerifyPage = () => {
                     <ArrowLeft size={15} />
                     Change number
                 </button>
-            </div>
+            </form>
         </div>
     )
 }

@@ -8,7 +8,10 @@ import AuthVerifyPage from "../pages/AuthPage/AuthVerifyPage"
 import HomePage from "../pages/HomePage/HomePage"
 import NotFoundPage from "../pages/NotFoundPage/NotFoundPage"
 import { queryClient } from "../shared/api/queryClient"
+import { PrivateRoute } from "../shared/routes/PrivateRoute"
 import theme from "./theme"
+import ChatsLayout from "../pages/Chats/ChatLayout"
+import AddFriendPage from "../pages/Chats/AddFriendPage"
 
 function App() {
   return (
@@ -29,6 +32,14 @@ function App() {
           <Route path="/" element={<HomePage />} />
           <Route path="/auth/phone" element={<AuthPhonePage />} />
           <Route path="/auth/verify" element={<AuthVerifyPage />} />
+
+          <Route element={<PrivateRoute />}>
+            <Route path="/chats" element={<ChatsLayout />}>
+              <Route index element={<AddFriendPage />} />
+              <Route path=":uuid" element={<div>hi123</div>} />
+              {/* <Route path=":uuid" element={<ChatPage />} /> */}
+            </Route>
+          </Route>
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </ThemeProvider>
