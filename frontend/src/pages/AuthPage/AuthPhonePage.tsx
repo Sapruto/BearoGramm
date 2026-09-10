@@ -1,5 +1,4 @@
 import { parsePhoneNumberWithError } from 'libphonenumber-js';
-import { matchIsValidTel } from 'mui-tel-input';
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from 'react-router-dom';
 import { useSendCode } from '../../shared/hooks/auth/useSendCode';
@@ -11,7 +10,7 @@ const AuthPhonePage = () => {
     const navigate = useNavigate();
     const [phone, setPhone] = useState('');
     const { phone: phoneStore, setPhone: setPhoneStore } = useAuthStore();
-    const { mutate: sendCode, isPending, error } = useSendCode();
+    const { mutate: sendCode, isPending } = useSendCode();
     const phoneInputRef = useRef<PhoneNumberInputRef>(null);
 
     const handleSendCode = () => {
