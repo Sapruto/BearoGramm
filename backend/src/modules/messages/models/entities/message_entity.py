@@ -1,20 +1,17 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, SerializeAsAny
 from enum import Enum
 
 from datetime import datetime
-from typing import List, Optional, Any
+from typing import List, Optional
 
-from src.general.processors.base.base_data import base_data_type
+from src.general.processors.base.base_data import BaseData, base_data_type
 
 
 class MessageFields(str, Enum):
     UUID = "uuid"
-
     MESSAGE_DATA = "message_data"
-
     CREATED_AT = "created_at"
     UPDATED_AT = "updated_at"
-
     CHAT_UUID = "chat_uuid"
     USER_UUID = "user_uuid"
 
@@ -25,7 +22,7 @@ class MessageFields(str, Enum):
 class MessageEntity(BaseModel):
     uuid: Optional[str] = Field(default=None)
 
-    message_data: List[base_data_type] = Field(default=[])
+    message_data: List[SerializeAsAny[BaseData]] = Field(default_factory=list)
 
     created_at: Optional[datetime] = Field(default=None)
     updated_at: Optional[datetime] = Field(default=None)

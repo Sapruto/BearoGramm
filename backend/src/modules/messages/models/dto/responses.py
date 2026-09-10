@@ -5,23 +5,19 @@ from ..entities.message_entity import MessageEntity
 
 
 class SendMessageResponse(BaseModel):
-    success: bool = Field(...)
+    success: bool = Field(default=True)
     message_entity: Optional[MessageEntity] = Field(default=None)
-    error_message: Optional[str] = Field(default=None)
 
 
 class UpdateMessageResponse(BaseModel):
-    success: bool = Field(...)
+    success: bool = Field(default=True)
     message_entity: Optional[MessageEntity] = Field(default=None)
-    error_message: Optional[str] = Field(default=None)
 
 
 class DeleteMessageResponse(BaseModel):
-    success: bool = Field(...)
-    error_message: Optional[str] = Field(default=None)
+    success: bool = Field(default=True)
 
 
 class GetMessagesResponse(BaseModel):
-    success: bool = Field(...)
+    success: bool = Field(default=True)
     message_entity: Optional[List[MessageEntity]] = Field(default=None)
-    error_message: Optional[str] = Field(default=None)

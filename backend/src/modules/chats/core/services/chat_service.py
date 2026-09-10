@@ -1,11 +1,12 @@
 from typing import Optional, List
 from sqlalchemy import select
 
+from src.general.repository.sql.sql_query import SqlQuery
 from src.modules.user import UserEntity
 from src.core.logger import get_logger
 
 from ..repositories.chat_repository import ChatRepository, get_chat_repository
-from ...models.entities.chat_entity import ChatEntity
+from ...models.entities.chat_entity import ChatEntity, ChatFields
 from ...models.orm.chat_orm import ChatORM
 
 
@@ -18,7 +19,7 @@ class ChatService:
 
     async def chat_exists(self, chat_uuid: str) -> bool:
         try:
-            chat = await self.chat_repository.get_by_id(chat_uuid)
+            chat = await self.chat_repository.get(SqlQuery[ChatFields]().add_filter(value=chat_uuid, field=ChatFields.UUID))
             return chat is not None
         except Exception as e:
             logger.error(f"Error checking chat exists: {e}")
@@ -26,7 +27,7 @@ class ChatService:
 
     async def user_in_chat(self, chat_uuid: str, user: UserEntity) -> bool:
         try:
-            chat = await self.chat_repository.get_by_id(chat_uuid)
+            chat = await self.chat_repository.get(SqlQuery[ChatFields]().add_filter(value=chat_uuid, field=ChatFields.UUID))
             if not chat:
                 return False
 
@@ -45,7 +46,7 @@ class ChatService:
 
     async def get_chat(self, chat_uuid: str) -> Optional[ChatEntity]:
         try:
-            return await self.chat_repository.get_by_id(chat_uuid)
+            return await self.chat_repository.get(SqlQuery[ChatFields]().add_filter(value=chat_uuid, field=ChatFields.UUID))
         except Exception as e:
             logger.error(f"Error getting chat: {e}")
             return None

@@ -21,8 +21,8 @@ def init_processor_registry():
     from .text import TextTypeName, TextProcessor
     from .media import MediaTypeName, MediaProcessor
 
-    _registry.register(TextTypeName, TextProcessor)
-    _registry.register(MediaTypeName, MediaProcessor)
+    _registry.register(TextTypeName, TextProcessor())
+    _registry.register(MediaTypeName, MediaProcessor())
 
 
 def get_processor_registry() -> ProcessorRegistry:

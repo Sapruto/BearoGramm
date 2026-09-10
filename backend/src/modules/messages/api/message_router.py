@@ -1,4 +1,4 @@
-from fastapi import APIRouter, WebSocket, Depends
+from fastapi import APIRouter, WebSocket, Depends, HTTPException, status
 import json
 
 from src.modules.user import get_current_user_depends, UserEntity, authenticate_by_token
@@ -70,20 +70,17 @@ async def listen_messages_websocket(websocket: WebSocket):
             except Exception as e:
                 logger.error(f"Error closing websocket: {e}")
 
-
 @message_router.post(MessageRoutes.send_message, response_model=SendMessageResponse)
 async def send_message(
     request: SendMessageRequest,
     service: MessageService = Depends(get_message_service),
     current_user: UserEntity = Depends(get_current_user_depends()),
 ):
-    if request.user_uuid != current_user.uuid:
-        return SendMessageResponse(
-            success=False, error_message="request.user_uuid != current_user.uuid"
-        )
-
-    result = await service.send_message(request)
-    return result
+    try:
+        return await service.send_message(request, current_user.uuid)
+    except Exception as e:
+        logger.error(f"Error in send_message: {e}", exc_info=True)
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
 
 @message_router.put(MessageRoutes.update_message, response_model=UpdateMessageResponse)
@@ -92,28 +89,24 @@ async def update_message(
     service: MessageService = Depends(get_message_service),
     current_user: UserEntity = Depends(get_current_user_depends()),
 ):
-    if request.user_uuid != current_user.uuid:
-        return UpdateMessageResponse(
-            success=False, error_message="request.user_uuid != current_user.uuid"
-        )
+    try:
+        return await service.update_message(request, current_user.uuid)
+    except Exception as e:
+        logger.error(f"Error in update_message: {e}", exc_info=True)
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
-    return await service.update_message(request)
 
-
-@message_router.delete(
-    MessageRoutes.delete_message, response_model=DeleteMessageResponse
-)
+@message_router.delete(MessageRoutes.delete_message, response_model=DeleteMessageResponse)
 async def delete_message(
     request: DeleteMessageRequest,
     service: MessageService = Depends(get_message_service),
     current_user: UserEntity = Depends(get_current_user_depends()),
 ):
-    if request.user_uuid != current_user.uuid:
-        return DeleteMessageResponse(
-            success=False, error_message="request.user_uuid != current_user.uuid"
-        )
-
-    return await service.delete_message(request)
+    try:
+        return await service.delete_message(request, current_user.uuid)
+    except Exception as e:
+        logger.error(f"Error in delete_message: {e}", exc_info=True)
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
 
 @message_router.get(MessageRoutes.get_messages, response_model=GetMessagesResponse)
@@ -122,10 +115,8 @@ async def get_messages(
     service: MessageService = Depends(get_message_service),
     current_user: UserEntity = Depends(get_current_user_depends()),
 ):
-    if request.user_uuid != current_user.uuid:
-        return GetMessagesResponse(
-            success=False, error_message="request.user_uuid != current_user.uuid"
-        )
-
-    result = await service.get_messages(request)
-    return result
+    try:
+        return await service.get_messages(request, current_user.uuid)
+    except Exception as e:
+        logger.error(f"Error in get_messages: {e}", exc_info=True)
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))

@@ -1,4 +1,6 @@
-from typing import Any, Tuple, List, Optional
+import asyncio
+import concurrent.futures
+from typing import Any, Tuple, List, Optional, Dict
 from sqlalchemy.orm import InstrumentedAttribute
 
 from src.general.repository.sql.sql_base_mapper import BaseMapper
@@ -36,6 +38,20 @@ class MessageMapper(BaseMapper[MessageEntity, MessageORM, MessageFields]):
     def __init__(self, message_registry: Optional[ProcessorRegistry] = None):
         self.message_registry = message_registry or get_processor_registry()
 
+    def _resolve_data_object(self, data: Any) -> BaseData:
+        if isinstance(data, BaseData):
+            return data
+
+        data_type = data.get("data_type") if isinstance(data, dict) else None
+        service = self.message_registry.get_data_service(data_type)
+        model_cls = getattr(service, "data_model", None) if service else None
+
+        if model_cls:
+            return model_cls.model_validate(data)
+
+        logger.warning(f"No model found for data_type={data_type}, using BaseData")
+        return BaseData.model_validate(data)
+
     async def _prepare_list_to_save(
         self, message_data: List[BaseData]
     ) -> List[BaseData]:
@@ -54,10 +70,11 @@ class MessageMapper(BaseMapper[MessageEntity, MessageORM, MessageFields]):
         return prepared
 
     async def _prepare_list_to_use(
-        self, message_data: List[BaseData]
+        self, message_data: List[Dict]
     ) -> List[BaseData]:
         prepared = []
-        for data in message_data:
+        for raw in message_data:
+            data = self._resolve_data_object(raw)
             service = self.message_registry.get_data_service(data.data_type)
             if service:
                 try:
@@ -85,20 +102,34 @@ class MessageMapper(BaseMapper[MessageEntity, MessageORM, MessageFields]):
             return []
         return value
 
+    def _run_async(self, coro):
+        try:
+            loop = asyncio.get_running_loop()
+        except RuntimeError:
+            return asyncio.run(coro)
+
+        if loop.is_running():
+            with concurrent.futures.ThreadPoolExecutor() as executor:
+                future = executor.submit(asyncio.run, coro)
+                return future.result()
+        else:
+            return loop.run_until_complete(coro)
+
     async def prepare_data_to_save(
         self, message_data: List[BaseData]
     ) -> List[BaseData]:
         return await self._prepare_list_to_save(message_data)
 
     async def prepare_data_to_use(
-        self, message_data: List[BaseData]
+        self, message_data: List[Dict]
     ) -> List[BaseData]:
         return await self._prepare_list_to_use(message_data)
 
     def to_orm(self, entity: MessageEntity) -> MessageORM:
+        prepared = self._run_async(self.prepare_data_to_save(entity.message_data))
         return MessageORM(
             uuid=entity.uuid,
-            message_data=entity.message_data,
+            message_data=[item.model_dump(mode="json") for item in prepared],
             created_at=entity.created_at,
             updated_at=entity.updated_at,
             chat_uuid=entity.chat_uuid,
@@ -106,9 +137,10 @@ class MessageMapper(BaseMapper[MessageEntity, MessageORM, MessageFields]):
         )
 
     def to_entity(self, orm: MessageORM) -> MessageEntity:
+        prepared = self._run_async(self.prepare_data_to_use(orm.message_data))
         return MessageEntity(
             uuid=orm.uuid,
-            message_data=orm.message_data,
+            message_data=prepared,
             created_at=orm.created_at,
             updated_at=orm.updated_at,
             chat_uuid=orm.chat_uuid,
