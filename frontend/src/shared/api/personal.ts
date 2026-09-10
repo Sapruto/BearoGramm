@@ -19,9 +19,7 @@ export type GetPersonalChatsParams = {
     offset: number;
 };
 
-export const getPersonalChats = async (
-    params: GetPersonalChatsParams
-): Promise<GetPersonalChatsResponse> => {
+export const getPersonalChats = async (params: GetPersonalChatsParams): Promise<GetPersonalChatsResponse> => {
     const res = await apiClient.get('/api/personal/', { params });
     return res.data;
 };

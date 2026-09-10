@@ -12,6 +12,7 @@ import { PrivateRoute } from "../shared/routes/PrivateRoute"
 import theme from "./theme"
 import ChatsLayout from "../pages/Chats/ChatLayout"
 import AddFriendPage from "../pages/Chats/AddFriendPage"
+import ChatPage from "../pages/Chats/ChatPage"
 
 function App() {
   return (
@@ -36,7 +37,7 @@ function App() {
           <Route element={<PrivateRoute />}>
             <Route path="/chats" element={<ChatsLayout />}>
               <Route index element={<AddFriendPage />} />
-              <Route path=":uuid" element={<div>hi123</div>} />
+              <Route path=":uuid" element={<ChatPage />} />
               {/* <Route path=":uuid" element={<ChatPage />} /> */}
             </Route>
           </Route>

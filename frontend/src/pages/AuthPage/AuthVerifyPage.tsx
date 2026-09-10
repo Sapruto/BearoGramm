@@ -10,11 +10,11 @@ import { useAuthStore } from "../../store/authStore";
 
 const AuthVerifyPage = () => {
     const navigate = useNavigate();
-    const { phone, setToken } = useAuthStore();
+    const { phone, setToken, setUserUUID } = useAuthStore();
     const [phoneFormatted, setPhoneFormatted] = useState('');
     const [otp, setOtp] = useState('')
 
-    const { mutate: verifyCode, isPending, error } = useVerifyCode();
+    const { mutate: verifyCode, isPending } = useVerifyCode();
 
     useEffect(() => {
         if (!phone) {
@@ -44,6 +44,7 @@ const AuthVerifyPage = () => {
             {
                 onSuccess: (data) => {
                     setToken(data.token);
+                    setUserUUID(data.user_uuid);
                     navigate("/", { replace: true });
                     toast.success("Successfully signed in!");
 

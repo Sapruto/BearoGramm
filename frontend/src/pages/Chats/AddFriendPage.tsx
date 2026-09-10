@@ -1,20 +1,21 @@
 import { parsePhoneNumberWithError } from 'libphonenumber-js';
 import { UserPlus } from 'lucide-react';
-import { matchIsValidTel } from 'mui-tel-input';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useAddFriend } from '../../shared/hooks/personal/useAddFriend';
 import { withPreventDefault } from '../../shared/lib/withPreventDefault';
-import PhoneNumberInput from '../AuthPage/PhoneNumberInput';
+import PhoneNumberInput, { type PhoneNumberInputRef } from '../AuthPage/PhoneNumberInput';
 
 const AddFriendPage = () => {
     const [phone, setPhone] = useState('');
     const [_phoneValid, setPhoneValid] = useState(false);
 
     const { mutate: sendAddFriend, isPending } = useAddFriend();
+    const phoneInputRef = useRef<PhoneNumberInputRef>(null);
 
     const handleAddFriend = () => {
-        if (!phone || !matchIsValidTel(phone)) return;
+        if (!phoneInputRef.current?.validate())
+            return;
 
         const rawPhone = parsePhoneNumberWithError(phone).number;
 
@@ -45,9 +46,11 @@ const AddFriendPage = () => {
 
                 <form onSubmit={withPreventDefault(handleAddFriend)}>
                     <PhoneNumberInput
+                        ref={phoneInputRef}
                         value={phone}
                         onChange={setPhone}
                         onValidate={setPhoneValid}
+                        verifyOnBlur={false}
                     />
 
                     <button

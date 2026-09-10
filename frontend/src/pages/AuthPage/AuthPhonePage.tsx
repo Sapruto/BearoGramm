@@ -1,21 +1,21 @@
 import { parsePhoneNumberWithError } from 'libphonenumber-js';
 import { matchIsValidTel } from 'mui-tel-input';
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from 'react-router-dom';
 import { useSendCode } from '../../shared/hooks/auth/useSendCode';
 import { withPreventDefault } from '../../shared/lib/withPreventDefault';
 import { useAuthStore } from '../../store/authStore';
-import PhoneNumberInput from "./PhoneNumberInput";
+import PhoneNumberInput, { type PhoneNumberInputRef } from "./PhoneNumberInput";
 
 const AuthPhonePage = () => {
     const navigate = useNavigate();
     const [phone, setPhone] = useState('');
-    const [_phoneValid, setPhoneValid] = useState(false);
     const { phone: phoneStore, setPhone: setPhoneStore } = useAuthStore();
     const { mutate: sendCode, isPending, error } = useSendCode();
+    const phoneInputRef = useRef<PhoneNumberInputRef>(null);
 
     const handleSendCode = () => {
-        if (!phone || !matchIsValidTel(phone))
+        if (!phoneInputRef.current?.validate())
             return;
 
         const rawPhone = parsePhoneNumberWithError(phone).number;
@@ -55,9 +55,9 @@ const AuthPhonePage = () => {
                 </p>
 
                 <PhoneNumberInput
+                    ref={phoneInputRef}
                     value={phone}
                     onChange={setPhone}
-                    onValidate={setPhoneValid}
                 />
 
                 <button
