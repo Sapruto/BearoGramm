@@ -18,7 +18,6 @@ from ..repositories.message_repository import MessageRepository, get_message_rep
 from ...models.dto.requests import (
     SendMessageRequest,
     UpdateMessageRequest,
-    DeleteMessageRequest,
 )
 from ...models.dto.responses import (
     SendMessageResponse,
@@ -143,10 +142,10 @@ class MessageService:
         return UpdateMessageResponse(message_entity=saved_entity)
 
     async def delete_message(
-        self, request: DeleteMessageRequest, user_uuid: str
+        self, message_uuid: str, user_uuid: str
     ) -> DeleteMessageResponse:
         query = SqlQuery[MessageFields]()
-        query.add_filter(MessageFields.UUID, request.message_uuid)
+        query.add_filter(MessageFields.UUID, message_uuid)
         message = await self.message_repository.get(query)
         if not message:
             raise MessageNotFoundError()
@@ -160,7 +159,7 @@ class MessageService:
             raise ChecksFailed()
 
         query = SqlQuery[MessageFields]()
-        query.add_filter(MessageFields.UUID, request.message_uuid)
+        query.add_filter(MessageFields.UUID, message_uuid)
         deleted_count = await self.message_repository.delete(query)
 
         if deleted_count == 0:
@@ -168,7 +167,7 @@ class MessageService:
 
         notification = {
             "type": "message_deleted",
-            "data": {"message_uuid": request.message_uuid},
+            "data": {"message_uuid": message_uuid},
         }
         await self.websocket_service.notify_chat_participants(
             message.chat_uuid, notification

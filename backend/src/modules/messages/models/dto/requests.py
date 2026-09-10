@@ -11,7 +11,3 @@ class SendMessageRequest(BaseModel):
 class UpdateMessageRequest(BaseModel):
     message_uuid: str = Field(...)
     typing_to_data: List[Tuple[str, Any]] = Field(default=[])
-
-
-class DeleteMessageRequest(BaseModel):
-    message_uuid: str = Field(...)
