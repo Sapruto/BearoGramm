@@ -1,7 +1,8 @@
 import { validatePhoneNumberLength, type CountryCode } from 'libphonenumber-js';
 import { AlertCircle } from 'lucide-react';
 import { matchIsValidTel, MuiTelInput, type MuiTelInputInfo } from 'mui-tel-input';
-import { useEffect, useRef, useState } from 'react';
+import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react';
+
 function isPhoneNumberTooLong(phoneNumber: string, countryCode: CountryCode | null) {
     const lengthResult = validatePhoneNumberLength(phoneNumber, countryCode ?? undefined);
     return lengthResult === "INVALID_LENGTH" || lengthResult === "TOO_LONG";
@@ -19,23 +20,33 @@ type Props = {
     onChange: (value: string) => void;
     error?: string | null;
     onValidate?: (isValid: boolean) => void;
+    verifyOnBlur?: boolean;
 };
 
-const PhoneNumberInput = ({ value, onChange, error, onValidate }: Props) => {
+export type PhoneNumberInputRef = {
+    validate: () => boolean;
+};
+
+const PhoneNumberInput = forwardRef<PhoneNumberInputRef, Props>(({ value, onChange, error, onValidate, verifyOnBlur = true }: Props, ref) => {
     const [inputKey, setInputKey] = useState(0);
     const inputRef = useRef<HTMLInputElement>(null);
     const [localError, setLocalError] = useState<string | null>(null);
 
-    const validate = (val: string): boolean => {
-        if (!val) {
-            setLocalError("Phone number is required");
+    const validate = (val: string, blur: boolean = false): boolean => {
+        const setError = (msg: string) => {
+            if (!verifyOnBlur && blur)
+                return;
+
+            setLocalError(msg);
             onValidate?.(false);
+        }
+        if (!val) {
+            setError("Phone number is required");
             return false;
         }
 
         if (!matchIsValidTel(val)) {
-            setLocalError('Invalid phone number');
-            onValidate?.(false);
+            setError('Invalid phone number');
             return false;
         }
 
@@ -43,6 +54,12 @@ const PhoneNumberInput = ({ value, onChange, error, onValidate }: Props) => {
         onValidate?.(true);
         return true;
     };
+
+    useImperativeHandle(ref, () => ({
+        validate: () => {
+            return validate(value);
+        }
+    }));
 
     const handleChange = (newValue: string, info: MuiTelInputInfo) => {
         if (info.reason === "country") {
@@ -74,7 +91,7 @@ const PhoneNumberInput = ({ value, onChange, error, onValidate }: Props) => {
             autoFocus
             value={value}
             onChange={handleChange}
-            onBlur={() => validate(value)}
+            onBlur={() => validate(value, true)}
             defaultCountry="RU"
             forceCallingCode
             preferredCountries={["RU", "US"]}
@@ -89,6 +106,6 @@ const PhoneNumberInput = ({ value, onChange, error, onValidate }: Props) => {
             }
         />
     );
-};
+});
 
 export default PhoneNumberInput;

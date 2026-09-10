@@ -6,7 +6,9 @@ type AuthStore = {
     setPhone: (phone: string) => void;
 
     token: string | null;
+    userUUID: string | null;
     setToken: (token: string) => void;
+    setUserUUID: (userUUID: string) => void;
     logout: () => void;
 };
 
@@ -17,8 +19,10 @@ export const useAuthStore = create<AuthStore>()(
             setPhone: (phone) => set({ phone }),
 
             token: null,
+            userUUID: null,
             setToken: (token) => set({ token }),
-            logout: () => set({ token: null, phone: '' }),
+            setUserUUID: (userUUID) => set({ userUUID }),
+            logout: () => set({ token: null, userUUID: null, phone: '' }),
         }),
         {
             name: 'auth-storage',
