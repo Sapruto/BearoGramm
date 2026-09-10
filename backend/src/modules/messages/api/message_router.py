@@ -9,7 +9,6 @@ from ..core.services.message_service import get_message_service, MessageService
 from ..core.services.websocket_message_service import get_websocket_message_service
 from ..models.dto.requests import (
     SendMessageRequest,
-    GetMessagesRequest,
     UpdateMessageRequest,
     DeleteMessageRequest,
 )
@@ -122,13 +121,12 @@ async def get_messages(
     current_user: UserEntity = Depends(get_current_user_depends()),
 ):
     try:
-        request = GetMessagesRequest(
-            chat_uuid=chat_uuid,
+        return await service.get_messages(chat_uuid=chat_uuid,
             limit=limit,
             offset=offset,
             show_new=show_new,
+            user_uuid=current_user.uuid
         )
-        return await service.get_messages(request, current_user.uuid)
     except Exception as e:
         logger.error(f"Error in get_messages: {e}", exc_info=True)
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))

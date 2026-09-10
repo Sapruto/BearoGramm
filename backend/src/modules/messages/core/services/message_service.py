@@ -17,7 +17,6 @@ from ..exceptions import (
 from ..repositories.message_repository import MessageRepository, get_message_repository
 from ...models.dto.requests import (
     SendMessageRequest,
-    GetMessagesRequest,
     UpdateMessageRequest,
     DeleteMessageRequest,
 )
@@ -176,19 +175,25 @@ class MessageService:
         )
         return DeleteMessageResponse()
 
-    async def get_messages(self, request: GetMessagesRequest, user_uuid: str) -> GetMessagesResponse:
+    async def get_messages(
+            self,
+            chat_uuid: str,
+            limit: int,
+            offset: int,
+            user_uuid: str,
+    show_new: bool,) -> GetMessagesResponse:
         if not await self._checks_in_chat_service(
-            request.chat_uuid, user_uuid, MessageAction.GET
+            chat_uuid, user_uuid, MessageAction.GET
         ):
             raise ChecksFailed()
 
         query = SqlQuery[MessageFields]()
-        query.add_filter(MessageFields.CHAT_UUID, request.chat_uuid)
+        query.add_filter(MessageFields.CHAT_UUID, chat_uuid)
 
-        query.limit = min(request.limit, self.max_limit)
-        query.offset = request.offset
+        query.limit = min(limit, self.max_limit)
+        query.offset = offset
 
-        if request.show_new:
+        if show_new:
             query.add_order_by(MessageFields.CREATED_AT, "desc")
         else:
             query.add_order_by(MessageFields.CREATED_AT, "asc")
