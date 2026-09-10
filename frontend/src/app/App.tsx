@@ -9,12 +9,12 @@ import HomePage from "../pages/HomePage/HomePage"
 import NotFoundPage from "../pages/NotFoundPage/NotFoundPage"
 import { queryClient } from "../shared/api/queryClient"
 import { LoginRequiredRoute } from "../shared/routes/LoginRequiredRoute"
-import theme from "./theme"
 import ChatsLayout from "../pages/Chats/ChatLayout"
 import AddFriendPage from "../pages/Chats/AddFriendPage"
 import ChatPage from "../pages/Chats/ChatPage"
 import { ProfileRequiredRoute } from "../shared/routes/ProfileRequiredRoute"
 import { NoLoginRequiredRoute } from "../shared/routes/NoLoginRequiredRoute"
+import { theme, toastTheme } from "./theme"
 
 function App() {
   return (
@@ -22,13 +22,7 @@ function App() {
       <ThemeProvider theme={theme}>
         <CssBaseline />
         <Toaster
-          toastOptions={{
-            className: '',
-            style: {
-              background: '#151515',
-              color: '#fff',
-            }
-          }}
+          toastOptions={toastTheme}
         />
 
         <Routes>

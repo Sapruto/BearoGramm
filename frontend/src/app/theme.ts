@@ -1,7 +1,7 @@
 import { createTheme } from '@mui/material/styles';
+import type { DefaultToastOptions } from 'react-hot-toast';
 
-
-const theme = createTheme({
+export const theme = createTheme({
     palette: {
         mode: 'dark',
         background: {
@@ -44,4 +44,10 @@ const theme = createTheme({
     },
 });
 
-export default theme;
+export const toastTheme: DefaultToastOptions = {
+    className: '',
+    style: {
+        background: '#151515',
+        color: '#fff',
+    }
+}
