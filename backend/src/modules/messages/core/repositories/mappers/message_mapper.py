@@ -1,5 +1,3 @@
-import asyncio
-import concurrent.futures
 from typing import Any, Tuple, List, Optional, Dict
 from sqlalchemy.orm import InstrumentedAttribute
 
@@ -102,19 +100,6 @@ class MessageMapper(BaseMapper[MessageEntity, MessageORM, MessageFields]):
             return []
         return value
 
-    def _run_async(self, coro):
-        try:
-            loop = asyncio.get_running_loop()
-        except RuntimeError:
-            return asyncio.run(coro)
-
-        if loop.is_running():
-            with concurrent.futures.ThreadPoolExecutor() as executor:
-                future = executor.submit(asyncio.run, coro)
-                return future.result()
-        else:
-            return loop.run_until_complete(coro)
-
     async def prepare_data_to_save(
         self, message_data: List[BaseData]
     ) -> List[BaseData]:
@@ -125,8 +110,8 @@ class MessageMapper(BaseMapper[MessageEntity, MessageORM, MessageFields]):
     ) -> List[BaseData]:
         return await self._prepare_list_to_use(message_data)
 
-    def to_orm(self, entity: MessageEntity) -> MessageORM:
-        prepared = self._run_async(self.prepare_data_to_save(entity.message_data))
+    async def to_orm(self, entity: MessageEntity) -> MessageORM:
+        prepared = await self.prepare_data_to_save(entity.message_data)
         return MessageORM(
             uuid=entity.uuid,
             message_data=[item.model_dump(mode="json") for item in prepared],
@@ -136,8 +121,8 @@ class MessageMapper(BaseMapper[MessageEntity, MessageORM, MessageFields]):
             user_uuid=entity.user_uuid,
         )
 
-    def to_entity(self, orm: MessageORM) -> MessageEntity:
-        prepared = self._run_async(self.prepare_data_to_use(orm.message_data))
+    async def to_entity(self, orm: MessageORM) -> MessageEntity:
+        prepared = await self.prepare_data_to_use(orm.message_data)
         return MessageEntity(
             uuid=orm.uuid,
             message_data=prepared,
@@ -147,10 +132,10 @@ class MessageMapper(BaseMapper[MessageEntity, MessageORM, MessageFields]):
             user_uuid=orm.user_uuid,
         )
 
-    def to_orm_value(
+    async def to_orm_value(
         self, field: MessageFields, value: Any
     ) -> Tuple[InstrumentedAttribute, Any]:
-        orm_field = self.to_orm_field(field)
+        orm_field = await self.to_orm_field(field)
 
         if field == MessageFields.MESSAGE_DATA:
             validated_value = self._validate_message_data(value)
@@ -158,10 +143,10 @@ class MessageMapper(BaseMapper[MessageEntity, MessageORM, MessageFields]):
 
         return orm_field, value
 
-    def to_entity_value(
+    async def to_entity_value(
         self, field: InstrumentedAttribute, value: Any
     ) -> Tuple[MessageFields, Any]:
-        entity_field = self.to_entity_field(field)
+        entity_field = await self.to_entity_field(field)
 
         if entity_field == MessageFields.MESSAGE_DATA:
             normalized_value = self._normalize_message_data(value)
@@ -169,13 +154,13 @@ class MessageMapper(BaseMapper[MessageEntity, MessageORM, MessageFields]):
 
         return entity_field, value
 
-    def to_orm_field(self, field: MessageFields) -> InstrumentedAttribute:
+    async def to_orm_field(self, field: MessageFields) -> InstrumentedAttribute:
         orm_field = self.field_mapping.get(field)
         if not orm_field:
             raise ValueError(f"No mapping found for field: {field}")
         return orm_field
 
-    def to_entity_field(self, field: InstrumentedAttribute) -> MessageFields:
+    async def to_entity_field(self, field: InstrumentedAttribute) -> MessageFields:
         entity_field = self.reverse_field_mapping.get(field)
         if entity_field:
             return entity_field

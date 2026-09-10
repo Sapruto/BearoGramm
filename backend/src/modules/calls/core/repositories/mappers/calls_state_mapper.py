@@ -29,7 +29,7 @@ class CallsStateMapper(BaseRedisMapper[CallStateEntity, CallStateFields]):
         CallStateFields.CALL_TYPE: "call_type",
     }
 
-    def to_redis(self, entity: CallStateEntity) -> Dict[str, Any]:
+    async def to_redis(self, entity: CallStateEntity) -> Dict[str, Any]:
         return {
             "user_uuid": entity.user_uuid,
             "room_id": entity.room_id or "",
@@ -48,7 +48,7 @@ class CallsStateMapper(BaseRedisMapper[CallStateEntity, CallStateFields]):
             else entity.call_type,
         }
 
-    def to_entity(self, data: Dict[str, Any]) -> CallStateEntity:
+    async def to_entity(self, data: Dict[str, Any]) -> CallStateEntity:
         participants = []
         if data.get("participants"):
             try:
@@ -90,8 +90,8 @@ class CallsStateMapper(BaseRedisMapper[CallStateEntity, CallStateFields]):
             call_type=call_type,
         )
 
-    def to_redis_value(self, field: CallStateFields, value: Any) -> Tuple[str, Any]:
-        redis_field = self.to_redis_field(field)
+    async def to_redis_value(self, field: CallStateFields, value: Any) -> Tuple[str, Any]:
+        redis_field = await self.to_redis_field(field)
 
         if field == CallStateFields.PARTICIPANTS:
             return redis_field, json.dumps(value) if value else "[]"
@@ -104,10 +104,10 @@ class CallsStateMapper(BaseRedisMapper[CallStateEntity, CallStateFields]):
 
         return redis_field, self.serialize_value(value)
 
-    def to_entity_value(
+    async def to_entity_value(
         self, redis_field: str, value: Any
     ) -> Tuple[CallStateFields, Any]:
-        field = self.to_entity_field(redis_field)
+        field = await self.to_entity_field(redis_field)
 
         if field == CallStateFields.PARTICIPANTS:
             try:
@@ -124,10 +124,10 @@ class CallsStateMapper(BaseRedisMapper[CallStateEntity, CallStateFields]):
 
         return field, self.deserialize_value(value, str)
 
-    def to_redis_field(self, field: CallStateFields) -> str:
+    async def to_redis_field(self, field: CallStateFields) -> str:
         return self.field_mapping.get(field, field.value)
 
-    def to_entity_field(self, redis_field: str) -> CallStateFields:
+    async def to_entity_field(self, redis_field: str) -> CallStateFields:
         return self.reverse_field_mapping.get(redis_field, CallStateFields(redis_field))
 
     def get_id_field(self) -> Optional[CallStateFields]:

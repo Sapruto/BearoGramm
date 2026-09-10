@@ -24,7 +24,7 @@ class ParticipantMapper(BaseMapper[ParticipantEntity, ParticipantORM, Participan
         ParticipantORM.permissions: ParticipantFields.PERMISSIONS,
     }
 
-    def to_orm(self, entity: ParticipantEntity) -> ParticipantORM:
+    async def to_orm(self, entity: ParticipantEntity) -> ParticipantORM:
         return ParticipantORM(
             uuid=entity.uuid,
             user_uuid=entity.user_uuid,
@@ -33,7 +33,7 @@ class ParticipantMapper(BaseMapper[ParticipantEntity, ParticipantORM, Participan
             permissions=entity.permissions,
         )
 
-    def to_entity(self, orm: ParticipantORM) -> ParticipantEntity:
+    async def to_entity(self, orm: ParticipantORM) -> ParticipantEntity:
         return ParticipantEntity(
             uuid=orm.uuid,
             user_uuid=orm.user_uuid,
@@ -44,14 +44,14 @@ class ParticipantMapper(BaseMapper[ParticipantEntity, ParticipantORM, Participan
             updated_at=orm.updated_at,
         )
 
-    def to_orm_value(self, field: ParticipantFields, value: Any):
-        return self.to_orm_field(field), value
+    async def to_orm_value(self, field: ParticipantFields, value: Any):
+        return await self.to_orm_field(field), value
 
-    def to_entity_value(self, orm_field: InstrumentedAttribute, value: Any):
-        return self.to_entity_field(orm_field), value
+    async def to_entity_value(self, orm_field: InstrumentedAttribute, value: Any):
+        return await self.to_entity_field(orm_field), value
 
-    def to_orm_field(self, field: ParticipantFields) -> InstrumentedAttribute:
+    async def to_orm_field(self, field: ParticipantFields) -> InstrumentedAttribute:
         return self.field_mapping[field]
 
-    def to_entity_field(self, orm_field: InstrumentedAttribute) -> ParticipantFields:
+    async def to_entity_field(self, orm_field: InstrumentedAttribute) -> ParticipantFields:
         return self.reverse_field_mapping[orm_field]

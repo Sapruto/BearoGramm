@@ -20,31 +20,31 @@ class BaseMapper(Generic[Entity, ORM, Fields], ABC):
             }
 
     @abstractmethod
-    def to_orm(self, entity: Entity) -> ORM:
+    async def to_orm(self, entity: Entity) -> ORM:
         pass
 
     @abstractmethod
-    def to_entity(self, orm: ORM) -> Entity:
+    async def to_entity(self, orm: ORM) -> Entity:
         pass
 
     @abstractmethod
-    def to_orm_value(
+    async def to_orm_value(
         self, field: Fields, value: Any
     ) -> Tuple[InstrumentedAttribute, Any]:
         pass
 
     @abstractmethod
-    def to_entity_value(
+    async def to_entity_value(
         self, field: InstrumentedAttribute, value: Any
     ) -> Tuple[Fields, Any]:
         pass
 
     @abstractmethod
-    def to_orm_field(self, field: Fields) -> InstrumentedAttribute:
+    async def to_orm_field(self, field: Fields) -> InstrumentedAttribute:
         pass
 
     @abstractmethod
-    def to_entity_field(self, field: InstrumentedAttribute) -> Fields:
+    async def to_entity_field(self, field: InstrumentedAttribute) -> Fields:
         pass
 
     def get_field_name(self, field: InstrumentedAttribute) -> str:

@@ -22,27 +22,27 @@ class BaseRedisMapper(Generic[Entity, Fields], ABC):
             }
 
     @abstractmethod
-    def to_redis(self, entity: Entity) -> Dict[str, Any]:
+    async def to_redis(self, entity: Entity) -> Dict[str, Any]:
         pass
 
     @abstractmethod
-    def to_entity(self, data: Dict[str, Any]) -> Entity:
+    async def to_entity(self, data: Dict[str, Any]) -> Entity:
         pass
 
     @abstractmethod
-    def to_redis_value(self, field: Fields, value: Any) -> Tuple[str, Any]:
+    async def to_redis_value(self, field: Fields, value: Any) -> Tuple[str, Any]:
         pass
 
     @abstractmethod
-    def to_entity_value(self, redis_field: str, value: Any) -> Tuple[Fields, Any]:
+    async def to_entity_value(self, redis_field: str, value: Any) -> Tuple[Fields, Any]:
         pass
 
     @abstractmethod
-    def to_redis_field(self, field: Fields) -> str:
+    async def to_redis_field(self, field: Fields) -> str:
         pass
 
     @abstractmethod
-    def to_entity_field(self, redis_field: str) -> Fields:
+    async def to_entity_field(self, redis_field: str) -> Fields:
         pass
 
     def get_key(self, entity_id: Any) -> str:

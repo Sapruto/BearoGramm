@@ -91,7 +91,7 @@ class ProfileCustomMapper(BaseMapper[ProfileCustomEntity, ProfileCustomORM, Prof
     ) -> List[base_data_type]:
         return await self._prepare_list_to_use(profile_data)
 
-    def to_orm(self, entity: ProfileCustomEntity) -> ProfileCustomORM:
+    async def to_orm(self, entity: ProfileCustomEntity) -> ProfileCustomORM:
         return ProfileCustomORM(
             uuid=entity.uuid,
             data=entity.data,
@@ -99,7 +99,7 @@ class ProfileCustomMapper(BaseMapper[ProfileCustomEntity, ProfileCustomORM, Prof
             user_uuid=entity.user_uuid,
         )
 
-    def to_entity(self, orm: ProfileCustomORM) -> ProfileCustomEntity:
+    async def to_entity(self, orm: ProfileCustomORM) -> ProfileCustomEntity:
         return ProfileCustomEntity(
             uuid=orm.uuid,
             data=orm.data or {},
@@ -107,10 +107,10 @@ class ProfileCustomMapper(BaseMapper[ProfileCustomEntity, ProfileCustomORM, Prof
             user_uuid=orm.user_uuid,
         )
 
-    def to_orm_value(
+    async def to_orm_value(
         self, field: ProfileCustomFields, value: Any
     ) -> Tuple[InstrumentedAttribute, Any]:
-        orm_field = self.to_orm_field(field)
+        orm_field = await self.to_orm_field(field)
 
         if field == ProfileCustomFields.DATA:
             validated_value = self._validate_profile_data(value)
@@ -118,10 +118,10 @@ class ProfileCustomMapper(BaseMapper[ProfileCustomEntity, ProfileCustomORM, Prof
 
         return orm_field, value
 
-    def to_entity_value(
+    async def to_entity_value(
         self, field: InstrumentedAttribute, value: Any
     ) -> Tuple[ProfileCustomFields, Any]:
-        entity_field = self.to_entity_field(field)
+        entity_field = await self.to_entity_field(field)
 
         if entity_field == ProfileCustomFields.DATA:
             normalized_value = self._normalize_profile_data(value)
@@ -129,13 +129,13 @@ class ProfileCustomMapper(BaseMapper[ProfileCustomEntity, ProfileCustomORM, Prof
 
         return entity_field, value
 
-    def to_orm_field(self, field: ProfileCustomFields) -> InstrumentedAttribute:
+    async def to_orm_field(self, field: ProfileCustomFields) -> InstrumentedAttribute:
         orm_field = self.field_mapping.get(field)
         if not orm_field:
             raise ValueError(f"No mapping found for field: {field}")
         return orm_field
 
-    def to_entity_field(self, field: InstrumentedAttribute) -> ProfileCustomFields:
+    async def to_entity_field(self, field: InstrumentedAttribute) -> ProfileCustomFields:
         entity_field = self.reverse_field_mapping.get(field)
         if entity_field:
             return entity_field

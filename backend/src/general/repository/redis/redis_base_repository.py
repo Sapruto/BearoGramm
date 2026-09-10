@@ -28,23 +28,23 @@ class BaseRedisRepository(
         self._index_enabled = False
         self._index_prefix = f"idx:{mapper.key_prefix}:"
 
-    def _to_redis(self, entity: EntityType) -> Dict[str, Any]:
-        return self._mapper.to_redis(entity)
+    async def _to_redis(self, entity: EntityType) -> Dict[str, Any]:
+        return await self._mapper.to_redis(entity)
 
-    def _to_entity(self, data: Dict[str, Any]) -> EntityType:
-        return self._mapper.to_entity(data)
+    async def _to_entity(self, data: Dict[str, Any]) -> EntityType:
+        return await self._mapper.to_entity(data)
 
-    def _to_redis_value(self, field: FieldsType, value: Any) -> tuple[str, Any]:
-        return self._mapper.to_redis_value(field, value)
+    async def _to_redis_value(self, field: FieldsType, value: Any) -> tuple[str, Any]:
+        return await self._mapper.to_redis_value(field, value)
 
-    def _to_entity_value(self, redis_field: str, value: Any) -> tuple[FieldsType, Any]:
-        return self._mapper.to_entity_value(redis_field, value)
+    async def _to_entity_value(self, redis_field: str, value: Any) -> tuple[FieldsType, Any]:
+        return await self._mapper.to_entity_value(redis_field, value)
 
-    def _to_redis_field(self, field: FieldsType) -> str:
-        return self._mapper.to_redis_field(field)
+    async def _to_redis_field(self, field: FieldsType) -> str:
+        return await self._mapper.to_redis_field(field)
 
-    def _to_entity_field(self, redis_field: str) -> FieldsType:
-        return self._mapper.to_entity_field(redis_field)
+    async def _to_entity_field(self, redis_field: str) -> FieldsType:
+        return await self._mapper.to_entity_field(redis_field)
 
     def _get_key(self, entity_id: Any) -> str:
         return self._mapper.get_key(entity_id)
@@ -78,7 +78,7 @@ class BaseRedisRepository(
                     decoded_data[k.decode() if isinstance(k, bytes) else k] = (
                         v.decode() if isinstance(v, bytes) else v
                     )
-                return self._to_entity(decoded_data)
+                return await self._to_entity(decoded_data)
             else:
                 data = await self.redis.get(key)
                 if not data:
@@ -86,7 +86,7 @@ class BaseRedisRepository(
                 if isinstance(data, bytes):
                     data = data.decode()
                 parsed_data = json.loads(data)
-                return self._to_entity(parsed_data)
+                return await self._to_entity(parsed_data)
 
         except Exception as e:
             logger.error(f"Error getting entity by key {key}: {e}")
@@ -165,7 +165,7 @@ class BaseRedisRepository(
         if not entity:
             return
 
-        data = self._to_redis(entity)
+        data = await self._to_redis(entity)
         for redis_field, value in data.items():
             index_key = f"{self._index_prefix}{redis_field}:{self._mapper.serialize_value(value)}"
             await self.redis.delete(index_key)
@@ -177,7 +177,7 @@ class BaseRedisRepository(
                 raise ValueError("Entity ID cannot be None")
 
             key = self._get_key(entity_id)
-            data = self._to_redis(entity)
+            data = await self._to_redis(entity)
 
             storage_type = self._mapper.storage_type
 

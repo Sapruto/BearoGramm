@@ -15,14 +15,14 @@ class SessionMapper(BaseRedisMapper[SessionEntity, SessionFields]):
         SessionFields.EXPIRED_AT: "expired_at",
     }
 
-    def to_redis(self, entity: SessionEntity) -> Dict[str, Any]:
+    async def to_redis(self, entity: SessionEntity) -> Dict[str, Any]:
         return {
             "user_uuid": entity.user_uuid,
             "token": entity.token,
             "expired_at": entity.expired_at.isoformat() if entity.expired_at else None,
         }
 
-    def to_entity(self, data: Dict[str, Any]) -> SessionEntity:
+    async def to_entity(self, data: Dict[str, Any]) -> SessionEntity:
         return SessionEntity(
             user_uuid=data.get("user_uuid"),
             token=data.get("token"),
@@ -31,8 +31,8 @@ class SessionMapper(BaseRedisMapper[SessionEntity, SessionFields]):
             else None,
         )
 
-    def to_redis_value(self, field: SessionFields, value: Any) -> Tuple[str, Any]:
-        redis_field = self.to_redis_field(field)
+    async def to_redis_value(self, field: SessionFields, value: Any) -> Tuple[str, Any]:
+        redis_field = await self.to_redis_field(field)
 
         if field == SessionFields.EXPIRED_AT:
             if isinstance(value, datetime):
@@ -45,10 +45,10 @@ class SessionMapper(BaseRedisMapper[SessionEntity, SessionFields]):
 
         return redis_field, value
 
-    def to_entity_value(
+    async def to_entity_value(
         self, redis_field: str, value: Any
     ) -> Tuple[SessionFields, Any]:
-        entity_field = self.to_entity_field(redis_field)
+        entity_field = await self.to_entity_field(redis_field)
 
         if entity_field == SessionFields.EXPIRED_AT:
             if isinstance(value, str):
@@ -61,12 +61,12 @@ class SessionMapper(BaseRedisMapper[SessionEntity, SessionFields]):
 
         return entity_field, value
 
-    def to_redis_field(self, field: SessionFields) -> str:
+    async def to_redis_field(self, field: SessionFields) -> str:
         return self.field_mapping.get(
             field, field.value if hasattr(field, "value") else str(field)
         )
 
-    def to_entity_field(self, redis_field: str) -> SessionFields:
+    async def to_entity_field(self, redis_field: str) -> SessionFields:
         return self.reverse_field_mapping.get(redis_field, SessionFields(redis_field))
 
     def get_id_field(self) -> Optional[SessionFields]:
