@@ -36,7 +36,7 @@ class WebSocketStateRepository(
         await self.save(entity)
 
         key = f"{self.USER_ONLINE_PREFIX}:{user_uuid}"
-        await self.redis.setex(key, self.ttl, "1")
+        await self.redis.setex(key, self.default_ttl, "1")
 
         return True
 

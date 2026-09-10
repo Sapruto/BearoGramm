@@ -1,4 +1,4 @@
-from typing import Dict, Any, Tuple
+from typing import Dict, Any, Tuple, Optional
 from src.general.repository.redis.redis_base_mapper import BaseRedisMapper
 
 from ....models.entities.websocket_state_entity import (
@@ -19,6 +19,9 @@ class WebSocketStateMapper(BaseRedisMapper[WebSocketStateEntity, WebSocketStateF
 
     def __init__(self):
         super().__init__()
+
+    def get_id_field(self) -> Optional[WebSocketStateFields]:
+        return WebSocketStateFields.USER_UUID
 
     async def to_redis(self, entity: WebSocketStateEntity) -> Dict[str, Any]:
         return {

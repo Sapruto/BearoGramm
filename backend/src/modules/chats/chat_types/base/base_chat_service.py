@@ -20,7 +20,6 @@ from .exceptions import (
     PermissionDeniedError,
     CreatorMustBeParticipantError,
     DuplicateParticipantsError,
-    InvalidParticipantsError,
 )
 
 

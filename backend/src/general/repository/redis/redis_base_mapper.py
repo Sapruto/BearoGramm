@@ -55,8 +55,13 @@ class BaseRedisMapper(Generic[Entity, Fields], ABC):
 
     def get_id_from_entity(self, entity: Entity) -> Optional[Any]:
         id_field = self.get_id_field()
-        if id_field and hasattr(entity, id_field):
-            return getattr(entity, id_field)
+        if id_field is None:
+            return None
+
+        field_name = id_field.value if hasattr(id_field, "value") else str(id_field)
+
+        if hasattr(entity, field_name):
+            return getattr(entity, field_name)
         return None
 
     def serialize_value(self, value: Any) -> str:
