@@ -85,6 +85,24 @@ class ProfileCustomMapper(BaseMapper[ProfileCustomEntity, ProfileCustomORM, Prof
             return {}
         return value
 
+    def _deserialize_data(self, raw: List) -> List[Dict]:
+        result = []
+        for item in raw:
+            if not isinstance(item, dict):
+                continue
+            data_type = item.get("data_type")
+            service = self.profile_registry.get_data_service(data_type) if data_type else None
+            model_cls = getattr(service, "data_model", None) if service else None
+            if model_cls:
+                try:
+                    result.append(model_cls(**item))
+                    continue
+                except Exception as e:
+                    logger.error(f"Deserialize error for {data_type}: {e}")
+            logger.warning(f"Unknown data_type {data_type}, keeping dict")
+            result.append(item)
+        return result
+
     async def prepare_data_to_save(
         self, profile_data: List[base_data_type]
     ) -> List[base_data_type]:
@@ -96,20 +114,26 @@ class ProfileCustomMapper(BaseMapper[ProfileCustomEntity, ProfileCustomORM, Prof
         return await self._prepare_list_to_use(profile_data)
 
     async def to_orm(self, entity: ProfileCustomEntity) -> ProfileCustomORM:
+        prepared = await self.prepare_data_to_save(entity.data or [])
         return ProfileCustomORM(
             uuid=entity.uuid,
             name=entity.name,
-            data=entity.data,
+            avatar_url=entity.avatar_url,
+            data=[d.model_dump() for d in prepared],  # ← JSON-friendly
             updated_at=entity.updated_at,
             user_uuid=entity.user_uuid,
         )
 
     async def to_entity(self, orm: ProfileCustomORM) -> ProfileCustomEntity:
+        raw = orm.data or []
+        # Восстанавливаем BaseData по data_type через registry
+        data_models = self._deserialize_data(raw)
+        prepared = await self.prepare_data_to_use(data_models)
         return ProfileCustomEntity(
             uuid=orm.uuid,
             name=orm.name,
             avatar_url=orm.avatar_url,
-            data=orm.data or {},
+            data=prepared,
             updated_at=orm.updated_at,
             user_uuid=orm.user_uuid,
         )

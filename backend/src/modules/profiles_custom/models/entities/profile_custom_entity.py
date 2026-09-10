@@ -1,10 +1,8 @@
 from pydantic import BaseModel, Field
 from enum import Enum
-
 from datetime import datetime
-from typing import Optional, Dict
+from typing import Optional, List
 
-from src.core.paths import DefaultAvatarPath
 from src.general.processors.base.base_data import base_data_type
 
 
@@ -26,8 +24,8 @@ class ProfileCustomEntity(BaseModel):
     uuid: Optional[str] = Field(default=None)
 
     name: str = Field(default="Unified")
-    avatar_url: str = Field(default=DefaultAvatarPath)
+    avatar_url: Optional[str] = Field(default=None)
 
-    data: Dict[str, base_data_type] = Field(default={})
+    data: List[base_data_type] = Field(default_factory=list)
     updated_at: Optional[datetime] = Field(default=None)
     user_uuid: Optional[str] = Field(default=None)

@@ -6,7 +6,11 @@ from uuid import uuid4
 from datetime import datetime
 
 from src.core.database import Base
-from src.core.paths import DefaultAvatarPath
+
+from .default_avatar_randomizer import AvatarRandomizer
+
+
+randomizer = AvatarRandomizer()
 
 
 class ProfileCustomORM(Base):
@@ -19,7 +23,7 @@ class ProfileCustomORM(Base):
     )
 
     name: Mapped[str] = mapped_column(String(67), nullable=False, default="Unified")
-    avatar_url: Mapped[str] = mapped_column(String(555), nullable=False, default=DefaultAvatarPath)
+    avatar_url: Mapped[str] = mapped_column(String(555), nullable=False, default=lambda: str(randomizer.get_random_avatar()))
 
     data: Mapped[Dict[str, Any]] = mapped_column(JSON)
 

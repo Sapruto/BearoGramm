@@ -61,7 +61,7 @@ def create_app() -> FastAPI:
     )
 
     if STATIC_ROOT.exists():
-        app.mount("/static", StaticFiles(directory=str(STATIC_ROOT)), name="static")
+        app.mount("/media", StaticFiles(directory=str(STATIC_ROOT)), name="media")
 
     app = include_all_routers(app)
 

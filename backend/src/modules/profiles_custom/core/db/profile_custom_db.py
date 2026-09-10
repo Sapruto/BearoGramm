@@ -8,6 +8,7 @@ class ProfileCustomManager(BaseManager[ProfileCustomORM]):
     def __init__(self):
         super().__init__(ProfileCustomORM, [ProfileCustomORM.uuid, ProfileCustomORM.updated_at])
 
+    @property
     def identifier_field(self) -> InstrumentedAttribute:
         return ProfileCustomORM.uuid
 
