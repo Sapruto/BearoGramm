@@ -13,13 +13,14 @@ class PersonalChatResponse(BaseModel):
     created_at: datetime
     updated_at: datetime
 
-    profiles: Optional[Dict[str, ProfileCustomEntity]] = None
+    partner_profile: Optional[ProfileCustomEntity] = None
 
 
 class PersonalChatPreview(BaseModel):
     uuid: str
     chat_type: str = ChatType.PERSONAL
     partner_uuid: str
+    partner_profile: Optional[ProfileCustomEntity] = None
     updated_at: datetime
 
 

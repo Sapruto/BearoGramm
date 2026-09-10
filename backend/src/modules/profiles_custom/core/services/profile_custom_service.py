@@ -1,8 +1,7 @@
-from typing import Optional, Dict, Any, List
+from typing import Optional, Dict, Any, List, Tuple
 from uuid import uuid4
 
-from sqlalchemy import or_
-
+from src.core.logger import get_logger
 from src.general.processors.data_processor import DataProcessor
 from src.general.repository.sql.sql_query import SqlQuery
 
@@ -15,6 +14,9 @@ from ...models.entities.profile_custom_entity import ProfileCustomEntity, Profil
 from ..repositories.profile_custom_repository import get_profile_custom_repository
 
 
+logger = get_logger(__name__)
+
+
 class ProfileCustomService:
     def __init__(self):
         self.repository = get_profile_custom_repository()
@@ -22,9 +24,11 @@ class ProfileCustomService:
 
     async def create(
         self,
-        data: Dict[str, Any],
+        data: Optional[List[Tuple[str, Any]]],
         user_uuid: Optional[str] = None,
         profile_uuid: Optional[str] = None,
+        name: Optional[str] = None,
+        avatar_url: Optional[str] = None,
     ) -> ProfileCustomEntity:
         try:
             if user_uuid:
@@ -38,6 +42,8 @@ class ProfileCustomService:
                 uuid=profile_uuid or str(uuid4()),
                 data=data,
                 user_uuid=user_uuid,
+                name=name,
+                avatar_url=avatar_url,
             )
 
             created = await self.repository.save(entity)
@@ -46,7 +52,8 @@ class ProfileCustomService:
 
             return created
 
-        except Exception:
+        except Exception as e:
+            logger.error(f"Error in create profile: {e}")
             raise
 
     async def get(
@@ -91,6 +98,14 @@ class ProfileCustomService:
             raise ProfileCustomDataError("Failed to delete profile")
 
         return True
+
+    async def get_by_user_uuid(
+        self,
+        user_uuid: str,
+    ) -> Optional[ProfileCustomEntity]:
+        query = SqlQuery[ProfileCustomFields]()
+        query.add_filter(ProfileCustomFields.USER_UUID, user_uuid)
+        return await self.repository.get(query)
 
     async def get_by_user_uuids(
             self,

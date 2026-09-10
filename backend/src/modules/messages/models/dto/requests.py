@@ -15,14 +15,3 @@ class UpdateMessageRequest(BaseModel):
 
 class DeleteMessageRequest(BaseModel):
     message_uuid: str = Field(...)
-
-
-class GetMessagesRequest(BaseModel):
-    chat_uuid: str = Field(...)
-
-    limit: int = Field(default=10)
-    offset: int = Field(default=0)
-    show_new: bool = Field(
-        default=True,
-        description="If this = false, we must show a f*cking old messages else new",
-    )

@@ -17,7 +17,6 @@ from ..models.dto.profile_custom_responses import (
     GetProfileResponse,
     UpdateProfileResponse,
     DeleteProfileResponse,
-    ProfileCustomResponse,
 )
 
 profile_custom_router = APIRouter(prefix="/api/profile-custom", tags=["profile_custom"])
@@ -35,12 +34,10 @@ async def get_my_profile(
 
         return GetProfileResponse(
             success=True,
-            profile=ProfileCustomResponse(
-                uuid=profile.uuid,
-                data=profile.data,
-                updated_at=profile.updated_at,
-                user_uuid=profile.user_uuid
-            )
+            uuid=profile.uuid,
+            data=profile.data,
+            updated_at=profile.updated_at,
+            user_uuid=profile.user_uuid
         )
     except Exception:
         raise HTTPException(
@@ -58,20 +55,15 @@ async def create_profile(
 ) -> CreateProfileResponse:
     try:
         profile = await service.create(
-            data=request.data,
-            user_uuid=request.user_uuid or current_user.uuid,
+            data=request.typing_to_data,
+            user_uuid=current_user.uuid,
             profile_uuid=request.profile_uuid
         )
 
         return CreateProfileResponse(
             success=True,
             message="Profile created successfully",
-            profile=ProfileCustomResponse(
-                uuid=profile.uuid,
-                data=profile.data,
-                updated_at=profile.updated_at,
-                user_uuid=profile.user_uuid
-            )
+            profile=profile
         )
     except ProfileCustomAlreadyExistsError as e:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(e))
@@ -99,12 +91,7 @@ async def update_profile(
         return UpdateProfileResponse(
             success=True,
             message="Profile updated successfully",
-            profile=ProfileCustomResponse(
-                uuid=profile.uuid,
-                data=profile.data,
-                updated_at=profile.updated_at,
-                user_uuid=profile.user_uuid
-            )
+            profile=profile
         )
     except ProfileCustomNotFoundError as e:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
@@ -147,12 +134,7 @@ async def get_profile(
 
         return GetProfileResponse(
             success=True,
-            profile=ProfileCustomResponse(
-                uuid=profile.uuid,
-                data=profile.data,
-                updated_at=profile.updated_at,
-                user_uuid=profile.user_uuid
-            )
+            profile=profile
         )
     except Exception:
         raise HTTPException(
@@ -174,12 +156,7 @@ async def get_profile_by_user(
 
         return GetProfileResponse(
             success=True,
-            profile=ProfileCustomResponse(
-                uuid=profile.uuid,
-                data=profile.data,
-                updated_at=profile.updated_at,
-                user_uuid=profile.user_uuid
-            )
+            profile=profile
         )
     except Exception:
         raise HTTPException(

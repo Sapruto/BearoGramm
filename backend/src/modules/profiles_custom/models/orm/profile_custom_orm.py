@@ -6,6 +6,7 @@ from uuid import uuid4
 from datetime import datetime
 
 from src.core.database import Base
+from src.core.paths import DefaultAvatarPath
 
 
 class ProfileCustomORM(Base):
@@ -16,6 +17,9 @@ class ProfileCustomORM(Base):
         primary_key=True,
         default=lambda: str(uuid4())
     )
+
+    name: Mapped[str] = mapped_column(String(67), nullable=False, default="Unified")
+    avatar_url: Mapped[str] = mapped_column(String(555), nullable=False, default=DefaultAvatarPath)
 
     data: Mapped[Dict[str, Any]] = mapped_column(JSON)
 

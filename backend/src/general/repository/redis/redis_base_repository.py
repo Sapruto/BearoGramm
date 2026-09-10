@@ -100,7 +100,7 @@ class BaseRedisRepository(
 
         if query.filters and self._index_enabled and len(query.filters) == 1:
             field, value = next(iter(query.filters.items()))
-            redis_field = self._to_redis_field(field)
+            redis_field = await self._to_redis_field(field)
             index_key = f"{self._index_prefix}{redis_field}:{self._mapper.serialize_value(value)}"
             key = await self.redis.get(index_key)
             if key:

@@ -17,6 +17,8 @@ logger = get_logger(__name__)
 class ProfileCustomMapper(BaseMapper[ProfileCustomEntity, ProfileCustomORM, ProfileCustomFields]):
     field_mapping = {
         ProfileCustomFields.UUID: ProfileCustomORM.uuid,
+        ProfileCustomFields.NAME: ProfileCustomORM.name,
+        ProfileCustomFields.AVATAR_URL: ProfileCustomORM.avatar_url,
         ProfileCustomFields.DATA: ProfileCustomORM.data,
         ProfileCustomFields.UPDATED_AT: ProfileCustomORM.updated_at,
         ProfileCustomFields.USER_UUID: ProfileCustomORM.user_uuid,
@@ -24,6 +26,8 @@ class ProfileCustomMapper(BaseMapper[ProfileCustomEntity, ProfileCustomORM, Prof
 
     reverse_field_mapping = {
         ProfileCustomORM.uuid: ProfileCustomFields.UUID,
+        ProfileCustomORM.name: ProfileCustomFields.NAME,
+        ProfileCustomORM.avatar_url: ProfileCustomFields.AVATAR_URL,
         ProfileCustomORM.data: ProfileCustomFields.DATA,
         ProfileCustomORM.updated_at: ProfileCustomFields.UPDATED_AT,
         ProfileCustomORM.user_uuid: ProfileCustomFields.USER_UUID,
@@ -94,6 +98,7 @@ class ProfileCustomMapper(BaseMapper[ProfileCustomEntity, ProfileCustomORM, Prof
     async def to_orm(self, entity: ProfileCustomEntity) -> ProfileCustomORM:
         return ProfileCustomORM(
             uuid=entity.uuid,
+            name=entity.name,
             data=entity.data,
             updated_at=entity.updated_at,
             user_uuid=entity.user_uuid,
@@ -102,6 +107,8 @@ class ProfileCustomMapper(BaseMapper[ProfileCustomEntity, ProfileCustomORM, Prof
     async def to_entity(self, orm: ProfileCustomORM) -> ProfileCustomEntity:
         return ProfileCustomEntity(
             uuid=orm.uuid,
+            name=orm.name,
+            avatar_url=orm.avatar_url,
             data=orm.data or {},
             updated_at=orm.updated_at,
             user_uuid=orm.user_uuid,

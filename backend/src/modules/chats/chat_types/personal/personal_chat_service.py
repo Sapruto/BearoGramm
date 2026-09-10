@@ -136,11 +136,14 @@ class PersonalChatService(BaseChatService):
                     partner_uuid = p.user_uuid
                     break
 
+            partner_profile = await self.profile_service.get_by_user_uuid(partner_uuid)
+
             previews.append(
                 PersonalChatPreview(
                     uuid=chat.uuid,
                     partner_uuid=partner_uuid,
-                    updated_at=chat.updated_at
+                    partner_profile=partner_profile,
+                    updated_at=chat.updated_at,
                 )
             )
 

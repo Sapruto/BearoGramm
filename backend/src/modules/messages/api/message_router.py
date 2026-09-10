@@ -1,4 +1,4 @@
-from fastapi import APIRouter, WebSocket, Depends, HTTPException, status
+from fastapi import APIRouter, WebSocket, Depends, HTTPException, status, Path, Query
 import json
 
 from src.modules.user import get_current_user_depends, UserEntity, authenticate_by_token
@@ -109,13 +109,25 @@ async def delete_message(
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
 
-@message_router.get(MessageRoutes.get_messages, response_model=GetMessagesResponse)
+@message_router.get(MessageRoutes.get_messages + "/{chat_uuid}", response_model=GetMessagesResponse)
 async def get_messages(
-    request: GetMessagesRequest,
+    chat_uuid: str = Path(..., description="UUID чата"),
+    limit: int = Query(default=10, ge=1, le=100, description="Количество сообщений"),
+    offset: int = Query(default=0, ge=0, description="Смещение"),
+    show_new: bool = Query(
+        default=True,
+        description="If this = false, we must show a f*cking old messages else new",
+    ),
     service: MessageService = Depends(get_message_service),
     current_user: UserEntity = Depends(get_current_user_depends()),
 ):
     try:
+        request = GetMessagesRequest(
+            chat_uuid=chat_uuid,
+            limit=limit,
+            offset=offset,
+            show_new=show_new,
+        )
         return await service.get_messages(request, current_user.uuid)
     except Exception as e:
         logger.error(f"Error in get_messages: {e}", exc_info=True)

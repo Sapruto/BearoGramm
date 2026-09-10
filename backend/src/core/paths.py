@@ -7,6 +7,8 @@ STATIC_ROOT = PROJECT_ROOT / "static"
 ENV_PATH = PROJECT_ROOT / ".env"
 CONFIG_ROOT = PROJECT_ROOT / "configs"
 
+DefaultAvatarPath = STATIC_ROOT / "default_avatar.png"
+
 DATABASE_ROOT = PROJECT_ROOT / "data"  # for develop and test on sqlite3
 
 
