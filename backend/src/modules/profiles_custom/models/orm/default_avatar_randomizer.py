@@ -1,6 +1,6 @@
 from random import choice
 from pathlib import Path
-from src.core.paths import MEDIA_ROOT
+from src.core.paths import STATIC_ROOT
 
 
 MEDIA_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp', '.tiff']
@@ -8,7 +8,7 @@ MEDIA_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp', '.tiff']
 
 class AvatarRandomizer:
     def __init__(self):
-        self.current_dir = MEDIA_ROOT / "default_avatars"
+        self.current_dir = STATIC_ROOT / "default_avatars"
         
         self.avatars = [
             f for f in self.current_dir.iterdir() 
@@ -22,4 +22,3 @@ class AvatarRandomizer:
         random_file = choice(self.avatars)
         
         return f"media/default_avatars/{random_file.name}"
-the 
