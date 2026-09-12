@@ -26,11 +26,15 @@ class ProfileCustomService:
         self.repository = get_profile_custom_repository()
         self.data_processor = DataProcessor()
 
+    async def _prepare_data_to_use(self, data: List[Any]) -> List[Any]:
+        if not data:
+            return []
+        return await self.repository.mapper.prepare_data_to_use(data)
+
     async def create(
         self,
         typing_to_data: List[Tuple[str, Any]],
         user_uuid: Optional[str] = None,
-        profile_uuid: Optional[str] = None,
         name: Optional[str] = None,
         avatar_url: Optional[str] = None,
     ) -> ProfileCustomEntity:
@@ -46,9 +50,9 @@ class ProfileCustomService:
             raise ProfileCustomDataError(result.error or "Failed to process data")
 
         entity = ProfileCustomEntity(
-            uuid=profile_uuid or str(uuid4()),
+            uuid=str(uuid4()),
             name=name or "Unified",
-            avatar_url=avatar_url or ProfileCustomEntity.model_fields["avatar_url"].default,
+            avatar_url=avatar_url,
             data=result.processed_data,
             user_uuid=user_uuid,
             updated_at=datetime.now(timezone.utc),
@@ -60,26 +64,6 @@ class ProfileCustomService:
             raise ProfileCustomDataError("Failed to save profile")
 
         return created
-
-    async def get(
-        self,
-        profile_uuid: Optional[str] = None,
-        user_uuid: Optional[str] = None,
-    ) -> Optional[ProfileCustomEntity]:
-        query = SqlQuery[ProfileCustomFields]()
-        if profile_uuid:
-            query.add_filter(ProfileCustomFields.UUID, profile_uuid)
-        if user_uuid:
-            query.add_filter(field=ProfileCustomFields.USER_UUID, value=user_uuid)
-
-        entity = await self.repository.get(query)
-        print(entity)
-        return entity
-
-    async def _prepare_data_to_use(self, data: List[Any]) -> List[Any]:
-        if not data:
-            return []
-        return await self.repository.mapper.prepare_data_to_use(data)
 
     async def update_by_user(
         self,
@@ -127,6 +111,20 @@ class ProfileCustomService:
             raise ProfileCustomDataError("Failed to delete profile")
 
         return True
+
+    async def get(
+            self,
+            profile_uuid: Optional[str] = None,
+            user_uuid: Optional[str] = None,
+    ) -> Optional[ProfileCustomEntity]:
+        query = SqlQuery[ProfileCustomFields]()
+        if profile_uuid:
+            query.add_filter(ProfileCustomFields.UUID, profile_uuid)
+        if user_uuid:
+            query.add_filter(field=ProfileCustomFields.USER_UUID, value=user_uuid)
+
+        entity = await self.repository.get(query)
+        return entity
 
     async def get_by_user_uuid(
         self, user_uuid: str

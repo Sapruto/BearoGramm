@@ -62,7 +62,6 @@ async def create_profile(
         profile = await service.create(
             typing_to_data=request.typing_to_data,
             user_uuid=current_user.uuid,
-            profile_uuid=request.profile_uuid,
             name=request.name,
             avatar_url=request.avatar_url,
         )

@@ -6,7 +6,6 @@ class CreateProfileRequest(BaseModel):
     typing_to_data: List[Tuple[str, Any]] = Field(default_factory=list)
     name: Optional[str] = Field(default=None)
     avatar_url: Optional[str] = Field(default=None)
-    profile_uuid: Optional[str] = Field(default=None)
 
 
 class UpdateProfileRequest(BaseModel):
