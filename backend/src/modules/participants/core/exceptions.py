@@ -20,3 +20,8 @@ class InvalidPermissionTypeError(PermissionError):
 
 class ResourceNotFoundError(PermissionError):
     pass
+
+
+class NotParticipant(PermissionError):
+    def __init__(self):
+        super().__init__("Not participant")

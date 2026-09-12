@@ -1,5 +1,6 @@
 from typing import Optional
 
+from src.modules.participants.core.exceptions import NotParticipant
 from .websocket_message_service import (
     WebSocketMessageService,
     get_websocket_message_service,
@@ -27,7 +28,6 @@ from ...models.dto.responses import (
 )
 from ...models.entities.message_entity import MessageEntity, MessageFields
 
-from src.modules.chats import ChatServiceAPI, get_chat_service_api
 from src.modules.participants import PermissionService, get_permission_service, MessageAction, ResourceType
 from src.general.repository.sql.sql_query import SqlQuery
 from src.core.logger import get_logger
@@ -42,23 +42,24 @@ class MessageService:
         data_processor: Optional[DataProcessor] = None,
         websocket_service: Optional[WebSocketMessageService] = None,
         permission_service: Optional[PermissionService] = None,
-        chat_service: Optional[ChatServiceAPI] = None,
     ):
         self.message_repository = message_repository or get_message_repository()
         self.data_processor = data_processor or DataProcessor()
         self.websocket_service = websocket_service or get_websocket_message_service()
 
         self.permission_service = permission_service or get_permission_service()
-        self.chat_service = chat_service or get_chat_service_api()
 
         self.max_limit = 100
 
     async def _checks_in_chat_service(
         self, chat_uuid: str, user_uuid: str, action_type: MessageAction
     ) -> bool:
-        return await self.permission_service.validate(
-            user_uuid, chat_uuid, ResourceType.CHAT, action_type
-        )
+        try:
+            return await self.permission_service.validate(
+                user_uuid, chat_uuid, ResourceType.CHAT, action_type
+            )
+        except NotParticipant:
+            raise NotParticipant()
 
     async def send_message(self, request: SendMessageRequest, user_uuid: str) -> SendMessageResponse:
         process_result = None
@@ -180,7 +181,8 @@ class MessageService:
             limit: int,
             offset: int,
             user_uuid: str,
-    show_new: bool,) -> GetMessagesResponse:
+            show_new: bool,
+    ) -> GetMessagesResponse:
         if not await self._checks_in_chat_service(
             chat_uuid, user_uuid, MessageAction.GET
         ):

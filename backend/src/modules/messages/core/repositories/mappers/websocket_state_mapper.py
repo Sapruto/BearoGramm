@@ -7,18 +7,16 @@ from ....models.entities.websocket_state_entity import (
 )
 
 
-class WebSocketStateMapper(BaseRedisMapper[WebSocketStateEntity, WebSocketStateFields]):
+class WebSocketStateMapper(
+    BaseRedisMapper[WebSocketStateEntity, WebSocketStateFields]
+):
     key_prefix = "ws:user"
     storage_type = "hash"
 
     field_mapping = {
         WebSocketStateFields.USER_UUID: "user_uuid",
         WebSocketStateFields.ONLINE: "online",
-        WebSocketStateFields.LAST_ACTIVE: "last_activity",
     }
-
-    def __init__(self):
-        super().__init__()
 
     def get_id_field(self) -> Optional[WebSocketStateFields]:
         return WebSocketStateFields.USER_UUID
@@ -26,15 +24,13 @@ class WebSocketStateMapper(BaseRedisMapper[WebSocketStateEntity, WebSocketStateF
     async def to_redis(self, entity: WebSocketStateEntity) -> Dict[str, Any]:
         return {
             "user_uuid": entity.user_uuid,
-            "online": "true" if entity.online else "false",
-            "last_activity": "true" if entity.last_activity else "false",
+            "online": self.serialize_value(entity.online),
         }
 
     async def to_entity(self, data: Dict[str, Any]) -> WebSocketStateEntity:
         return WebSocketStateEntity(
             user_uuid=data.get("user_uuid", ""),
-            online=data.get("online", "false").lower() == "true",
-            last_activity=data.get("last_activity", "false").lower() == "true",
+            online=self.deserialize_value(data.get("online"), bool),
         )
 
     async def to_redis_value(
@@ -42,18 +38,20 @@ class WebSocketStateMapper(BaseRedisMapper[WebSocketStateEntity, WebSocketStateF
     ) -> Tuple[str, Any]:
         redis_field = await self.to_redis_field(field)
 
-        if isinstance(value, bool):
-            return redis_field, "true" if value else "false"
-        return redis_field, str(value) if value else ""
+        if field == WebSocketStateFields.ONLINE:
+            return redis_field, self.serialize_value(bool(value))
+
+        return redis_field, self.serialize_value(value)
 
     async def to_entity_value(
         self, redis_field: str, value: Any
     ) -> Tuple[WebSocketStateFields, Any]:
         field = await self.to_entity_field(redis_field)
 
-        if isinstance(value, str):
-            return field, value.lower() == "true"
-        return field, bool(value)
+        if field == WebSocketStateFields.ONLINE:
+            return field, self.deserialize_value(value, bool)
+
+        return field, value
 
     async def to_redis_field(self, field: WebSocketStateFields) -> str:
         return self.field_mapping.get(field, field.value)

@@ -1,6 +1,8 @@
 from typing import Optional, List, Tuple, Dict, Any
 
 from src.general.repository.sql.sql_query import SqlQuery
+from src.modules.participants.core.exceptions import NotParticipant
+from src.modules.participants.models.enums import ResourceType
 from src.modules.profiles_custom import ProfileCustomService, get_profile_custom_service
 from src.modules.user import UserServiceAPI, get_user_service_api
 from src.modules.participants import Permission, PermissionService, ChatAction, MessageAction
@@ -129,6 +131,11 @@ class PersonalChatService(BaseChatService):
 
         previews: List[PersonalChatPreview] = []
         for chat in chats:
+            try:
+                await self._permission_service.validate(user_uuid, chat.uuid, ResourceType.CHAT)
+            except NotParticipant:
+                continue
+
             participants = await self._permission_service.get_by_resource(chat.uuid)
             partner_uuid: str = ""
             for p in participants:

@@ -3,7 +3,7 @@ from typing import Optional, List
 from src.core.logger import get_logger
 from src.general.repository.sql.sql_query import SqlQuery
 
-from ..exceptions import ParticipantNotFoundError, PermissionAlreadyExistsError
+from ..exceptions import ParticipantNotFoundError, PermissionAlreadyExistsError, NotParticipant
 from ..repositories.participant_repository import ParticipantRepository
 from ...models.enums import ResourceType, ActionTypification
 from ...models.entities.participant_entity import ParticipantEntity
@@ -101,15 +101,16 @@ class PermissionService:
         user_uuid: str,
         resource_uuid: str,
         resource_type: ResourceType,
-        action: ActionTypification
+        action: Optional[ActionTypification] = None,
     ) -> bool:
         participant = await self.participant_repository.find_user_resource(
             user_uuid, resource_uuid, resource_type
         )
         if not participant:
-            return False
-        if not participant.permissions.get(action, False):
-            return False
+            raise NotParticipant()
+        if action:
+            if not participant.permissions.get(action, False):
+                return False
         return True
 
 

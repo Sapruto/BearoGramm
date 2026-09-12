@@ -12,6 +12,7 @@ from ...models.entities.websocket_state_entity import (
     WebSocketStateEntity,
 )
 
+
 logger = get_logger(__name__)
 
 
@@ -20,24 +21,17 @@ class WebSocketStateRepository(
         WebSocketStateMapper, WebSocketStateFields, WebSocketStateEntity
     ]
 ):
+    USER_ONLINE_PREFIX = "user:online"
+    USER_ACTIVE_CHATS_PREFIX = "user:active_chats"
+    USER_NOTIFICATIONS_PREFIX = "user:notifications"
+
     def __init__(self, redis_client: Redis, ttl: int = 3600):
         mapper = WebSocketStateMapper()
         super().__init__(redis_client=redis_client, mapper=mapper, ttl=ttl)
-        self.enable_indexes()
-
-        self.USER_ONLINE_PREFIX = "user:online"
-        self.CHAT_USERS_PREFIX = "chat:users"
-        self.USER_NOTIFICATIONS_PREFIX = "user:notifications"
 
     async def set_user_online(self, user_uuid: str) -> bool:
-        entity = WebSocketStateEntity(
-            user_uuid=user_uuid, online=True, last_activity=True
-        )
+        entity = WebSocketStateEntity(user_uuid=user_uuid, online=True)
         await self.save(entity)
-
-        key = f"{self.USER_ONLINE_PREFIX}:{user_uuid}"
-        await self.redis.setex(key, self.default_ttl, "1")
-
         return True
 
     async def set_user_offline(self, user_uuid: str) -> bool:
@@ -45,61 +39,48 @@ class WebSocketStateRepository(
         if entity:
             entity.online = False
             await self.save(entity)
-
-        key = f"{self.USER_ONLINE_PREFIX}:{user_uuid}"
-        await self.redis.delete(key)
-
         return True
 
     async def is_user_online(self, user_uuid: str) -> bool:
-        key = f"{self.USER_ONLINE_PREFIX}:{user_uuid}"
-        return await self.redis.exists(key) > 0
+        entity = await self.get_by_id(user_uuid)
+        return bool(entity and entity.online)
 
     async def get_online_users(self) -> List[WebSocketStateEntity]:
         query = RedisQuery[WebSocketStateFields]()
         query.add_filter(WebSocketStateFields.ONLINE, True)
         return await self.get_all(query)
 
-    async def add_user_to_chat(self, chat_uuid: str, user_uuid: str) -> None:
-        key = f"{self.CHAT_USERS_PREFIX}:{chat_uuid}"
-        await self.redis.sadd(key, user_uuid)
-        await self.redis.expire(key, self.ttl)
+    async def add_active_chat(self, user_uuid: str, chat_uuid: str) -> None:
+        key = f"{self.USER_ACTIVE_CHATS_PREFIX}:{user_uuid}"
+        await self.redis.sadd(key, chat_uuid)
+        await self.redis.expire(key, self.default_ttl)
 
-    async def remove_user_from_chat(self, chat_uuid: str, user_uuid: str) -> None:
-        key = f"{self.CHAT_USERS_PREFIX}:{chat_uuid}"
-        await self.redis.srem(key, user_uuid)
+    async def remove_active_chat(self, user_uuid: str, chat_uuid: str) -> None:
+        key = f"{self.USER_ACTIVE_CHATS_PREFIX}:{user_uuid}"
+        await self.redis.srem(key, chat_uuid)
 
-    async def get_chat_participants(self, chat_uuid: str) -> Set[str]:
-        key = f"{self.CHAT_USERS_PREFIX}:{chat_uuid}"
+    async def get_active_chats(self, user_uuid: str) -> Set[str]:
+        key = f"{self.USER_ACTIVE_CHATS_PREFIX}:{user_uuid}"
         members = await self.redis.smembers(key)
         return {m.decode() if isinstance(m, bytes) else m for m in members}
 
-    async def clear_chat_participants(self, chat_uuid: str) -> None:
-        key = f"{self.CHAT_USERS_PREFIX}:{chat_uuid}"
-        await self.redis.delete(key)
+    async def clear_active_chats(self, user_uuid: str) -> None:
+        await self.redis.delete(f"{self.USER_ACTIVE_CHATS_PREFIX}:{user_uuid}")
 
     async def publish_notification(
         self, user_uuid: str, notification: Dict[str, Any]
     ) -> None:
         channel = f"{self.USER_NOTIFICATIONS_PREFIX}:{user_uuid}"
-        await self.redis.publish(channel, json.dumps(notification))
-
-    async def publish_to_chat(
-        self, chat_uuid: str, notification: Dict[str, Any]
-    ) -> None:
-        participants = await self.get_chat_participants(chat_uuid)
-        for user_uuid in participants:
-            await self.publish_notification(user_uuid, notification)
+        subscribers = await self.redis.publish(
+            channel, json.dumps(notification, ensure_ascii=False)
+        )
+        logger.debug(
+            f"PUBLISH → {channel} | subscribers={subscribers} | "
+            f"type={notification.get('type')}"
+        )
 
     async def get_notification_channel(self, user_uuid: str) -> str:
         return f"{self.USER_NOTIFICATIONS_PREFIX}:{user_uuid}"
-
-    async def ping(self) -> bool:
-        try:
-            await self.redis.ping()
-            return True
-        except Exception:
-            return False
 
 
 _websocket_state_repository: Optional[WebSocketStateRepository] = None

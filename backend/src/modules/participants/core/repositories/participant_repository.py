@@ -29,9 +29,9 @@ class ParticipantRepository(BaseRepository[ParticipantManager, ParticipantFields
     ) -> Optional[ParticipantEntity]:
         return await self.get(
             SqlQuery()
-            .add_filter(ParticipantFields.USER_UUID, user_uuid)
-            .add_filter(ParticipantFields.RESOURCE_UUID, resource_uuid)
-            .add_filter(ParticipantFields.RESOURCE_TYPE, resource_type.value)
+            .add_filter(field=ParticipantFields.USER_UUID, value=user_uuid)
+            .add_filter(field=ParticipantFields.RESOURCE_UUID, value=resource_uuid)
+            .add_filter(field=ParticipantFields.RESOURCE_TYPE, value=resource_type.value)
         )
 
     async def update_permissions(

@@ -5,6 +5,7 @@ from .core.exceptions import (
     ParticipantNotFoundError,
     PermissionAlreadyExistsError,
     InvalidPermissionTypeError,
+    NotParticipant,
 )
 from .models.enums import (
     ResourceType,
@@ -28,6 +29,7 @@ __all__ = [
     "PermissionAlreadyExistsError",
     "Permission",
     "InvalidPermissionTypeError",
+    "NotParticipant",
     "ResourceType",
     "ActionCategory",
     "ChatAction",
