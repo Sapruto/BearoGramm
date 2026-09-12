@@ -15,6 +15,7 @@ import ChatPage from "../pages/Chats/ChatPage"
 import { ProfileRequiredRoute } from "../shared/routes/ProfileRequiredRoute"
 import { NoLoginRequiredRoute } from "../shared/routes/NoLoginRequiredRoute"
 import { theme, toastTheme } from "./theme"
+import ProfileCustomizationPage from "../pages/ProfileCustomization/ProfileCustomizationPage"
 
 function App() {
   return (
@@ -36,7 +37,7 @@ function App() {
 
 
           <Route element={<LoginRequiredRoute />}>
-            <Route path="/profile/me" element={<div>aboba</div>} />
+            <Route path="/profile/me" element={<ProfileCustomizationPage />} />
 
             <Route element={<ProfileRequiredRoute />}>
               <Route path="/chats" element={<ChatsLayout />}>

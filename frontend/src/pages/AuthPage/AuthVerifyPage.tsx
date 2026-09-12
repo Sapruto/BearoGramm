@@ -10,7 +10,7 @@ import { useAuthStore } from "../../store/authStore";
 
 const AuthVerifyPage = () => {
     const navigate = useNavigate();
-    const { phone, setToken, setUserUUID } = useAuthStore();
+    const { phone, setToken, setUserUUID, justCreated } = useAuthStore();
     const [phoneFormatted, setPhoneFormatted] = useState('');
     const [otp, setOtp] = useState('')
 
@@ -48,7 +48,7 @@ const AuthVerifyPage = () => {
                 onSuccess: (data) => {
                     setToken(data.token);
                     setUserUUID(data.user_uuid);
-                    navigate("/", { replace: true });
+                    navigate(justCreated ? "/profile/me" : "/", { replace: true });
                     toast.success("Successfully signed in!");
 
                     console.log(`Signed in ${phoneFormatted}, token: ${data.token}`);

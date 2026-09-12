@@ -1,9 +1,13 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { queryClient } from '../shared/api/queryClient';
 
 type AuthStore = {
     phone: string;
     setPhone: (phone: string) => void;
+
+    justCreated: boolean;
+    setJustCreated: (justCreated: boolean) => void;
 
     token: string | null;
     userUUID: string | null;
@@ -20,11 +24,21 @@ export const useAuthStore = create<AuthStore>()(
             phone: '',
             setPhone: (phone) => set({ phone }),
 
+            justCreated: false,
+            setJustCreated: (justCreated: boolean) => set({ justCreated }),
+
             token: null,
             userUUID: null,
             setToken: (token) => set({ token }),
             setUserUUID: (userUUID) => set({ userUUID }),
-            logout: () => set({ token: null, userUUID: null, phone: '' }),
+            logout: () => {
+                const { token } = get();
+                if (token === null)
+                    return;
+
+                queryClient.removeQueries({ queryKey: ['my_profile'] });
+                set({ token: null, userUUID: null, phone: '' });
+            },
 
             isLoggedIn: () => {
                 const state = get();

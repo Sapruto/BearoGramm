@@ -6,6 +6,7 @@ export type SendCodeRequest = {
 
 export type SendCodeResponse = {
     success: boolean;
+    is_logining: boolean;
     error_message: string;
 };
 
