@@ -39,6 +39,9 @@ const AuthVerifyPage = () => {
     };
 
     const submitCode = (code: string) => {
+        if (isPending)
+            return;
+
         verifyCode(
             { phone_number: phone, code },
             {
@@ -56,7 +59,9 @@ const AuthVerifyPage = () => {
     };
 
     const handleVerify = () => {
-        if (otp.length !== 5) return;
+        if (otp.length !== 5)
+            return;
+        
         submitCode(otp);
     };
 

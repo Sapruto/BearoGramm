@@ -17,6 +17,9 @@ const AuthPhonePage = () => {
         if (!phoneInputRef.current?.validate())
             return;
 
+        if (isPending)
+            return;
+
         const rawPhone = parsePhoneNumberWithError(phone).number;
 
         sendCode(
