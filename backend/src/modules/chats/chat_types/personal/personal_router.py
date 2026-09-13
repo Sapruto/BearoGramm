@@ -104,7 +104,7 @@ async def get_personal_chats(
         service: PersonalChatService = Depends(get_personal_chat_service)
 ) -> PersonalChatListResponse:
     try:
-        chats, total = await service.get_user_chats(
+        chats, total = await service.get_user_personal_chats(
             user_uuid=current_user.uuid,
             limit=limit,
             offset=offset
