@@ -2,7 +2,7 @@ import { useState } from "react"
 import { Outlet, useNavigate, useParams } from "react-router-dom"
 import SplitPane, { Pane } from "split-pane-react"
 import "split-pane-react/esm/themes/default.css"
-import ChatSidebar from "./ChatSidebar"
+import ChatSidebar from "./ChatSidebar/ChatSidebar"
 
 export default function ChatsLayout() {
     const [sizes, setSizes] = useState<(number | string)[]>([300, "auto"])

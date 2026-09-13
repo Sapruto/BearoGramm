@@ -6,8 +6,7 @@ export type SendCodeRequest = {
 
 export type SendCodeResponse = {
     success: boolean;
-    is_logining: boolean;
-    error_message: string;
+    just_created: boolean;
 };
 
 export const sendCode = async (data: SendCodeRequest): Promise<SendCodeResponse> => {
@@ -21,11 +20,15 @@ export type VerifyCodeRequest = {
 };
 
 export type VerifyCodeResponse = {
-    success: boolean;
     token: string;
     user_uuid: string;
-    user: any;
-    error_message: string;
+    user: {
+        uuid: string,
+        phone_number: string,
+        created_at: string,
+        updated_at: string,
+    };
+    has_profile: boolean;
 };
 
 export const verifyCode = async (data: VerifyCodeRequest): Promise<VerifyCodeResponse> => {

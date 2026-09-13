@@ -1,13 +1,13 @@
 import { useMutation } from '@tanstack/react-query';
-import { createProfile } from '../../api/profile';
+import { sendMessage } from '../../api/messages';
 import { queryClient } from '../../api/queryClient';
 import { queryKeys } from '../../lib/queryKeys';
 
-export const useCreateProfile = () => {
+export const useSendMessage = (chatUUID: string) => {
     return useMutation({
-        mutationFn: createProfile,
+        mutationFn: sendMessage,
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: queryKeys.myProfile });
+            queryClient.invalidateQueries({ queryKey: queryKeys.messagesChat(chatUUID) })
         },
     });
 };

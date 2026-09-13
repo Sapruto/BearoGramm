@@ -10,9 +10,9 @@ import { useAuthStore } from "../../store/authStore";
 
 const AuthVerifyPage = () => {
     const navigate = useNavigate();
-    const { phone, setToken, setUserUUID, justCreated } = useAuthStore();
     const [phoneFormatted, setPhoneFormatted] = useState('');
     const [otp, setOtp] = useState('')
+    const { phone, setToken, setUserUUID } = useAuthStore();
 
     const { mutate: verifyCode, isPending } = useVerifyCode();
 
@@ -48,11 +48,16 @@ const AuthVerifyPage = () => {
                 onSuccess: (data) => {
                     setToken(data.token);
                     setUserUUID(data.user_uuid);
-                    navigate(justCreated ? "/profile/me" : "/", { replace: true });
-                    toast.success("Successfully signed in!");
 
                     console.log(`Signed in ${phoneFormatted}, token: ${data.token}`);
                     navigator.clipboard.writeText(data.token);
+
+                    if (data.has_profile) {
+                        navigate("/", { replace: true });
+                        toast.success("Successfully signed in!");
+                    } else {
+                        navigate("/profile/me", { replace: true });
+                    }
                 }
             }
         );
@@ -61,7 +66,7 @@ const AuthVerifyPage = () => {
     const handleVerify = () => {
         if (otp.length !== 5)
             return;
-        
+
         submitCode(otp);
     };
 

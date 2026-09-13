@@ -1,11 +1,12 @@
 import { useInfiniteQuery } from '@tanstack/react-query';
 import { getPersonalChats } from '../../api/personal';
+import { queryKeys } from '../../lib/queryKeys';
 
 const PAGE_SIZE = 50;
 
 export const useGetPersonalChats = () => {
     return useInfiniteQuery({
-        queryKey: ['personal-chats'],
+        queryKey: queryKeys.personalChats,
         queryFn: ({ pageParam }) => getPersonalChats({ limit: PAGE_SIZE, offset: pageParam }),
         initialPageParam: 0,
         getNextPageParam: (lastPage, allPages) => {

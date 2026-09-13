@@ -27,7 +27,7 @@ const AuthPhonePage = () => {
             {
                 onSuccess: (data) => {
                     setPhoneStore(rawPhone);
-                    setJustCreated(!data.is_logining);
+                    setJustCreated(data.just_created);
                     navigate("/auth/verify");
                 }
             }
