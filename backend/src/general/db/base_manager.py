@@ -1,5 +1,7 @@
 from abc import ABC, abstractmethod
-from sqlalchemy import select, delete, update, insert, func, and_
+from sqlalchemy import select, delete, update, func, and_, insert as sa_insert
+from sqlalchemy.dialects.postgresql import insert as pg_insert
+from sqlalchemy.dialects.sqlite import insert as sqlite_insert
 from sqlalchemy.orm import InstrumentedAttribute
 from sqlalchemy.ext.asyncio import AsyncSession
 from contextlib import asynccontextmanager
@@ -29,6 +31,17 @@ class InvalidTransactionStateError(Exception):
 
 
 logger = get_logger(__name__)
+
+
+def get_insert(session: AsyncSession, model):
+    dialect_name = session.bind.dialect.name
+
+    if dialect_name == "postgresql":
+        return pg_insert(model)
+    if dialect_name == "sqlite":
+        return sqlite_insert(model)
+
+    return sa_insert(model)
 
 
 class BaseManager(Generic[ORM], ABC):
@@ -117,13 +130,13 @@ class BaseManager(Generic[ORM], ABC):
                     if hasattr(model, c.name)
                 }
 
-                stmt = insert(self.model).values(**data)
+                stmt = get_insert(sess, self.model).values(**data)
                 stmt = stmt.on_conflict_do_update(
                     index_elements=[self.identifier_field],
                     set_={
                         k: v
                         for k, v in data.items()
-                        if k not in [f.name for f in self.immutable_fields]
+                        if k not in [f.key for f in self.immutable_fields]
                     },
                 ).returning(self.model)
 
