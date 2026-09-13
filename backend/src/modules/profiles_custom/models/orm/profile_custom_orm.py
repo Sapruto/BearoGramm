@@ -22,7 +22,7 @@ class ProfileCustomORM(Base):
         default=lambda: str(uuid4())
     )
 
-    name: Mapped[str] = mapped_column(String(67), nullable=False, default="Unified")
+    name: Mapped[str] = mapped_column(String(67), nullable=False, default="Unnamed")
     avatar_url: Mapped[str] = mapped_column(String(555), nullable=False, default=lambda: str(randomizer.get_random_avatar()))
 
     data: Mapped[Dict[str, Any]] = mapped_column(JSON)

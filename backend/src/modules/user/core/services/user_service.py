@@ -88,9 +88,9 @@ class UserService:
                 SqlQuery[UserFields]().add_filter(field=UserFields.PHONE_NUMBER, value=phone_number)
             )
 
-            just_created = True
+            just_created = False
             if not user:
-                just_created = False
+                just_created = True
 
                 new_user = UserEntity(phone_number=phone_number)
                 user = await self.user_repository.save(new_user)
