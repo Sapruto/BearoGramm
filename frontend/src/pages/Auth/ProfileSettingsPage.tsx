@@ -1,5 +1,5 @@
 import { UserRound } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import toast from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
 import { useGetMyProfile } from '../../shared/hooks/profile/useGetMyProfile';
@@ -7,35 +7,26 @@ import { useUpdateProfile } from '../../shared/hooks/profile/useUpdateProfile';
 import { withPreventDefault } from '../../shared/lib/withPreventDefault';
 
 const ProfileSettingsPage = () => {
-    const { data, isPending: isLoadingProfile } = useGetMyProfile();
+    const { isPending: isLoadingProfile } = useGetMyProfile();
     const { mutate: updateProfile, isPending: isUpdating } = useUpdateProfile();
 
     const navigate = useNavigate();
 
     const [name, setName] = useState('');
 
-    const profileExists = !!data?.profile;
-
-    useEffect(() => {
-        if (data?.profile) {
-            setName(data.profile.name);
-        }
-    }, [data]);
 
     const handleSave = () => {
         const trimmedName = name.trim();
         if (!trimmedName) return;
 
-        if (profileExists) {
-            updateProfile(
-                { name: trimmedName },
-                {
-                    onSuccess: () => {
-                        navigate("/", { replace: true })
-                        toast.success('Successfully signed in!');
-                    }
-                });
-        }
+        updateProfile(
+            { name: trimmedName },
+            {
+                onSuccess: () => {
+                    navigate("/", { replace: true })
+                    toast.success('Successfully signed in!');
+                }
+            });
     };
 
     if (isLoadingProfile) {
@@ -54,12 +45,10 @@ const ProfileSettingsPage = () => {
                 </div>
 
                 <h1 className="text-[22px] font-medium text-[#f4f4f5] mb-1.5">
-                    {profileExists ? 'Edit profile' : 'Create your profile'}
+                    Create your profile
                 </h1>
                 <p className="text-sm text-[#8b8b93] mb-8 leading-relaxed">
-                    {profileExists
-                        ? 'Update your display name.'
-                        : "Choose a name so friends can recognize you."}
+                    Choose a name so friends can recognize you.
                 </p>
 
                 <form onSubmit={withPreventDefault(handleSave)}>
@@ -77,7 +66,7 @@ const ProfileSettingsPage = () => {
                         disabled={isUpdating}
                         className="w-full h-10.5 rounded-[10px] bg-[#f4f4f5] text-[#0a0a0b] text-[15px] font-medium hover:bg-[#d4d4d8] transition-colors cursor-pointer"
                     >
-                        {profileExists ? 'Save changes' : 'Create profile'}
+                        Create profile
                     </button>
                 </form>
             </div>

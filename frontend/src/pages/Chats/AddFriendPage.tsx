@@ -4,7 +4,7 @@ import { useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useAddFriend } from '../../shared/hooks/personal/useAddFriend';
 import { withPreventDefault } from '../../shared/lib/withPreventDefault';
-import PhoneNumberInput, { type PhoneNumberInputRef } from '../AuthPage/PhoneNumberInput';
+import PhoneNumberInput, { type PhoneNumberInputRef } from '../Auth/PhoneNumberInput';
 
 const AddFriendPage = () => {
     const [phone, setPhone] = useState('');
