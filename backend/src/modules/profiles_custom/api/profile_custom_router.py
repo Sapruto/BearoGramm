@@ -48,40 +48,6 @@ async def me(
         )
 
 
-@profile_custom_router.post(
-    "/me",
-    response_model=CreateProfileResponse,
-    status_code=status.HTTP_201_CREATED,
-)
-async def me(
-    request: CreateProfileRequest,
-    current_user=Depends(get_current_user_depends()),
-    service: ProfileCustomService = Depends(get_profile_custom_service),
-) -> CreateProfileResponse:
-    try:
-        profile = await service.create(
-            typing_to_data=request.typing_to_data,
-            user_uuid=current_user.uuid,
-            name=request.name,
-            avatar_url=request.avatar_url,
-        )
-        return CreateProfileResponse(
-            success=True,
-            message="Profile created successfully",
-            profile=profile,
-        )
-    except ProfileCustomAlreadyExistsError as e:
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(e))
-    except ProfileCustomDataError as e:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
-    except Exception:
-        logger.exception("Failed to create profile")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to create profile",
-        )
-
-
 @profile_custom_router.patch("/me", response_model=UpdateProfileResponse)
 async def me(
     request: UpdateProfileRequest,
@@ -109,28 +75,6 @@ async def me(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to update profile",
-        )
-
-
-@profile_custom_router.delete(
-    "/me", response_model=DeleteProfileResponse
-)
-async def me(
-    current_user=Depends(get_current_user_depends()),
-    service: ProfileCustomService = Depends(get_profile_custom_service),
-) -> DeleteProfileResponse:
-    try:
-        await service.delete_by_user(current_user.uuid)
-        return DeleteProfileResponse(
-            success=True, message="Profile deleted successfully"
-        )
-    except ProfileCustomNotFoundError as e:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
-    except Exception:
-        logger.exception("Failed to delete profile")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to delete profile",
         )
 
 

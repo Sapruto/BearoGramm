@@ -51,7 +51,7 @@ class ProfileCustomService:
 
         entity = ProfileCustomEntity(
             uuid=str(uuid4()),
-            name=name or "Unified",
+            name=name,
             avatar_url=avatar_url,
             data=result.processed_data,
             user_uuid=user_uuid,
