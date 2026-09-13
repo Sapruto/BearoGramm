@@ -23,7 +23,7 @@ class ProfileCustomFields(str, Enum):
 class ProfileCustomEntity(BaseModel):
     uuid: Optional[str] = Field(default=None)
 
-    name: str = Field(default="Unified")
+    name: str = Field(default=None)
     avatar_url: Optional[str] = Field(default=None)
 
     data: List[base_data_type] = Field(default_factory=list)

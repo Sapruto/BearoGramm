@@ -1,5 +1,6 @@
 from typing import Optional
 
+from src.modules.profiles_custom.service import get_profile_custom_service, ProfileCustomService
 from .verify_service import VerifyService, get_verify_service
 from ..repositories.user_repository import UserRepository, get_user_repository
 from ..exceptions import (
@@ -33,10 +34,12 @@ class UserService:
         user_repository: Optional[UserRepository] = None,
         verify_service: Optional[VerifyService] = None,
         session_service: Optional[SessionAPIService] = None,
+        profile_service: Optional[ProfileCustomService] = None,
     ):
         self.user_repository = user_repository or get_user_repository()
         self.verify_service = verify_service or get_verify_service()
         self.session_service = session_service or get_session_service_api()
+        self.profile_service = profile_service or get_profile_custom_service()
 
     async def send_code_and_register_if_not(
         self, request: SendCodeRequest
@@ -49,9 +52,9 @@ class UserService:
             user = await self.user_repository.get(
                 SqlQuery[UserFields]().add_filter(value=phone_number, field=UserFields.PHONE_NUMBER)
             )
-            is_logining = True
+            just_created = True
             if not user:
-                is_logining = False
+                just_created = False
 
                 new_user = UserEntity(phone_number=phone_number)
                 user = await self.user_repository.save(new_user)
@@ -66,7 +69,7 @@ class UserService:
             if not code:
                 raise FailedToSendCode(phone_number, str(user.uuid), "Verify service returned None")
 
-            return SendCodeResponse(is_logining=is_logining)
+            return SendCodeResponse(just_created=just_created)
 
         except (InvalidPhoneNumber, FailedToCreateUser, FailedToSendCode):
             raise
@@ -97,6 +100,11 @@ class UserService:
             if not user:
                 raise UserNotFound(phone_number)
 
+            has_profile = False
+            profile = await self.profile_service.get_by_user_uuid(user.uuid)
+            if profile:
+                has_profile = True
+
             await self.verify_service.delete_code(code)
 
             session = await self.session_service.create_session(
@@ -105,7 +113,7 @@ class UserService:
             if not session:
                 raise SessionCreationFailed(str(user.uuid), "Session service returned None")
 
-            return VerifyCodeResponse(token=session.token, user_uuid=str(user.uuid), user=user)
+            return VerifyCodeResponse(token=session.token, user_uuid=str(user.uuid), user=user, has_profile=has_profile)
 
         except (InvalidPhoneNumber,
             InvalidOrExpiredCode,

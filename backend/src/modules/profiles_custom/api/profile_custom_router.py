@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 
 from src.core.logger import get_logger
-from src.modules.user import get_current_user_depends
+from src.modules.user.api.routers.login_required import get_current_user_depends
 
 from ..core.exceptions import (
     ProfileCustomNotFoundError,
@@ -31,7 +31,7 @@ profile_custom_router = APIRouter(
 
 
 @profile_custom_router.get("/me", response_model=GetProfileResponse)
-async def get_my_profile(
+async def me(
     current_user=Depends(get_current_user_depends()),
     service: ProfileCustomService = Depends(get_profile_custom_service),
 ) -> GetProfileResponse:
@@ -53,7 +53,7 @@ async def get_my_profile(
     response_model=CreateProfileResponse,
     status_code=status.HTTP_201_CREATED,
 )
-async def create_profile(
+async def me(
     request: CreateProfileRequest,
     current_user=Depends(get_current_user_depends()),
     service: ProfileCustomService = Depends(get_profile_custom_service),
@@ -83,7 +83,7 @@ async def create_profile(
 
 
 @profile_custom_router.patch("/me", response_model=UpdateProfileResponse)
-async def update_profile(
+async def me(
     request: UpdateProfileRequest,
     current_user=Depends(get_current_user_depends()),
     service: ProfileCustomService = Depends(get_profile_custom_service),
@@ -115,7 +115,7 @@ async def update_profile(
 @profile_custom_router.delete(
     "/me", response_model=DeleteProfileResponse
 )
-async def delete_profile(
+async def me(
     current_user=Depends(get_current_user_depends()),
     service: ProfileCustomService = Depends(get_profile_custom_service),
 ) -> DeleteProfileResponse:
