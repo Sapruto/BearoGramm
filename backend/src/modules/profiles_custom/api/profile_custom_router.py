@@ -26,11 +26,11 @@ from ..models.dto.profile_custom_responses import (
 logger = get_logger(__name__)
 
 profile_custom_router = APIRouter(
-    prefix="/api/profile-custom", tags=["profile_custom"]
+    prefix="/api/profile", tags=["profile_custom"]
 )
 
 
-@profile_custom_router.get("/get_my_profile", response_model=GetProfileResponse)
+@profile_custom_router.get("/me", response_model=GetProfileResponse)
 async def get_my_profile(
     current_user=Depends(get_current_user_depends()),
     service: ProfileCustomService = Depends(get_profile_custom_service),
@@ -49,7 +49,7 @@ async def get_my_profile(
 
 
 @profile_custom_router.post(
-    "/create_profile",
+    "/me",
     response_model=CreateProfileResponse,
     status_code=status.HTTP_201_CREATED,
 )
@@ -82,7 +82,7 @@ async def create_profile(
         )
 
 
-@profile_custom_router.put("/update_profile", response_model=UpdateProfileResponse)
+@profile_custom_router.patch("/me", response_model=UpdateProfileResponse)
 async def update_profile(
     request: UpdateProfileRequest,
     current_user=Depends(get_current_user_depends()),
@@ -113,7 +113,7 @@ async def update_profile(
 
 
 @profile_custom_router.delete(
-    "/delete_profile", response_model=DeleteProfileResponse
+    "/me", response_model=DeleteProfileResponse
 )
 async def delete_profile(
     current_user=Depends(get_current_user_depends()),

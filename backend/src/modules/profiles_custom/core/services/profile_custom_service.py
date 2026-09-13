@@ -90,7 +90,7 @@ class ProfileCustomService:
             entity.avatar_url = avatar_url
         entity.updated_at = datetime.now(timezone.utc)
 
-        updated = await self.repository.update(entity)
+        updated = await self.repository.save(entity, to_update=True)
         if not updated:
             raise ProfileCustomDataError("Failed to update profile")
 

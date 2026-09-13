@@ -3,7 +3,7 @@ from sqlalchemy.orm import InstrumentedAttribute
 
 from ..interfaces.base_repository_interface import BaseRepositoryInterface
 
-from src.general.db.base_manager import OnConflictAction
+from src.general.db.base_manager import OnConflictAction, ObjectAlreadyExistsError
 from src.core.database import Base
 from src.core.logger import get_logger
 
@@ -62,18 +62,28 @@ class BaseRepository(
                 raise
         return result
 
-    async def save(self, EntityType: EntityType) -> EntityType:
+    async def save(self, entity: EntityType, to_update: bool = False) -> EntityType:
         try:
-            orm_obj = await self._to_orm(EntityType)
-            result = await self.manager.create(
-                orm_obj, on_conflict=OnConflictAction.NOTHING
-            )
+            orm_obj = await self._to_orm(entity)
+
+            if not to_update:
+                result = await self.manager.create(
+                    orm_obj, on_conflict=OnConflictAction.NOTHING
+                )
+            else:
+                result = await self.manager.create(
+                    orm_obj, on_conflict=OnConflictAction.UPDATE
+                )
+
+            if result is None:
+                raise ValueError(f"Failed to save entity: {entity}")
+
             return await self._to_entity(result)
-        except NotConvertableError as e:
-            logger.error(f"Conversion error in save: {e}")
+        except ObjectAlreadyExistsError:
+            logger.warning(f"Object already exists: {entity}")
             raise
         except Exception as e:
-            logger.error(f"Unexpected error in save: {e}")
+            logger.error(f"Error saving entity: {e}")
             raise
 
     async def delete(self, query: SqlQuery[FieldsType]) -> int:
