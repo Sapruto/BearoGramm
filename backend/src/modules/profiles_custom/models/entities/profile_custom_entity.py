@@ -1,8 +1,9 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_serializer
 from enum import Enum
 from datetime import datetime
 from typing import Optional, List
 
+from src.core.settings import Settings
 from src.general.processors.base.base_data import base_data_type
 
 
@@ -29,3 +30,9 @@ class ProfileCustomEntity(BaseModel):
     data: List[base_data_type] = Field(default_factory=list)
     updated_at: Optional[datetime] = Field(default=None)
     user_uuid: Optional[str] = Field(default=None)
+
+    @field_serializer('avatar_url')
+    def serialize_avatar_url(self, avatar_url: Optional[str]) -> Optional[str]:
+        if not avatar_url:
+            return None
+        return f"{Settings.MEDIA_BASE_URL.rstrip('/')}/{avatar_url.lstrip('/')}"

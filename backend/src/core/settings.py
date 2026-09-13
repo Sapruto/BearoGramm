@@ -153,6 +153,8 @@ class SettingsModel(BaseSettings):
     ENCRYPTER: EncrypterSettings = Field(default_factory=EncrypterSettings)
     PHONE: PhoneSettings = Field(default_factory=PhoneSettings)
 
+    MEDIA_BASE_URL: str = "http://localhost:8000"
+
     CLIENT_SMS_TYPE: str = "test"
 
     @field_validator("BASE_URL")
