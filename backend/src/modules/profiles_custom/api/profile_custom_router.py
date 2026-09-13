@@ -26,7 +26,7 @@ from ..models.dto.profile_custom_responses import (
 logger = get_logger(__name__)
 
 profile_custom_router = APIRouter(
-    prefix="/api/profile", tags=["profile_custom"]
+    prefix="/api/profile", tags=["profile"]
 )
 
 
