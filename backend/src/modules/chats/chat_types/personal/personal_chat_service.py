@@ -104,14 +104,14 @@ class PersonalChatService(BaseChatService):
                 partner_uuid = p.user_uuid
                 break
 
-        profiles = self.profile_service.get_by_user_uuids([user_uuid, partner_uuid])
+        partner_profile = self.profile_service.get_by_user_uuid(partner_uuid)
 
         return PersonalChatResponse(
             uuid=chat.uuid,
             partner_uuid=partner_uuid,
             created_at=chat.created_at,
             updated_at=chat.updated_at,
-            profiles=profiles
+            partner_profile=partner_profile
         )
 
     async def get_user_personal_chats(
