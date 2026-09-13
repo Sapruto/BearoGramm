@@ -9,7 +9,7 @@ import PhoneNumberInput, { type PhoneNumberInputRef } from "./PhoneNumberInput";
 const AuthPhonePage = () => {
     const navigate = useNavigate();
     const [phone, setPhone] = useState('');
-    const { phone: phoneStore, setPhone: setPhoneStore, setJustCreated } = useAuthStore();
+    const { phone: phoneStore, setPhone: setPhoneStore } = useAuthStore();
     const { mutate: sendCode, isPending } = useSendCode();
     const phoneInputRef = useRef<PhoneNumberInputRef>(null);
 
@@ -25,9 +25,8 @@ const AuthPhonePage = () => {
         sendCode(
             { phone_number: rawPhone },
             {
-                onSuccess: (data) => {
+                onSuccess: () => {
                     setPhoneStore(rawPhone);
-                    setJustCreated(data.just_created);
                     navigate("/auth/verify");
                 }
             }
@@ -54,7 +53,7 @@ const AuthPhonePage = () => {
                     Enter your phone number
                 </h1>
                 <p className="text-sm text-[#8b8b93] mb-8 leading-relaxed">
-                    We'll send you a code to verify it's you.
+                    A verification code will be sent to your phone number.
                 </p>
 
                 <PhoneNumberInput

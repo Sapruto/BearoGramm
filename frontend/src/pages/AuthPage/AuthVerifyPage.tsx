@@ -52,11 +52,11 @@ const AuthVerifyPage = () => {
                     console.log(`Signed in ${phoneFormatted}, token: ${data.token}`);
                     navigator.clipboard.writeText(data.token);
 
-                    if (data.has_profile) {
+                    if (data.just_created_profile) {
+                        navigate("/profile/me", { replace: true });
+                    } else {
                         navigate("/", { replace: true });
                         toast.success("Successfully signed in!");
-                    } else {
-                        navigate("/profile/me", { replace: true });
                     }
                 }
             }
@@ -79,7 +79,7 @@ const AuthVerifyPage = () => {
 
                 <h1 className="text-[22px] font-medium text-[#f4f4f5] mb-1.5">Enter the code</h1>
                 <p className="text-sm text-[#8b8b93] mb-8 leading-relaxed">
-                    We sent a 5-digit code to <span className="text-[#f4f4f5] font-medium">{phoneFormatted}</span>
+                    A 5-digit code has been sent to <span className="text-[#f4f4f5] font-medium">{phoneFormatted}</span>
                 </p>
 
                 <MuiOtpInput

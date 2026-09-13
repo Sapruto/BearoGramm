@@ -6,7 +6,6 @@ export type SendCodeRequest = {
 
 export type SendCodeResponse = {
     success: boolean;
-    just_created: boolean;
 };
 
 export const sendCode = async (data: SendCodeRequest): Promise<SendCodeResponse> => {
@@ -28,7 +27,8 @@ export type VerifyCodeResponse = {
         created_at: string,
         updated_at: string,
     };
-    has_profile: boolean;
+    just_created_profile: boolean;
+    just_created: boolean;
 };
 
 export const verifyCode = async (data: VerifyCodeRequest): Promise<VerifyCodeResponse> => {

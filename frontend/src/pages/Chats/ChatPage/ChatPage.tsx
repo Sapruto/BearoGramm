@@ -24,7 +24,7 @@ const ChatPage = () => {
     const partnerAvatar = partnerProfile?.partner_profile.avatar_url;
     const partnerName = partnerProfile?.partner_profile.name;
 
-    const messages = data?.pages?.flatMap((response) => response.message_entity) ?? [];
+    const messages = data?.pages.flatMap((response) => response.message_entity) ?? [];
 
     const handleSend = (text: string) => {
         sendMessage(

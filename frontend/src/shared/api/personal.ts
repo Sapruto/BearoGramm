@@ -34,6 +34,9 @@ export type AddPersonalResponse = {
     uuid: string;
     chat_type: 'personal';
     partner_uuid: string;
+    created_at: string;
+    updated_at: string;
+    partner_profile: Profile;
 };
 
 export const addFriend = async (data: AddPersonalRequest): Promise<AddPersonalResponse> => {
@@ -41,16 +44,12 @@ export const addFriend = async (data: AddPersonalRequest): Promise<AddPersonalRe
     return res.data;
 };
 
-export type GetChatPartnerParams = {
-    chat_uuid: string;
-};
-
 export type GetChatPartnerResponse = {
     partner_uuid: string;
     partner_profile: Profile;
 };
 
-export const getChatPartner = async (params: GetChatPartnerParams): Promise<GetChatPartnerResponse> => {
-    const res = await apiClient.get(`/api/personal/${params.chat_uuid}/partner`, { params });
+export const getChatPartner = async (chatUUID: string): Promise<GetChatPartnerResponse> => {
+    const res = await apiClient.get(`/api/personal/${chatUUID}/partner`);
     return res.data;
 };

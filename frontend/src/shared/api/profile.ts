@@ -11,7 +11,7 @@ export type Profile = {
 
 export type GetMyProfileResponse = {
     success: boolean;
-    profile: Profile | null;
+    profile?: Profile;
 };
 
 export const getMyProfile = async (): Promise<GetMyProfileResponse> => {
@@ -19,23 +19,8 @@ export const getMyProfile = async (): Promise<GetMyProfileResponse> => {
     return res.data;
 };
 
-export type CreateProfileRequest = {
-    name?: string;
-    avatar_url?: string;
-};
-
-export type CreateProfileResponse = {
-    success: boolean;
-    message: string;
-    profile: Profile;
-};
-
-export const createProfile = async (data: CreateProfileRequest): Promise<CreateProfileResponse> => {
-    const res = await apiClient.post('/api/profile/me', data);
-    return res.data;
-};
-
 export type UpdateProfileRequest = {
+    typing_to_data?: any[];
     name?: string;
     avatar_url?: string;
 };

@@ -7,9 +7,6 @@ type AuthStore = {
     phone: string;
     setPhone: (phone: string) => void;
 
-    justCreated: boolean;
-    setJustCreated: (justCreated: boolean) => void;
-
     token: string | null;
     userUUID: string | null;
     setToken: (token: string) => void;
@@ -24,9 +21,6 @@ export const useAuthStore = create<AuthStore>()(
         (set, get) => ({
             phone: '',
             setPhone: (phone) => set({ phone }),
-
-            justCreated: false,
-            setJustCreated: (justCreated: boolean) => set({ justCreated }),
 
             token: null,
             userUUID: null,

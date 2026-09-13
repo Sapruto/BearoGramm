@@ -8,7 +8,6 @@ import PhoneNumberInput, { type PhoneNumberInputRef } from '../AuthPage/PhoneNum
 
 const AddFriendPage = () => {
     const [phone, setPhone] = useState('');
-    const [_phoneValid, setPhoneValid] = useState(false);
 
     const { mutate: sendAddFriend, isPending } = useAddFriend();
     const phoneInputRef = useRef<PhoneNumberInputRef>(null);
@@ -49,7 +48,6 @@ const AddFriendPage = () => {
                         ref={phoneInputRef}
                         value={phone}
                         onChange={setPhone}
-                        onValidate={setPhoneValid}
                         verifyOnBlur={false}
                     />
 

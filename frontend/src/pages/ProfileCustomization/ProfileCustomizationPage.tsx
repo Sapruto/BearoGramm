@@ -1,20 +1,20 @@
 import { UserRound } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
-import { useCreateProfile } from '../../shared/hooks/profile/useCreateProfile';
+import { useNavigate } from 'react-router-dom';
 import { useGetMyProfile } from '../../shared/hooks/profile/useGetMyProfile';
 import { useUpdateProfile } from '../../shared/hooks/profile/useUpdateProfile';
 import { withPreventDefault } from '../../shared/lib/withPreventDefault';
 
 const ProfileSettingsPage = () => {
     const { data, isPending: isLoadingProfile } = useGetMyProfile();
-    const { mutate: createProfile, isPending: isCreating } = useCreateProfile();
     const { mutate: updateProfile, isPending: isUpdating } = useUpdateProfile();
+
+    const navigate = useNavigate();
 
     const [name, setName] = useState('');
 
     const profileExists = !!data?.profile;
-    const isSaving = isCreating || isUpdating;
 
     useEffect(() => {
         if (data?.profile) {
@@ -26,14 +26,15 @@ const ProfileSettingsPage = () => {
         const trimmedName = name.trim();
         if (!trimmedName) return;
 
-        const onSuccess = () => {
-            toast.success('Profile saved!');
-        };
-
         if (profileExists) {
-            updateProfile({ name: trimmedName }, { onSuccess });
-        } else {
-            createProfile({ name: trimmedName }, { onSuccess });
+            updateProfile(
+                { name: trimmedName },
+                {
+                    onSuccess: () => {
+                        navigate("/", { replace: true })
+                        toast.success('Successfully signed in!');
+                    }
+                });
         }
     };
 
@@ -73,7 +74,7 @@ const ProfileSettingsPage = () => {
 
                     <button
                         type="submit"
-                        disabled={isSaving}
+                        disabled={isUpdating}
                         className="w-full h-10.5 rounded-[10px] bg-[#f4f4f5] text-[#0a0a0b] text-[15px] font-medium hover:bg-[#d4d4d8] transition-colors cursor-pointer"
                     >
                         {profileExists ? 'Save changes' : 'Create profile'}
