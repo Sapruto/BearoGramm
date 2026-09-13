@@ -4,11 +4,7 @@ export type Profile = {
     uuid: string;
     name: string;
     avatar_url: string;
-    data: [
-        {
-            data_type: string;
-        }
-    ];
+    data: any[];
     updated_at: string;
     user_uuid: string;
 };
@@ -19,7 +15,7 @@ export type GetMyProfileResponse = {
 };
 
 export const getMyProfile = async (): Promise<GetMyProfileResponse> => {
-    const res = await apiClient.get('/api/profile-custom/get_my_profile');
+    const res = await apiClient.get('/api/profile/me');
     return res.data;
 };
 
@@ -35,7 +31,7 @@ export type CreateProfileResponse = {
 };
 
 export const createProfile = async (data: CreateProfileRequest): Promise<CreateProfileResponse> => {
-    const res = await apiClient.post('/api/profile-custom/create_profile', data);
+    const res = await apiClient.post('/api/profile/me', data);
     return res.data;
 };
 
@@ -51,6 +47,6 @@ export type UpdateProfileResponse = {
 };
 
 export const updateProfile = async (data: UpdateProfileRequest): Promise<UpdateProfileResponse> => {
-    const res = await apiClient.put('/api/profile-custom/update_profile', data);
+    const res = await apiClient.patch('/api/profile/me', data);
     return res.data;
 };

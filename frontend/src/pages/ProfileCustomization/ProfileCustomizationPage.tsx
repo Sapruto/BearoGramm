@@ -1,4 +1,3 @@
-import { useQueryClient } from '@tanstack/react-query';
 import { UserRound } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
@@ -8,7 +7,6 @@ import { useUpdateProfile } from '../../shared/hooks/profile/useUpdateProfile';
 import { withPreventDefault } from '../../shared/lib/withPreventDefault';
 
 const ProfileSettingsPage = () => {
-    const queryClient = useQueryClient();
     const { data, isPending: isLoadingProfile } = useGetMyProfile();
     const { mutate: createProfile, isPending: isCreating } = useCreateProfile();
     const { mutate: updateProfile, isPending: isUpdating } = useUpdateProfile();
@@ -30,7 +28,6 @@ const ProfileSettingsPage = () => {
 
         const onSuccess = () => {
             toast.success('Profile saved!');
-            queryClient.invalidateQueries({ queryKey: ['my-profile'] });
         };
 
         if (profileExists) {

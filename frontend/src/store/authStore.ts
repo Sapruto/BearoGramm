@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { queryClient } from '../shared/api/queryClient';
+import { queryKeys } from '../shared/lib/queryKeys';
 
 type AuthStore = {
     phone: string;
@@ -36,7 +37,7 @@ export const useAuthStore = create<AuthStore>()(
                 if (token === null)
                     return;
 
-                queryClient.removeQueries({ queryKey: ['my_profile'] });
+                queryClient.removeQueries({ queryKey: queryKeys.myProfile });
                 set({ token: null, userUUID: null, phone: '' });
             },
 

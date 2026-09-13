@@ -30,3 +30,23 @@ export const getMessages = async (params: GetMessagesParams, chatUUID: string): 
     const res = await apiClient.get('/api/messages/get/' + chatUUID, { params });
     return res.data;
 };
+
+export type SendMessageRequest = {
+    chat_uuid: string;
+    typing_to_data: [
+        [
+            dataType: 'text_type' | 'media_type',
+            rawData: string,
+        ]
+    ];
+};
+
+export type SendMessageResponse = {
+    success: boolean;
+    message_entity: Message;
+};
+
+export const sendMessage = async (data: SendMessageRequest): Promise<SendMessageResponse> => {
+    const res = await apiClient.post('/api/messages/send/', data);
+    return res.data;
+};

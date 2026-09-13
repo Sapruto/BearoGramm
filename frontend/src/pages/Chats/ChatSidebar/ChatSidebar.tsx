@@ -1,7 +1,7 @@
 import { UserPlus } from 'lucide-react';
 import { useEffect, useRef } from 'react';
-import type { PersonalChat } from '../../shared/api/personal';
-import { useGetPersonalChats } from '../../shared/hooks/personal/useGetPersonalChats';
+import type { PersonalChat } from '../../../shared/api/personal';
+import { useGetPersonalChats } from '../../../shared/hooks/personal/useGetPersonalChats';
 
 type Props = {
     activeChatId: string | null;
@@ -61,11 +61,11 @@ const ChatSidebar = ({ activeChatId, onSelectAddFriend, onSelectChat }: Props) =
                             }`}
                     >
                         <img
-                            src="https://cdn.discordapp.com/avatars/840559505308909599/fce4743acb41490870ac34652b8ba9a6.webp?size=32"
+                            src={chat.partner_profile.avatar_url}
                             className="w-9 h-9 rounded-full object-cover shrink-0"
                         />
                         <span className="text-sm text-[#f4f4f5] truncate" title={chat.uuid}>
-                            {chat.uuid}
+                            {chat.partner_profile.name}
                         </span>
                     </div>
                 ))}
