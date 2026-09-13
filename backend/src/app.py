@@ -69,6 +69,10 @@ def create_app() -> FastAPI:
     async def index():
         return "67"
 
+    @app.get("/media_path")
+    async def media_path():
+        return Settings.BASE_URL
+
     @app.get("/health")
     async def health_check():
         return {"status": "healthy"}
