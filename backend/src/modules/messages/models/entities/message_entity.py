@@ -1,7 +1,7 @@
-from pydantic import BaseModel, Field, SerializeAsAny
+from pydantic import BaseModel, Field, SerializeAsAny, field_serializer
 from enum import Enum
 
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import List, Optional
 
 from src.general.processors.base.base_data import BaseData, base_data_type
@@ -36,3 +36,11 @@ class MessageEntity(BaseModel):
     def remove_content(self, delete_data: base_data_type) -> None:
         if delete_data in self.message_data:
             self.message_data.remove(delete_data)
+
+    @field_serializer("created_at", "updated_at")
+    def serialize_dt(self, v: datetime | None, _info):
+        if v is None:
+            return None
+        if v.tzinfo is None:
+            v = v.replace(tzinfo=timezone.utc)
+        return v.astimezone(timezone.utc).isoformat().replace("+00:00", "Z")

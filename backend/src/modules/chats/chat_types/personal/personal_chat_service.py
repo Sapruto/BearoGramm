@@ -192,7 +192,7 @@ class PersonalChatService(BaseChatService):
         participants = await self._permission_service.get_by_resource(chat_uuid)
         for p in participants:
             if p.user_uuid != user_uuid:
-                profile = self.profile_service.get_by_user_uuid(p.user_uuid)
+                profile = await self.profile_service.get_by_user_uuid(p.user_uuid)
                 return PartnerResponse(partner_uuid=p.user_uuid, partner_profile=profile)
 
         raise UserNotParticipantError(user_uuid, chat_uuid)
