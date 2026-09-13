@@ -2,18 +2,13 @@ import { UserRound } from 'lucide-react';
 import { useState } from 'react';
 import toast from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
-import { useGetMyProfile } from '../../shared/hooks/profile/useGetMyProfile';
 import { useUpdateProfile } from '../../shared/hooks/profile/useUpdateProfile';
 import { withPreventDefault } from '../../shared/lib/withPreventDefault';
 
 const ProfileSettingsPage = () => {
-    const { isPending: isLoadingProfile } = useGetMyProfile();
     const { mutate: updateProfile, isPending: isUpdating } = useUpdateProfile();
-
     const navigate = useNavigate();
-
     const [name, setName] = useState('');
-
 
     const handleSave = () => {
         const trimmedName = name.trim();
@@ -28,14 +23,6 @@ const ProfileSettingsPage = () => {
                 }
             });
     };
-
-    if (isLoadingProfile) {
-        return (
-            <div className="flex-1 h-screen flex items-center justify-center bg-[#0a0a0b]">
-                <span className="text-sm text-[#8b8b93]">Loading...</span>
-            </div>
-        );
-    }
 
     return (
         <div className="flex-1 h-screen flex items-center justify-center bg-[#0a0a0b]">
