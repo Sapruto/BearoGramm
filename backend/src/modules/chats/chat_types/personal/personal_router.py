@@ -182,11 +182,7 @@ async def get_chat_partner(
         service: PersonalChatService = Depends(get_personal_chat_service)
 ) -> PartnerResponse:
     try:
-        partner_uuid = await service.get_chat_partner(chat_uuid, current_user.uuid)
-        return PartnerResponse(
-            chat_uuid=chat_uuid,
-            partner_uuid=partner_uuid
-        )
+        return await service.get_chat_partner(chat_uuid, current_user.uuid)
     except ChatNotFoundError as e:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,

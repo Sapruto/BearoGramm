@@ -36,8 +36,8 @@ class PersonalChatListResponse(BaseModel):
 
 
 class PartnerResponse(BaseModel):
-    chat_uuid: str
     partner_uuid: str
+    partner_profile: Optional[ProfileCustomEntity] = None
 
 
 class ParticipantCheckResponse(BaseModel):

@@ -7,7 +7,7 @@ from src.modules.profiles_custom import ProfileCustomService, get_profile_custom
 from src.modules.user import UserServiceAPI, get_user_service_api
 from src.modules.participants import Permission, PermissionService, ChatAction, MessageAction
 
-from .personal_models import PersonalChatResponse, PersonalChatPreview
+from .personal_models import PersonalChatResponse, PersonalChatPreview, PartnerResponse
 from .personal_exceptions import CannotChatWithSelfError, NotFoundUser, ChatIsExisting
 from .personal_repository import get_personal_repository, PersonalRepository
 from ..base.base_chat_service import BaseChatService
@@ -180,7 +180,7 @@ class PersonalChatService(BaseChatService):
             self,
             chat_uuid: str,
             user_uuid: str
-    ) -> str:
+    ) -> PartnerResponse:
         query = SqlQuery[ChatFields]().add_filter(ChatFields.UUID, chat_uuid)
         chat = await self._repository.get(query)
 
@@ -192,7 +192,8 @@ class PersonalChatService(BaseChatService):
         participants = await self._permission_service.get_by_resource(chat_uuid)
         for p in participants:
             if p.user_uuid != user_uuid:
-                return p.user_uuid
+                profile = self.profile_service.get_by_user_uuid(p.user_uuid)
+                return PartnerResponse(partner_uuid=p.user_uuid, partner_profile=profile)
 
         raise UserNotParticipantError(user_uuid, chat_uuid)
 
