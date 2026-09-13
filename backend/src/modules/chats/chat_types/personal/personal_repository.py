@@ -1,4 +1,4 @@
-from typing import Optional, List
+from typing import Optional, List, Tuple
 from sqlalchemy import select, func, and_
 
 from src.modules.chats.chat_types.chat_types import ChatType
@@ -47,6 +47,49 @@ class PersonalRepository(ChatRepository):
             created_at=chat_orm.created_at,
             updated_at=chat_orm.updated_at
         )
+
+    async def get_user_personal_chats(
+        self,
+        user_uuid: str,
+        limit: int = 50,
+        offset: int = 0,
+    ) -> Tuple[List[ChatEntity], int]:
+
+        async with self.manager._BaseManager__get_session() as session:
+            user_chat_uuids = (
+                select(ParticipantORM.resource_uuid)
+                .where(
+                    ParticipantORM.user_uuid == user_uuid,
+                    ParticipantORM.resource_type == ResourceType.CHAT,
+                )
+                .scalar_subquery()
+            )
+
+            base_where = and_(
+                ChatORM.chat_type == ChatType.PERSONAL,
+                ChatORM.uuid.in_(user_chat_uuids),
+            )
+
+            total: int = (
+                await session.execute(
+                    select(func.count()).select_from(ChatORM).where(base_where)
+                )
+            ).scalar_one()
+
+            if total == 0:
+                return [], 0
+
+            stmt = (
+                select(ChatORM)
+                .where(base_where)
+                .order_by(ChatORM.updated_at.desc().nullslast())
+                .limit(limit)
+                .offset(offset)
+            )
+            chats_orm = (await session.execute(stmt)).scalars().all()
+
+        chats: List[ChatEntity] = [self._to_entity(c) for c in chats_orm]
+        return chats, total
 
 
 def get_personal_repository() -> PersonalRepository:

@@ -114,36 +114,51 @@ class PersonalChatService(BaseChatService):
             profiles=profiles
         )
 
-    async def get_user_chats(
-            self,
-            user_uuid: str,
-            limit: int = 50,
-            offset: int = 0
+    async def get_user_personal_chats(
+        self,
+        user_uuid: str,
+        limit: int = 50,
+        offset: int = 0,
     ) -> Tuple[List[PersonalChatPreview], int]:
-        query = SqlQuery[ChatFields]().add_filter(
-            ChatFields.CHAT_TYPE, ChatType.PERSONAL
-        )
-        query.limit = limit
-        query.offset = offset
 
-        chats = await self._repository.get_all(query)
-        total = await self._repository.count(query)
+        chats, total = await self._repository.get_user_personal_chats(
+            user_uuid=user_uuid,
+            limit=limit,
+            offset=offset,
+        )
+
+        if not chats:
+            return [], total
+
+        chat_uuids = [c.uuid for c in chats]
+
+        participants_by_chat = await self._permission_service.get_by_resources(
+            resource_uuids=chat_uuids,
+            resource_type=ResourceType.CHAT,
+        )
+
+        partner_by_chat: dict[str, str] = {}
+        partner_uuids: set[str] = set()
+        for chat in chats:
+            for p in participants_by_chat.get(chat.uuid, []):
+                if p.user_uuid != user_uuid:
+                    partner_by_chat[chat.uuid] = p.user_uuid
+                    partner_uuids.add(p.user_uuid)
+                    break
+
+        profiles_by_uuid = await self.profile_service.get_by_user_uuids(
+            list(partner_uuids),
+        )
 
         previews: List[PersonalChatPreview] = []
         for chat in chats:
-            try:
-                await self._permission_service.validate(user_uuid, chat.uuid, ResourceType.CHAT)
-            except NotParticipant:
+            partner_uuid = partner_by_chat.get(chat.uuid)
+            if partner_uuid is None:
                 continue
 
-            participants = await self._permission_service.get_by_resource(chat.uuid)
-            partner_uuid: str = ""
-            for p in participants:
-                if p.user_uuid != user_uuid:
-                    partner_uuid = p.user_uuid
-                    break
-
-            partner_profile = await self.profile_service.get_by_user_uuid(partner_uuid)
+            partner_profile = profiles_by_uuid.get(partner_uuid)
+            if partner_profile is None:
+                continue
 
             previews.append(
                 PersonalChatPreview(
