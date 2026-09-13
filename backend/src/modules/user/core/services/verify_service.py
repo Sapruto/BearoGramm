@@ -100,11 +100,12 @@ class VerifyService:
             logger.error(f"Error sending login code: {e}")
             return None
 
-    async def verify_code(self, code: str) -> bool:
+    async def verify_code(self, phone_number: str, code: str) -> bool:
         try:
             query = RedisQuery[VerificationCodeFields]().add_filter(
                 VerificationCodeFields.CODE, code
             )
+            query.add_filter(VerificationCodeFields.PHONE, phone_number)
             entity = await self.verification_code_repository.get(query)
 
             if not entity:

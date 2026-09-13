@@ -79,7 +79,7 @@ class UserService:
             if not code:
                 raise InvalidOrExpiredCode(phone_number)
 
-            is_valid = await self.verify_service.verify_code(code)
+            is_valid = await self.verify_service.verify_code(phone_number, code)
 
             if not is_valid:
                 raise InvalidOrExpiredCode(phone_number)
