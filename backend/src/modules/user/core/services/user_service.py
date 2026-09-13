@@ -52,24 +52,15 @@ class UserService:
             user = await self.user_repository.get(
                 SqlQuery[UserFields]().add_filter(value=phone_number, field=UserFields.PHONE_NUMBER)
             )
-            just_created = True
-            if not user:
-                just_created = False
-
-                new_user = UserEntity(phone_number=phone_number)
-                user = await self.user_repository.save(new_user)
-
-                if not user:
-                    raise FailedToCreateUser(phone_number, "Repository returned None")
 
             code = await self.verify_service.send_login_code(
-                user_uuid=str(user.uuid), phone_number=phone_number
+                phone_number=phone_number
             )
 
             if not code:
                 raise FailedToSendCode(phone_number, str(user.uuid), "Verify service returned None")
 
-            return SendCodeResponse(just_created=just_created)
+            return SendCodeResponse()
 
         except (InvalidPhoneNumber, FailedToCreateUser, FailedToSendCode):
             raise
@@ -97,13 +88,21 @@ class UserService:
                 SqlQuery[UserFields]().add_filter(field=UserFields.PHONE_NUMBER, value=phone_number)
             )
 
+            just_created = True
             if not user:
-                raise UserNotFound(phone_number)
+                just_created = False
 
-            has_profile = False
+                new_user = UserEntity(phone_number=phone_number)
+                user = await self.user_repository.save(new_user)
+
+                if not user:
+                    raise FailedToCreateUser(phone_number, "Repository returned None")
+
+            just_created_profile = False
             profile = await self.profile_service.get_by_user_uuid(user.uuid)
-            if profile:
-                has_profile = True
+            if not profile:
+                just_created_profile = True
+                await self.profile_service.create([], user.uuid)
 
             await self.verify_service.delete_code(code)
 
@@ -113,7 +112,7 @@ class UserService:
             if not session:
                 raise SessionCreationFailed(str(user.uuid), "Session service returned None")
 
-            return VerifyCodeResponse(token=session.token, user_uuid=str(user.uuid), user=user, has_profile=has_profile)
+            return VerifyCodeResponse(token=session.token, user_uuid=str(user.uuid), user=user, just_created_profile=just_created_profile, just_created=just_created)
 
         except (InvalidPhoneNumber,
             InvalidOrExpiredCode,

@@ -7,11 +7,11 @@ from ..entities.user_entity import UserEntity
 
 class SendCodeResponse(BaseModel):
     success: bool = Field(default=True)
-    just_created: bool = Field(default=True)
 
 
 class VerifyCodeResponse(BaseModel):
     token: str = Field(description="JWT токен")
     user_uuid: str = Field()
     user: UserEntity = Field()
-    has_profile: bool = Field(default=False)
+    just_created_profile: bool = Field(default=False)
+    just_created: bool = Field(default=False)

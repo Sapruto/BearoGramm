@@ -27,7 +27,7 @@ class VerifyService:
         self.sms_api = sms_api or get_client_sms_api()
 
     async def send_phone_verify_code(
-        self, user_uuid: str, phone_number: str
+        self, phone_number: str
     ) -> Optional[str]:
         try:
             query = RedisQuery[VerificationCodeFields]().add_filter(
@@ -37,7 +37,6 @@ class VerifyService:
 
             code = self.verification_code_repository.gen_code()
             entity = VerificationCodeEntity(
-                user_uuid=user_uuid,
                 phone=phone_number,
                 code=code,
                 expired_at=datetime.now()
@@ -65,7 +64,7 @@ class VerifyService:
             logger.error(f"Error sending phone verify code: {e}")
             return None
 
-    async def send_login_code(self, user_uuid: str, phone_number: str) -> Optional[str]:
+    async def send_login_code(self, phone_number: str) -> Optional[str]:
         try:
             query = RedisQuery[VerificationCodeFields]().add_filter(
                 VerificationCodeFields.PHONE, phone_number
@@ -74,7 +73,6 @@ class VerifyService:
 
             code = self.verification_code_repository.gen_code()
             entity = VerificationCodeEntity(
-                user_uuid=user_uuid,
                 phone=phone_number,
                 code=code,
                 expired_at=datetime.now()

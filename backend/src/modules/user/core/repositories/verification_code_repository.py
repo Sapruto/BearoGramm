@@ -16,14 +16,12 @@ logger = get_logger(__name__)
 
 
 class VerificationCodeEntity(BaseModel):
-    user_uuid: str
     phone: str
     code: str
     expired_at: datetime
 
 
 class VerificationCodeFields(str, Enum):
-    USER_UUID = "user_uuid"
     PHONE = "phone"
     CODE = "code"
     EXPIRED_AT = "expired_at"
@@ -36,7 +34,6 @@ class VerificationCodeMapper(
     storage_type = "hash"
 
     field_mapping = {
-        VerificationCodeFields.USER_UUID: "user_uuid",
         VerificationCodeFields.PHONE: "phone",
         VerificationCodeFields.CODE: "code",
         VerificationCodeFields.EXPIRED_AT: "expired_at",
@@ -44,7 +41,6 @@ class VerificationCodeMapper(
 
     async def to_redis(self, entity: VerificationCodeEntity) -> dict:
         return {
-            "user_uuid": entity.user_uuid,
             "phone": entity.phone,
             "code": entity.code,
             "expired_at": entity.expired_at.isoformat(),
@@ -52,7 +48,6 @@ class VerificationCodeMapper(
 
     async def to_entity(self, data: dict) -> VerificationCodeEntity:
         return VerificationCodeEntity(
-            user_uuid=data.get("user_uuid", ""),
             phone=data.get("phone", ""),
             code=data.get("code", ""),
             expired_at=datetime.fromisoformat(
