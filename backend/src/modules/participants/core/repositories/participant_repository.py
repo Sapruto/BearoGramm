@@ -1,4 +1,8 @@
 from typing import Optional, List, Dict
+
+from sqlalchemy import select
+
+from core.database import AsyncSessionLocal
 from src.general.repository.sql.sql_base_repository import BaseRepository
 from src.general.repository.sql.sql_query import SqlQuery
 
@@ -6,6 +10,7 @@ from .mappers.participant_mapper import ParticipantMapper
 from ..db.participant_db import ParticipantManager
 from ...models.entities.participant_entity import ParticipantEntity, ParticipantFields
 from ...models.enums import ResourceType
+from ...models.orm.participant_orm import ParticipantORM
 
 
 class ParticipantRepository(BaseRepository[ParticipantManager, ParticipantFields, ParticipantEntity]):
@@ -20,6 +25,26 @@ class ParticipantRepository(BaseRepository[ParticipantManager, ParticipantFields
 
     async def find_by_resource(self, resource_uuid: str) -> List[ParticipantEntity]:
         return await self.get_all(SqlQuery().add_filter(ParticipantFields.RESOURCE_UUID, resource_uuid))
+
+    async def find_by_resources(
+            self,
+            resource_uuids: List[str],
+            resource_type: Optional[ResourceType] = None
+    ) -> List[ParticipantEntity]:
+        if not resource_uuids:
+            return []
+
+        stmt = select(ParticipantORM).where(
+            ParticipantORM.resource_uuid.in_(resource_uuids)
+        )
+        if resource_type:
+            stmt = stmt.where(ParticipantORM.resource_type == resource_type)
+
+        async with AsyncSessionLocal() as session:
+            result = await session.execute(stmt)
+            orms = result.scalars().all()
+
+        return [await self._to_entity(orm) for orm in orms]
 
     async def find_user_resource(
         self,

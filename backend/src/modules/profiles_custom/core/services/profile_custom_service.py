@@ -132,14 +132,16 @@ class ProfileCustomService:
         return await self.get(user_uuid=user_uuid)
 
     async def get_by_user_uuids(
-        self, user_uuids: List[str]
+            self, user_uuids: List[str]
     ) -> Dict[str, ProfileCustomEntity]:
+        if not user_uuids:
+            return {}
+    
         profiles = await self.repository.get_by_user_uuids(user_uuids)
-
+    
         result: Dict[str, ProfileCustomEntity] = {}
         for profile in profiles:
-            if profile.user_uuid:
-                profile.data = await self._prepare_data_to_use(profile.data)
+            if profile and profile.user_uuid:
                 result[profile.user_uuid] = profile
         return result
 

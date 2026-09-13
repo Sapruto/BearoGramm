@@ -1,5 +1,6 @@
-from sqlalchemy import or_
+from sqlalchemy import select
 
+from core.database import AsyncSessionLocal
 from src.general.repository.sql.sql_base_repository import BaseRepository
 from typing import Optional, List
 
@@ -17,13 +18,16 @@ class ProfileCustomRepository(BaseRepository[ProfileCustomManager, ProfileCustom
     async def get_by_user_uuids(self, user_uuids: List[str]) -> List[ProfileCustomEntity]:
         if not user_uuids:
             return []
-
-        conditions = [ProfileCustomORM.user_uuid == uid for uid in user_uuids]
-        orms = await self.manager.get_all(
-            where=or_(*conditions) if len(conditions) > 1 else conditions[0]
+    
+        stmt = select(ProfileCustomORM).where(
+            ProfileCustomORM.user_uuid.in_(user_uuids)
         )
-
-        return [self._to_entity(orm) for orm in orms]
+    
+        async with AsyncSessionLocal() as session:
+            result = await session.execute(stmt)
+            orms = result.scalars().all()
+    
+        return [await self._to_entity(orm) for orm in orms]
 
 
 def get_profile_custom_repository() -> ProfileCustomRepository:

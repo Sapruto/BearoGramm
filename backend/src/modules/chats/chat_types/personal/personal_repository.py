@@ -88,7 +88,7 @@ class PersonalRepository(ChatRepository):
             )
             chats_orm = (await session.execute(stmt)).scalars().all()
 
-        chats: List[ChatEntity] = [self._to_entity(c) for c in chats_orm]
+        chats: List[ChatEntity] = [await self._to_entity(c) for c in chats_orm]
         return chats, total
 
 

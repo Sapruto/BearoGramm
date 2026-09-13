@@ -1,4 +1,4 @@
-from typing import Optional, List
+from typing import Optional, List, Dict
 
 from src.core.logger import get_logger
 from src.general.repository.sql.sql_query import SqlQuery
@@ -73,6 +73,24 @@ class PermissionService:
         resource_uuid: str
     ) -> List[ParticipantEntity]:
         return await self.participant_repository.find_by_resource(resource_uuid)
+
+    async def get_by_resources(
+            self,
+            resource_uuids: List[str],
+            resource_type: Optional[ResourceType] = None,
+    ) -> Dict[str, List[ParticipantEntity]]:
+        if not resource_uuids:
+            return {}
+
+        entities = await self.participant_repository.find_by_resources(
+            resource_uuids, resource_type
+        )
+    
+        result: Dict[str, List[ParticipantEntity]] = {uuid: [] for uuid in resource_uuids}
+        for entity in entities:
+            result.setdefault(entity.resource_uuid, []).append(entity)
+    
+        return result
 
     async def update(
         self,
