@@ -197,7 +197,7 @@ class MessageService:
         query.limit = min(limit, self.max_limit)
         query.offset = offset
 
-        if not show_new:
+        if show_new:
             query.add_order_by(MessageFields.CREATED_AT, "desc")
         else:
             query.add_order_by(MessageFields.CREATED_AT, "asc")
