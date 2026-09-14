@@ -1,4 +1,4 @@
-from typing import Optional, Set, List, Dict, Any
+from typing import Optional, List, Dict, Any
 from redis.asyncio import Redis
 import json
 
@@ -22,7 +22,6 @@ class WebSocketStateRepository(
     ]
 ):
     USER_ONLINE_PREFIX = "user:online"
-    USER_ACTIVE_CHATS_PREFIX = "user:active_chats"
     USER_NOTIFICATIONS_PREFIX = "user:notifications"
 
     def __init__(self, redis_client: Redis, ttl: int = 3600):
@@ -50,33 +49,12 @@ class WebSocketStateRepository(
         query.add_filter(WebSocketStateFields.ONLINE, True)
         return await self.get_all(query)
 
-    async def add_active_chat(self, user_uuid: str, chat_uuid: str) -> None:
-        key = f"{self.USER_ACTIVE_CHATS_PREFIX}:{user_uuid}"
-        await self.redis.sadd(key, chat_uuid)
-        await self.redis.expire(key, self.default_ttl)
-
-    async def remove_active_chat(self, user_uuid: str, chat_uuid: str) -> None:
-        key = f"{self.USER_ACTIVE_CHATS_PREFIX}:{user_uuid}"
-        await self.redis.srem(key, chat_uuid)
-
-    async def get_active_chats(self, user_uuid: str) -> Set[str]:
-        key = f"{self.USER_ACTIVE_CHATS_PREFIX}:{user_uuid}"
-        members = await self.redis.smembers(key)
-        return {m.decode() if isinstance(m, bytes) else m for m in members}
-
-    async def clear_active_chats(self, user_uuid: str) -> None:
-        await self.redis.delete(f"{self.USER_ACTIVE_CHATS_PREFIX}:{user_uuid}")
-
     async def publish_notification(
         self, user_uuid: str, notification: Dict[str, Any]
     ) -> None:
         channel = f"{self.USER_NOTIFICATIONS_PREFIX}:{user_uuid}"
-        subscribers = await self.redis.publish(
+        await self.redis.publish(
             channel, json.dumps(notification, ensure_ascii=False)
-        )
-        logger.debug(
-            f"PUBLISH → {channel} | subscribers={subscribers} | "
-            f"type={notification.get('type')}"
         )
 
     async def get_notification_channel(self, user_uuid: str) -> str:

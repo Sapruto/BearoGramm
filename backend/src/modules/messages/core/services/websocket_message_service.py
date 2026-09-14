@@ -75,15 +75,6 @@ class WebSocketMessageService:
                     chat_uuid,
                     {"type": "typing", "data": {"user_uuid": user_uuid, "chat_uuid": chat_uuid}},
                 )
-
-        elif msg_type == "open_chat":
-            chat_uuid = parsed.get("chat_uuid")
-            if chat_uuid:
-                await self.state_repo.add_active_chat(user_uuid, chat_uuid)
-        elif msg_type == "close_chat":
-            chat_uuid = parsed.get("chat_uuid")
-            if chat_uuid:
-                await self.state_repo.remove_active_chat(user_uuid, chat_uuid)
         elif msg_type == "ping":
             await send_message(json.dumps({"type": "pong"}))
 
