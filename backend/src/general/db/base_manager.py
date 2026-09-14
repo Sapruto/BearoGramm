@@ -1,12 +1,12 @@
 from abc import ABC, abstractmethod
-from sqlalchemy import select, delete, update, func, and_, insert as sa_insert
+from sqlalchemy import select, delete, update, func, and_, insert as sa_insert, desc, asc
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.dialects.sqlite import insert as sqlite_insert
 from sqlalchemy.orm import InstrumentedAttribute
 from sqlalchemy.ext.asyncio import AsyncSession
 from contextlib import asynccontextmanager
 from enum import Enum
-from typing import Generic, Optional, Any, List, Dict
+from typing import Generic, Optional, Any, List, Dict, Tuple
 
 from src.core.database import AsyncSessionLocal
 from src.core.logger import get_logger
@@ -72,17 +72,23 @@ class BaseManager(Generic[ORM], ABC):
             return result.scalar_one_or_none()
 
     async def get_all(
-        self,
-        where: Optional[Dict[str, Any]] = None,
-        limit: Optional[int] = None,
-        offset: Optional[int] = None,
-        session: Optional[AsyncSession] = None,
+            self,
+            where: Optional[Dict[str, Any]] = None,
+            limit: Optional[int] = None,
+            offset: Optional[int] = None,
+            order_by: Optional[List[Tuple[InstrumentedAttribute, str]]] = None,
+            session: Optional[AsyncSession] = None,
     ) -> List[ORM]:
         async with self.__get_session(session) as sess:
             stmt = select(self.model)
             if where:
                 for field, value in where.items():
                     stmt = stmt.where(field == value)
+            if order_by:
+                for field, direction in order_by:
+                    stmt = stmt.order_by(
+                        desc(field) if direction == "desc" else asc(field)
+                    )
             if limit:
                 stmt = stmt.limit(limit)
             if offset:

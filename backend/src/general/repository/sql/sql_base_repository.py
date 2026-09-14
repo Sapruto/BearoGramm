@@ -146,8 +146,17 @@ class BaseRepository(
     async def get_all(self, query: SqlQuery[FieldsType]) -> List[EntityType]:
         try:
             where = await self._build_where(query.filters or {})
+
+            orm_order_by = []
+            for field, direction in (query.order_by or []):
+                orm_field = await self._to_orm_field(field)
+                orm_order_by.append((orm_field, direction))
+
             results = await self.manager.get_all(
-                where=where, limit=query.limit, offset=query.offset
+                where=where,
+                limit=query.limit,
+                offset=query.offset,
+                order_by=orm_order_by or None,
             )
             return [await self._to_entity(r) for r in results]
         except NotConvertableError as e:

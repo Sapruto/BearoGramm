@@ -1,6 +1,6 @@
 from sqlalchemy import select
 
-from core.database import AsyncSessionLocal
+from src.core.database import AsyncSessionLocal
 from src.general.repository.sql.sql_base_repository import BaseRepository
 from typing import Optional, List
 

@@ -1,3 +1,4 @@
+from datetime import datetime, timezone
 from typing import Optional
 
 from src.modules.participants.core.exceptions import NotParticipant
@@ -79,6 +80,7 @@ class MessageService:
                 chat_uuid=request.chat_uuid,
                 message_data=process_result.processed_data,
                 user_uuid=user_uuid,
+                created_at=datetime.now(timezone.utc),
             )
 
             saved_entity = await self.message_repository.save(entity)
@@ -127,6 +129,7 @@ class MessageService:
             raise FailedToProcessData()
 
         message.message_data = process_result.processed_data
+        message.updated_at = datetime.now(timezone.utc)
         saved_entity = await self.message_repository.update(message)
 
         if not saved_entity:
@@ -194,7 +197,7 @@ class MessageService:
         query.limit = min(limit, self.max_limit)
         query.offset = offset
 
-        if show_new:
+        if not show_new:
             query.add_order_by(MessageFields.CREATED_AT, "desc")
         else:
             query.add_order_by(MessageFields.CREATED_AT, "asc")
