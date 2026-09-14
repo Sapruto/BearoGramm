@@ -55,7 +55,7 @@ class BaseRedisRepository(
     async def _set_ttl(self, key: str, ttl: Optional[int] = None):
         if ttl:
             await self.redis.expire(key, ttl)
-        if self.default_ttl:
+        elif self.default_ttl:
             await self.redis.expire(key, self.default_ttl)
 
     def _json_serializer(self, obj):
@@ -93,10 +93,7 @@ class BaseRedisRepository(
             return None
 
     async def _find_keys_by_query(self, query: RedisQuery[FieldsType]) -> List[str]:
-        if query.pattern:
-            pattern = query.pattern
-        else:
-            pattern = f"{self._mapper.key_prefix}:*"
+        pattern = query.pattern or f"{self._mapper.key_prefix}:*"
 
         if query.filters and self._index_enabled and len(query.filters) == 1:
             field, value = next(iter(query.filters.items()))
@@ -104,23 +101,17 @@ class BaseRedisRepository(
             index_key = f"{self._index_prefix}{redis_field}:{self._mapper.serialize_value(value)}"
             key = await self.redis.get(index_key)
             if key:
-                return [key.decode() if isinstance(key, bytes) else key]
+                return [key]
+            return []
 
-        keys = []
+        keys: List[str] = []
         cursor = 0
         scan_count = query.scan_count or 100
-
         while True:
-            cursor, scan_keys = await self.redis.scan(
-                cursor, match=pattern, count=scan_count
-            )
-            for key in scan_keys:
-                if isinstance(key, bytes):
-                    key = key.decode()
-                keys.append(key)
+            cursor, batch = await self.redis.scan(cursor, match=pattern, count=scan_count)
+            keys.extend(batch)
             if cursor == 0:
                 break
-
         return keys
 
     def _match_filters(
@@ -170,37 +161,71 @@ class BaseRedisRepository(
             index_key = f"{self._index_prefix}{redis_field}:{self._mapper.serialize_value(value)}"
             await self.redis.delete(index_key)
 
-    async def save(self, entity: EntityType) -> EntityType:
-        try:
-            entity_id = self._get_entity_id(entity)
-            if entity_id is None:
-                raise ValueError("Entity ID cannot be None")
+    async def _rebuild_indexes_for_keys(self, keys: List[str]) -> None:
+        if not keys:
+            return
 
-            key = self._get_key(entity_id)
-            data = await self._to_redis(entity)
-
-            storage_type = self._mapper.storage_type
-
-            if storage_type == "hash":
-                await self.redis.hset(key, mapping=data)
+        pipe = self.redis.pipeline(transaction=False)
+        for key in keys:
+            if self._mapper.storage_type == "hash":
+                await pipe.hgetall(key)
             else:
-                await self.redis.set(
-                    key, json.dumps(data, default=self._json_serializer)
-                )
+                await pipe.get(key)
+        raw_results = await pipe.execute()
 
-            await self._set_ttl(key)
+        pipe = self.redis.pipeline(transaction=False)
+        for key, raw in zip(keys, raw_results):
+            if not raw:
+                continue
+            if self._mapper.storage_type == "hash":
+                data = raw
+            else:
+                data = json.loads(raw)
+            for redis_field, value in data.items():
+                idx_key = f"{self._index_prefix}{redis_field}:{self._mapper.serialize_value(value)}"
+                await pipe.set(idx_key, key)
+                if self.default_ttl:
+                    await pipe.expire(idx_key, self.default_ttl)
+        await pipe.execute()
 
-            if self._index_enabled:
-                await self._update_indexes(key, data)
+    async def save(self, entity: EntityType) -> EntityType:
+        entity_id = self._get_entity_id(entity)
+        if entity_id is None:
+            raise ValueError("Entity ID cannot be None")
 
-            return entity
+        key = self._get_key(entity_id)
+        new_data = await self._to_redis(entity)
 
-        except NotConvertableError as e:
-            logger.error(f"Conversion error in save: {e}")
-            raise
-        except Exception as e:
-            logger.error(f"Unexpected error in save: {e}")
-            raise
+        old_data: Optional[Dict[str, Any]] = None
+        if self._index_enabled:
+            old_entity = await self._get_by_key(key)
+            if old_entity is not None:
+                old_data = await self._to_redis(old_entity)
+
+        pipe = self.redis.pipeline()
+        if self._mapper.storage_type == "hash":
+            await pipe.hset(key, mapping=new_data)
+        else:
+            await pipe.set(key, json.dumps(new_data, default=self._json_serializer))
+
+        ttl = self.default_ttl
+        if ttl:
+            await pipe.expire(key, ttl)
+
+        if self._index_enabled:
+            if old_data:
+                await pipe.delete(*[
+                    f"{self._index_prefix}{f}:{self._mapper.serialize_value(v)}"
+                    for f, v in old_data.items()
+                ])
+            for redis_field, value in new_data.items():
+                idx_key = f"{self._index_prefix}{redis_field}:{self._mapper.serialize_value(value)}"
+                await pipe.set(idx_key, key)
+                if self.default_ttl:
+                    await pipe.expire(idx_key, self.default_ttl)
+
+        await pipe.execute()
+        return entity
 
     async def delete(self, query: RedisQuery[FieldsType]) -> int:
         try:
@@ -208,21 +233,25 @@ class BaseRedisRepository(
             if not keys:
                 return 0
 
-            if self._index_enabled:
-                for key in keys:
-                    await self._remove_indexes(key)
-
-            if len(keys) == 1:
-                await self.redis.delete(keys[0])
-                return 1
-            else:
+            if not self._index_enabled:
                 return await self.redis.delete(*keys)
 
-        except NotConvertableError as e:
-            logger.error(f"Conversion error in delete: {e}")
-            raise
+            pipe = self.redis.pipeline()
+            for key in keys:
+                entity = await self._get_by_key(key)
+                if entity is None:
+                    continue
+                data = await self._to_redis(entity)
+                for redis_field, value in data.items():
+                    await pipe.delete(
+                        f"{self._index_prefix}{redis_field}:{self._mapper.serialize_value(value)}"
+                    )
+            if keys:
+                await pipe.delete(*keys)
+            await pipe.execute()
+            return len(keys)
         except Exception as e:
-            logger.error(f"Unexpected error in delete: {e}")
+            logger.error(f"Error in delete in redis_repository: {e}")
             raise
 
     async def get_by_field(
@@ -230,7 +259,7 @@ class BaseRedisRepository(
     ) -> Optional[EntityType]:
         try:
             if self._index_enabled:
-                redis_field = self._to_redis_field(field)
+                redis_field = await self._to_redis_field(field)
                 index_key = f"{self._index_prefix}{redis_field}:{self._mapper.serialize_value(value)}"
                 key = await self.redis.get(index_key)
                 if key:
@@ -303,22 +332,22 @@ class BaseRedisRepository(
             raise
 
     async def count(self, query: RedisQuery[FieldsType]) -> int:
-        try:
-            keys = await self._find_keys_by_query(query)
+        if query.filters and self._index_enabled and len(query.filters) == 1:
+            field, value = next(iter(query.filters.items()))
+            redis_field = await self._to_redis_field(field)
+            index_key = f"{self._index_prefix}{redis_field}:{self._mapper.serialize_value(value)}"
+            return 1 if await self.redis.exists(index_key) else 0
 
-            if query.filters:
-                count = 0
-                for key in keys:
-                    entity = await self._get_by_key(key)
-                    if entity and self._match_filters(entity, query.filters):
-                        count += 1
-                return count
-
+        keys = await self._find_keys_by_query(query)
+        if not query.filters:
             return len(keys)
 
-        except Exception as e:
-            logger.error(f"Error in count: {e}")
-            raise
+        count = 0
+        for key in keys:
+            entity = await self._get_by_key(key)
+            if entity and self._match_filters(entity, query.filters):
+                count += 1
+        return count
 
     async def get_by_id(self, entity_id: Any) -> Optional[EntityType]:
         key = self._get_key(entity_id)
@@ -338,18 +367,70 @@ class BaseRedisRepository(
         return await self.redis.exists(key) > 0
 
     async def batch_save(self, entities: List[EntityType]) -> List[EntityType]:
-        saved = []
+        if not entities:
+            return []
+
+        pipe = self.redis.pipeline(transaction=False)
+        keys_to_invalidate: List[str] = []
+
+        if self._index_enabled:
+            for entity in entities:
+                entity_id = self._get_entity_id(entity)
+                if entity_id is None:
+                    raise ValueError("Entity ID cannot be None")
+                keys_to_invalidate.append(self._get_key(entity_id))
+
         for entity in entities:
-            saved_entity = await self.save(entity)
-            saved.append(saved_entity)
-        return saved
+            entity_id = self._get_entity_id(entity)
+            if entity_id is None:
+                raise ValueError("Entity ID cannot be None")
+            key = self._get_key(entity_id)
+            data = await self._to_redis(entity)
+
+            if self._mapper.storage_type == "hash":
+                await pipe.hset(key, mapping=data)
+            else:
+                await pipe.set(key, json.dumps(data, default=self._json_serializer))
+
+            if self.default_ttl:
+                await pipe.expire(key, self.default_ttl)
+
+        await pipe.execute()
+
+        if self._index_enabled:
+            await self._rebuild_indexes_for_keys(keys_to_invalidate)
+
+        return entities
 
     async def batch_delete(self, entity_ids: List[Any]) -> int:
-        deleted = 0
-        for entity_id in entity_ids:
-            if await self.delete_by_id(entity_id):
-                deleted += 1
-        return deleted
+        if not entity_ids:
+            return 0
+
+        keys = [self._get_key(eid) for eid in entity_ids]
+
+        pipe = self.redis.pipeline(transaction=False)
+        for key in keys:
+            await pipe.exists(key)
+        exists_flags = await pipe.execute()
+
+        live_keys = [k for k, ok in zip(keys, exists_flags) if ok]
+        if not live_keys:
+            return 0
+
+        pipe = self.redis.pipeline(transaction=False)
+        if self._index_enabled:
+            for key in live_keys:
+                entity = await self._get_by_key(key)
+                if entity is None:
+                    continue
+                data = await self._to_redis(entity)
+                for redis_field, value in data.items():
+                    await pipe.delete(
+                        f"{self._index_prefix}{redis_field}:{self._mapper.serialize_value(value)}"
+                    )
+        await pipe.delete(*live_keys)
+        await pipe.execute()
+        return len(live_keys)
 
     def enable_indexes(self) -> "BaseRedisRepository":
         self._index_enabled = True

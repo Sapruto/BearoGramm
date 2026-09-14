@@ -67,7 +67,7 @@ class WebSocketMessageService:
 
         msg_type = parsed.get("type")
 
-        if msg_type == "writing":
+        if msg_type == "тупинг":
             chat_uuid = parsed.get("chat_uuid")
             if chat_uuid:
                 await self.state_repo.add_active_chat(user_uuid, chat_uuid)
