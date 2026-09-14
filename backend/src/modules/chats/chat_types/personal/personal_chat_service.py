@@ -28,9 +28,11 @@ class PersonalChatService(BaseChatService):
             permission_service: Optional[PermissionService] = None,
             user_service: Optional[UserServiceAPI] = None,
             profile_service: Optional[ProfileCustomService] = None,
+            max_limit: Optional[int] = None,
     ):
         self.user_service = user_service or get_user_service_api()
         self.profile_service = profile_service or get_profile_custom_service()
+        self.max_limit = max_limit or 50
         super().__init__(repository or get_personal_repository(), permission_service)
 
     def _get_chat_type(self) -> str:
@@ -123,7 +125,7 @@ class PersonalChatService(BaseChatService):
 
         chats, total = await self._repository.get_user_personal_chats(
             user_uuid=user_uuid,
-            limit=limit,
+            limit=min(self.max_limit, limit),
             offset=offset,
             show_new=True,
         )
