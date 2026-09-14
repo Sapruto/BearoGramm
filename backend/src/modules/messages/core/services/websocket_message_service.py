@@ -77,10 +77,6 @@ class PingReceiveMessageService(BaseReceiveMessageService):
         user_uuid: str,
         send_message: Callable[[str], Awaitable[None]],
     ) -> None:
-        chat_uuid = parsed.get("chat_uuid")
-        if not chat_uuid:
-            return
-
         await send_message("PONG")
 
 
