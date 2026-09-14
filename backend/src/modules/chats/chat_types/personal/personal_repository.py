@@ -1,6 +1,7 @@
 from typing import Optional, List, Tuple
 from sqlalchemy import select, func, and_
 
+from src.core.database import AsyncSessionLocal
 from src.modules.chats.chat_types.chat_types import ChatType
 from src.modules.chats.core.repositories.chat_repository import ChatRepository
 from src.modules.chats.models.orm.chat_orm import ChatORM
@@ -17,7 +18,7 @@ class PersonalRepository(ChatRepository):
         if len(user_uuids) != 2:
             return None
 
-        async with self.manager._BaseManager__get_session() as session:
+        async with AsyncSessionLocal() as session:
             stmt = (
                 select(ChatORM)
                 .join(
@@ -41,21 +42,16 @@ class PersonalRepository(ChatRepository):
         if not chat_orm:
             return None
 
-        return ChatEntity(
-            uuid=chat_orm.uuid,
-            chat_type=chat_orm.chat_type,
-            created_at=chat_orm.created_at,
-            updated_at=chat_orm.updated_at
-        )
+        return await self._to_entity(chat_orm)
 
     async def get_user_personal_chats(
         self,
         user_uuid: str,
         limit: int = 50,
         offset: int = 0,
+        show_new: bool = True,
     ) -> Tuple[List[ChatEntity], int]:
-
-        async with self.manager._BaseManager__get_session() as session:
+        async with AsyncSessionLocal() as session:
             user_chat_uuids = (
                 select(ParticipantORM.resource_uuid)
                 .where(
@@ -79,10 +75,16 @@ class PersonalRepository(ChatRepository):
             if total == 0:
                 return [], 0
 
+            order_by_clause = (
+                ChatORM.updated_at.desc().nullslast()
+                if show_new
+                else ChatORM.updated_at.asc().nullsfirst()
+            )
+
             stmt = (
                 select(ChatORM)
                 .where(base_where)
-                .order_by(ChatORM.updated_at.desc().nullslast())
+                .order_by(order_by_clause)
                 .limit(limit)
                 .offset(offset)
             )

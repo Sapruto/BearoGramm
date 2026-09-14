@@ -125,6 +125,7 @@ class PersonalChatService(BaseChatService):
             user_uuid=user_uuid,
             limit=limit,
             offset=offset,
+            show_new=True,
         )
 
         if not chats:
