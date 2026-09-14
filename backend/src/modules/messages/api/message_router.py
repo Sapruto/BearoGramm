@@ -36,7 +36,9 @@ async def listen_messages_websocket(websocket: WebSocket):
             data = json.loads(raw_data)
             token = data.get("auth")
         except Exception:
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Not json in auth.")
+            await websocket.close(code=1008, reason="Invalid request to auth")
+            closed = True
+            return
 
         if not token:
             await websocket.send_text(json.dumps({"error": "Missing auth token"}))
