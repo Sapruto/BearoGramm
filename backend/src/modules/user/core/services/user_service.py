@@ -102,7 +102,7 @@ class UserService:
             profile = await self.profile_service.get_by_user_uuid(user.uuid)
             if not profile:
                 just_created_profile = True
-                await self.profile_service.create([], user.uuid)
+                profile = await self.profile_service.create([], user.uuid)
 
             await self.verify_service.delete_code(code)
 
@@ -112,7 +112,7 @@ class UserService:
             if not session:
                 raise SessionCreationFailed(str(user.uuid), "Session service returned None")
 
-            return VerifyCodeResponse(token=session.token, user_uuid=str(user.uuid), user=user, just_created_profile=just_created_profile, just_created=just_created)
+            return VerifyCodeResponse(token=session.token, user_uuid=str(user.uuid), user=user, just_created_profile=just_created_profile, just_created=just_created, profile=profile)
 
         except (InvalidPhoneNumber,
             InvalidOrExpiredCode,
