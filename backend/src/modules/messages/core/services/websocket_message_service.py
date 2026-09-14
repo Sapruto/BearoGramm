@@ -13,16 +13,90 @@ from ..repositories.websocket_message_repository import (
 logger = get_logger(__name__)
 
 
+from abc import ABC, abstractmethod
+from enum import Enum
+
+
+class ReceiveMessageType(str, Enum):
+    TYPING = "typing"
+    PING = "ping"
+
+    def __str__(self):
+        return self.value
+
+class BaseReceiveMessageService(ABC):
+    def __init__(self, message_type: ReceiveMessageType):
+        self._type = message_type
+
+    def get_type(self) -> ReceiveMessageType:
+        return self._type
+
+    @abstractmethod
+    async def process_receive_message(
+        self,
+        parsed: Dict[str, Any],
+        user_uuid: str,
+        send_message: Callable[[str], Awaitable[None]],
+    ) -> None:
+        pass
+
+
+class TypingReceiveMessageService(BaseReceiveMessageService):
+    def __init__(self, notify: Callable[[str, Dict[str, Any]], Awaitable[None]], state_repo: Optional[WebSocketStateRepository] = None):
+        super().__init__(ReceiveMessageType.TYPING)
+        self._state_repo = state_repo or get_websocket_state_repository()
+        self._notify = notify
+
+    async def process_receive_message(
+        self,
+        parsed: Dict[str, Any],
+        user_uuid: str,
+        send_message: Callable[[str], Awaitable[None]],
+    ) -> None:
+        chat_uuid = parsed.get("chat_uuid")
+        if not chat_uuid:
+            return
+
+        await self._state_repo.add_active_chat(user_uuid, chat_uuid)
+        await self._notify(
+            chat_uuid,
+            {
+                "type": self._type,
+                "data": {"user_uuid": user_uuid, "chat_uuid": chat_uuid},
+            },
+        )
+
+
+class PingReceiveMessageService(BaseReceiveMessageService):
+    def __init__(self):
+        super().__init__(ReceiveMessageType.PING)
+
+    async def process_receive_message(
+        self,
+        parsed: Dict[str, Any],
+        user_uuid: str,
+        send_message: Callable[[str], Awaitable[None]],
+    ) -> None:
+        chat_uuid = parsed.get("chat_uuid")
+        if not chat_uuid:
+            return
+
+        await send_message("PONG")
+
+
 class WebSocketMessageService:
     def __init__(
         self,
         state_repository: Optional[WebSocketStateRepository] = None,
         permission_service: Optional[PermissionService] = None,
-        time_of_expire_per_seconds: Optional[int] = None,
     ):
         self.state_repo = state_repository or get_websocket_state_repository()
-        self.time_of_expire_per_seconds = time_of_expire_per_seconds or 3600
         self.permission_service = permission_service or get_permission_service()
+
+        self._handlers = {
+            ReceiveMessageType.TYPING: TypingReceiveMessageService(self.notify_chat_participants),
+            ReceiveMessageType.PING: PingReceiveMessageService()
+        }
 
     async def _get_chat_participants(self, chat_uuid: str) -> List[str]:
         try:
@@ -37,6 +111,30 @@ class WebSocketMessageService:
             if uuid:
                 result.append(str(uuid))
         return result
+
+    async def _parse_websocket_data(
+        self,
+        data: Any,
+        user_uuid: str,
+        send_message: Callable[[str], Awaitable[None]],
+    ) -> None:
+        if not data:
+            return
+
+        try:
+            parsed = json.loads(data)
+        except (json.JSONDecodeError, TypeError):
+            logger.warning("Invalid JSON from client: %r", data)
+            return
+
+        msg_type = parsed.get("type")
+
+        handler = self._handlers.get(msg_type)
+        if handler is not None:
+            await handler.process_receive_message(
+                parsed, user_uuid, send_message
+            )
+            return
 
     async def connect(self, user_uuid: str) -> bool:
         return await self.state_repo.set_user_online(user_uuid)
@@ -53,30 +151,6 @@ class WebSocketMessageService:
         participants = await self._get_chat_participants(chat_uuid)
         for user_uuid in participants:
             await self.state_repo.publish_notification(user_uuid, notification)
-
-    async def _parse_websocket_data(
-        self, data: Any, user_uuid: str, send_message: Callable[[str], Awaitable[None]]
-    ) -> None:
-        if not data:
-            return
-        try:
-            parsed = json.loads(data)
-        except json.JSONDecodeError:
-            logger.warning(f"Invalid JSON from client: {data}")
-            return
-
-        msg_type = parsed.get("type")
-
-        if msg_type == "typing":
-            chat_uuid = parsed.get("chat_uuid")
-            if chat_uuid:
-                await self.state_repo.add_active_chat(user_uuid, chat_uuid)
-                await self.notify_chat_participants(
-                    chat_uuid,
-                    {"type": "typing", "data": {"user_uuid": user_uuid, "chat_uuid": chat_uuid}},
-                )
-        elif msg_type == "ping":
-            await send_message(json.dumps({"type": "pong"}))
 
     async def listen_messages(
         self,

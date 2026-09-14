@@ -23,7 +23,7 @@ logger = get_logger(__name__)
 message_router = APIRouter(prefix=MessageRoutes.base, tags=["messages"])
 
 
-@message_router.websocket(MessageRoutes.listen_messages_websocket)
+@message_router.websocket(MessageRoutes.ws_messages)
 async def listen_messages_websocket(websocket: WebSocket):
     closed = False
     try:
@@ -32,8 +32,11 @@ async def listen_messages_websocket(websocket: WebSocket):
         ws_service = get_websocket_message_service()
 
         raw_data = await websocket.receive_text()
-        data = json.loads(raw_data)
-        token = data.get("auth")
+        try:
+            data = json.loads(raw_data)
+            token = data.get("auth")
+        except Exception:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Not json in auth.")
 
         if not token:
             await websocket.send_text(json.dumps({"error": "Missing auth token"}))
