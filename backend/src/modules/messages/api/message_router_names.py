@@ -11,7 +11,7 @@ class MessageRoutes(str, Enum):
     delete_message = "/delete"
     get_messages = "/get"
 
-    ws_messages = "/ws/messages"
+    ws_messages = "/ws"
 
     def __str__(self):
         return self.value
