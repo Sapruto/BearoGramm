@@ -19,12 +19,14 @@ def include_all_routers(app: FastAPI) -> FastAPI:
     from src.modules.messages import message_router
     from src.modules.calls import calls_router
     from src.modules.profiles_custom import profile_custom_router
+    from src.modules.media import media_router
 
     app.include_router(auth_router)
     app.include_router(personal_chats_router)
     app.include_router(message_router)
     app.include_router(calls_router)
     app.include_router(profile_custom_router)
+    app.include_router(media_router)
 
     return app
 

@@ -1,19 +1,27 @@
 from datetime import datetime, timezone
-from typing import Dict, List, Optional
+from typing import Optional
+from uuid import uuid4
+
+from sqlalchemy.exc import IntegrityError
+
+from src.core.logger import get_logger
+from src.general.repository.sql.sql_query import SqlQuery
 
 from ..validators.media_validator import MediaValidator, get_default_media_validator
 from ..storages.storage_api import StorageAPI, get_storage_api
+from ..exceptions import NotFoundError, StorageError
 
-from src.core.logger import get_logger
-
+from ..repositories.media_repository import (
+    MediaRepository,
+    get_media_repository,
+)
 from ...models.dto import (
     MediaDTO,
-    MediaMeta,
     MediaUploadResponse,
     MediaDeleteResponse,
     MediaExistsResponse,
 )
-from ..exceptions import NotFoundError, StorageError
+from ...models.media_entity import MediaEntity, MediaFields
 
 logger = get_logger(__name__)
 
@@ -23,35 +31,57 @@ class MediaService:
         self,
         storage: Optional[StorageAPI] = None,
         validator: Optional[MediaValidator] = None,
+        repository: Optional[MediaRepository] = None,
     ):
         self.storage = storage or get_storage_api()
         self.validator = validator or get_default_media_validator()
-        self._registry: Dict[str, MediaMeta] = {}
+        self.repository = repository or get_media_repository()
 
     @staticmethod
-    def _make_media_id() -> str:
-        return f"att_{datetime.now(timezone.utc).strftime('%Y%m%d%H%M%S%f')}"
+    def _make_media_uuid() -> str:
+        return str(uuid4())
 
-    def _to_dto(self, meta: MediaMeta) -> MediaDTO:
+    @staticmethod
+    def _storage_key_from_url(url: str) -> str:
+        return url.rsplit("/", 1)[-1]
+
+    @staticmethod
+    def _compute_hash(content: bytes) -> str:
+        import hashlib
+        return hashlib.sha256(content).hexdigest()
+
+    async def _get_or_raise(self, media_id: str) -> MediaEntity:
+        entity = await self.repository.get(media_id)
+        if not entity:
+            raise NotFoundError(f"Media not found: {media_id}")
+        return entity
+
+    def _to_dto(self, entity: MediaEntity) -> MediaDTO:
         return MediaDTO(
-            uuid=meta.uuid,
-            filename=meta.filename,
-            url=meta.url,
-            content_type=meta.content_type,
-            size=meta.size,
-            uploaded_at=meta.uploaded_at,
+            uuid=entity.uuid,
+            filename=entity.filename,
+            url=entity.url,
+            content_type=entity.content_type,
+            size=entity.size,
+            uploaded_at=entity.created_at,
         )
 
     async def upload_media(
-        self,
-        content: bytes,
-        filename: str,
-        content_type: Optional[str] = None,
+            self,
+            content: bytes,
+            filename: str,
+            content_type: Optional[str] = None,
     ) -> MediaUploadResponse:
         is_valid, err = self.validator.validate(content, filename)
         if not is_valid:
             logger.warning(f"Media validation failed: {err}")
             return MediaUploadResponse(success=False, error=err)
+
+        media_hash = self._compute_hash(content)
+
+        existing = await self.repository.get(SqlQuery[MediaFields]().add_filter(MediaFields.HASH, media_hash))
+        if existing:
+            return MediaUploadResponse(success=True, media=self._to_dto(existing))
 
         ok, url_or_err = await self.storage.upload_file(
             file_content=content,
@@ -66,62 +96,71 @@ class MediaService:
 
         url = url_or_err
 
-        storage_key = url.rsplit("/", 1)[-1]
-
-        meta = MediaMeta(
-            id=self._make_media_id(),
-            filename=filename,
-            storage_key=storage_key,
+        entity = MediaEntity(
+            uuid=self._make_media_uuid(),
             url=url,
-            content_type=content_type or self.validator.get_file_extension(filename),
+            hash=media_hash,
+            filename=filename,
+            content_type=content_type or "application/octet-stream",
             size=len(content),
-            uploaded_at=datetime.now(timezone.utc),
+            version=1,
+            created_at=datetime.now(timezone.utc),
         )
-        self._registry[meta.id] = meta
-
-        logger.info(f"Media uploaded: id={meta.id}, url={url}")
-        return MediaUploadResponse(success=True, media=self._to_dto(meta))
-
-    async def unload_media(self, media_id: str) -> MediaDeleteResponse:
-        meta = self._registry.get(media_id)
-        if not meta:
-            raise NotFoundError(f"Media not found: {media_id}")
 
         try:
-            ok = await self.storage.unload_file(meta.storage_key)
+            saved = await self.repository.save(entity)
+        except IntegrityError:
+            logger.warning(f"Race on hash={media_hash}, falling back to existing")
+            try:
+                await self.storage.unload_file(self._storage_key_from_url(url))
+            except Exception as rollback_err:
+                logger.error(f"Rollback storage unload failed: {rollback_err}")
+            existing = await self.repository.get_by_hash(media_hash)
+            if existing:
+                return MediaUploadResponse(success=True, media=self._to_dto(existing))
+            return MediaUploadResponse(success=False, error="Persistence race failed")
+        except Exception as e:
+            logger.error(f"Failed to persist media: {e}")
+            try:
+                await self.storage.unload_file(self._storage_key_from_url(url))
+            except Exception as rollback_err:
+                logger.error(f"Rollback storage unload failed: {rollback_err}")
+            return MediaUploadResponse(success=False, error="Persistence failed")
+
+        return MediaUploadResponse(success=True, media=self._to_dto(saved))
+
+    async def unload_media(self, media_uuid: str) -> MediaDeleteResponse:
+        entity = await self._get_or_raise(media_uuid)
+
+        storage_key = self._storage_key_from_url(entity.url)
+
+        try:
+            ok = await self.storage.unload_file(storage_key)
         except Exception as e:
             logger.error(f"Storage unload error: {e}")
             raise StorageError(str(e))
 
         if not ok:
             return MediaDeleteResponse(
-                success=False, filename=meta.filename, error="Storage delete failed"
+                success=False, filename=entity.url, error="Storage delete failed"
             )
 
-        self._registry.pop(media_id, None)
-        logger.info(f"Media unloaded: id={media_id}")
-        return MediaDeleteResponse(success=True, filename=meta.filename)
+        await self.repository.delete(media_uuid)
+        return MediaDeleteResponse(success=True, filename=entity.url)
 
     async def media_exists(self, media_id: str) -> MediaExistsResponse:
-        meta = self._registry.get(media_id)
-        if not meta:
+        entity = await self.repository.get(media_id)
+        if not entity:
             return MediaExistsResponse(exists=False, filename=media_id)
 
-        exists = await self.storage.storage_impl.file_exists(meta.storage_key)
-        return MediaExistsResponse(exists=exists, filename=meta.filename)
+        storage_key = self._storage_key_from_url(entity.url)
+        exists = await self.storage.storage_impl.file_exists(storage_key)
+        return MediaExistsResponse(exists=exists, filename=entity.url)
 
-    def get_media(self, media_id: str) -> MediaDTO:
-        meta = self._registry.get(media_id)
-        if not meta:
-            raise NotFoundError(f"Media not found: {media_id}")
-        return self._to_dto(meta)
-
-
-_media_service_singleton: Optional[MediaService] = None
+    async def get_media(self, media_id: str) -> MediaDTO:
+        entity = await self._get_or_raise(media_id)
+        return self._to_dto(entity)
 
 
 def get_media_service() -> MediaService:
-    global _media_service_singleton
-    if _media_service_singleton is None:
-        _media_service_singleton = MediaService()
-    return _media_service_singleton
+    return MediaService()

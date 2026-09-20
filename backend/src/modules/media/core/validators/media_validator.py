@@ -8,21 +8,20 @@ class MediaValidatorConfig(BaseModel):
 
     allowed_extensions: Set[str] = Field(
         default={
-            ".jpg",
-            ".jpeg",
-            ".png",
-            ".gif",
-            ".webp",
-            ".svg",
-            ".bmp",
-            ".ico",
-            ".mp4",
-            ".avi",
-            ".mov",
-            ".mkv",
-            ".webm",
-            ".flv",
-            ".m4v",
+            ".jpg", ".jpeg", ".png", ".gif", ".webp", ".svg",
+            ".bmp", ".ico", ".heic", ".avif",
+
+            ".mp4", ".avi", ".mov", ".mkv", ".webm",
+            ".flv", ".m4v",
+
+            ".mp3", ".ogg", ".oga", ".opus", ".wav",
+            ".flac", ".aac", ".m4a", ".wma",
+
+            ".pdf", ".doc", ".docx", ".xls", ".xlsx",
+            ".ppt", ".pptx", ".txt", ".csv", ".json",
+            ".xml", ".md", ".rtf", ".odt",
+
+            ".zip", ".rar", ".7z", ".tar", ".gz",
         }
     )
 

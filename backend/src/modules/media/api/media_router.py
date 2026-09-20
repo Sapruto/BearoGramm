@@ -1,6 +1,6 @@
 from typing import Optional
 
-from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, UploadFile, status
+from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, status
 
 from ..models.dto import (
     MediaDTO,
@@ -11,7 +11,7 @@ from ..models.dto import (
 from ..core.exceptions import NotFoundError, StorageError
 from ..core.services.media_service import MediaService, get_media_service
 
-media_router = APIRouter(prefix="/medias", tags=["medias"])
+media_router = APIRouter(prefix="/api/medias", tags=["medias"])
 
 
 @media_router.post(
@@ -38,29 +38,6 @@ async def upload_media(
     return result
 
 
-@media_router.delete(
-    "/{media_uuid}",
-    response_model=MediaDeleteResponse,
-)
-async def unload_media(
-    media_uuid: str,
-    service: MediaService = Depends(get_media_service),
-) -> MediaDeleteResponse:
-    try:
-        result = await service.unload_media(media_uuid)
-    except NotFoundError as e:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
-    except StorageError as e:
-        raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail=str(e))
-
-    if not result.success:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=result.error or "Delete failed",
-        )
-    return result
-
-
 @media_router.get(
     "/{media_uuid}",
     response_model=MediaDTO,
@@ -70,7 +47,7 @@ async def get_media(
     service: MediaService = Depends(get_media_service),
 ) -> MediaDTO:
     try:
-        return service.get_media(media_uuid)
+        return await service.get_media(media_uuid)
     except NotFoundError as e:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
 
