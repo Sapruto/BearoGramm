@@ -174,10 +174,7 @@ class MessageService:
             user_uuid: str,
             show_new: bool,
     ) -> GetMessagesResponse:
-        if not await self._check_access(
-                chat_uuid, user_uuid, MessageAction.GET
-        ):
-            raise ChecksFailed()
+        await self._check_access(chat_uuid, user_uuid, MessageAction.GET)
 
         query = SqlQuery[MessageFields]()
         query.add_filter(MessageFields.CHAT_UUID, chat_uuid)
@@ -185,7 +182,7 @@ class MessageService:
         query.limit = min(limit, self.max_limit)
         query.offset = offset
 
-        if show_new:
+        if not show_new:
             query.add_order_by(MessageFields.CREATED_AT, "desc")
         else:
             query.add_order_by(MessageFields.CREATED_AT, "asc")
@@ -194,7 +191,6 @@ class MessageService:
             query,
             load_options=MessageLoadOptions(extra=True, references=True, user=True),
         )
-
         return GetMessagesResponse(message_entity=list(messages))
 
 

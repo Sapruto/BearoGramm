@@ -15,13 +15,13 @@ from ...models.orm.message_orm import MessageORM
 
 class MessageRepository(BaseRepository[MessageManager, MessageFields, MessageEntity]):
     def __init__(self, manager: Optional[MessageManager] = None):
-        mapper = MessageMapper()
-        super().__init__(manager=manager or get_message_manager(), mapper=mapper)
+        _mapper = MessageMapper()
+        super().__init__(manager=manager or get_message_manager(), mapper=_mapper)
 
     async def _encrypt_text(self, text: Optional[str]) -> Optional[str]:
         if text is None:
             return None
-        return await self.mapper.encrypt_text(text)
+        return await self._mapper.encrypt_text(text)
 
     async def get_by_uuid(
         self,
@@ -38,7 +38,7 @@ class MessageRepository(BaseRepository[MessageManager, MessageFields, MessageEnt
             orm = res.scalar_one_or_none()
             if orm is None:
                 return None
-            return await self.mapper.to_entity(orm, load_options)
+            return await self._mapper.to_entity(orm, load_options)
 
     async def get_by_chat(
         self,
@@ -68,7 +68,7 @@ class MessageRepository(BaseRepository[MessageManager, MessageFields, MessageEnt
         async with AsyncSessionLocal() as session:
             res = await session.execute(stmt)
             orms = res.scalars().all()
-            return await self.mapper.to_entity_many(list(orms), load_options)
+            return await self._mapper.to_entity_many(list(orms), load_options)
 
     async def get_many_by_uuid(
         self,
@@ -83,7 +83,7 @@ class MessageRepository(BaseRepository[MessageManager, MessageFields, MessageEnt
         async with AsyncSessionLocal() as session:
             res = await session.execute(stmt)
             orms = res.scalars().all()
-            return await self.mapper.to_entity_many(list(orms), load_options)
+            return await self._mapper.to_entity_many(list(orms), load_options)
 
     async def get_all_with_options(
             self,
@@ -115,10 +115,10 @@ class MessageRepository(BaseRepository[MessageManager, MessageFields, MessageEnt
         async with AsyncSessionLocal() as session:
             res = await session.execute(stmt)
             orms = res.scalars().all()
-            return await self.mapper.to_entity_many(list(orms), load_options)
+            return await self._mapper.to_entity_many(list(orms), load_options)
 
     async def save_with_relations(self, entity: MessageEntity) -> MessageEntity:
-        orm = await self.mapper.to_orm(entity)
+        orm = await self._mapper.to_orm(entity)
         async with AsyncSessionLocal() as session:
             session.add(orm)
             await session.flush()
@@ -147,7 +147,7 @@ class MessageRepository(BaseRepository[MessageManager, MessageFields, MessageEnt
 
             if entity.extra_data is not None:
                 if orm.extra_data is None:
-                    orm.extra_data = await self.mapper.data_mapper.to_orm(
+                    orm.extra_data = await self._mapper.data__mapper.to_orm(
                         entity.extra_data
                     )
                 else:

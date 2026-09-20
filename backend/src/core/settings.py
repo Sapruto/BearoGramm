@@ -78,6 +78,7 @@ class Boto3Settings(BaseSettings):
     S3_REGION: str = "ru1"
     S3_ACCESS_KEY: Optional[str] = None
     S3_SECRET_KEY: Optional[str] = None
+    USE_S3: bool = Field(default=False)
 
     model_config = {"extra": "ignore"}
 

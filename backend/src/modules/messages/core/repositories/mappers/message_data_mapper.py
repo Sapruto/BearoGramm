@@ -68,7 +68,7 @@ class MessageDataMapper(
 
     async def to_orm(self, entity: MessageDataEntity) -> MessageDataORM:
         payload_dict = entity.payload.model_dump(
-            mode="json", exclude_computed_fields=True
+            mode="json", exclude={"url"}
         )
         payload_dict = await self._encrypt_payload(
             payload_dict, entity.payload.sensitive_fields()

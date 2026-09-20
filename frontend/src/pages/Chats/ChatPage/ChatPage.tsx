@@ -67,7 +67,7 @@ const ChatPage = () => {
                         return (
                             <div key={msg.uuid} className={!(isFirst) ? 'mt-0.5' : 'mt-3.5'}>
                                 <ChatMessage
-                                    text={msg.message_data[0].text!}
+                                    text={msg.message_text!}
                                     time={formatTime(Date.parse(msg.created_at))}
                                     isOwn={isOwn}
                                     avatarUrl={isOwn ? myProfile?.profile?.avatar_url : partnerAvatar}
