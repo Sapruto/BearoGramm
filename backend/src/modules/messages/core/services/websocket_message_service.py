@@ -57,7 +57,6 @@ class TypingReceiveMessageService(BaseReceiveMessageService):
         if not chat_uuid:
             return
 
-        await self._state_repo.add_active_chat(user_uuid, chat_uuid)
         await self._notify(
             chat_uuid,
             {

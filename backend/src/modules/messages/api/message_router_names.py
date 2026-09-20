@@ -8,7 +8,7 @@ class MessageRoutes(str, Enum):
 
     send_message = "/send"
     update_message = "/update"
-    delete_message = "/delete"
+    delete_message = "/delete/{message_uuid}"
     get_messages = "/get"
 
     ws_messages = "/ws"

@@ -1,19 +1,22 @@
-from pydantic import BaseModel, Field, SerializeAsAny, field_serializer
+from pydantic import BaseModel, Field, field_serializer
 from enum import Enum
-
 from datetime import datetime, timezone
 from typing import List, Optional
 
-from src.general.processors.base.base_data import BaseData, base_data_type
+from .message_data_entity import MessageDataEntity
+from .message_reference_entity import MessageReferenceEntity
 
 
 class MessageFields(str, Enum):
     UUID = "uuid"
-    MESSAGE_DATA = "message_data"
+    MESSAGE_TEXT = "message_text"
     CREATED_AT = "created_at"
     UPDATED_AT = "updated_at"
+    HAS_EXTRA_DATA = "has_extra_data"
     CHAT_UUID = "chat_uuid"
     USER_UUID = "user_uuid"
+    EXTRA_DATA = "extra_data"
+    REFERENCES = "references"
 
     def __str__(self):
         return self.value
@@ -21,21 +24,18 @@ class MessageFields(str, Enum):
 
 class MessageEntity(BaseModel):
     uuid: Optional[str] = Field(default=None)
-
-    message_data: List[SerializeAsAny[BaseData]] = Field(default_factory=list)
+    message_text: Optional[str] = Field(default=None)
 
     created_at: Optional[datetime] = Field(default=None)
     updated_at: Optional[datetime] = Field(default=None)
 
+    has_extra_data: bool = Field(default=False)
+
     chat_uuid: Optional[str] = Field(default=None)
     user_uuid: Optional[str] = Field(default=None)
 
-    def add_content(self, new_data: base_data_type) -> None:
-        self.message_data.append(new_data)
-
-    def remove_content(self, delete_data: base_data_type) -> None:
-        if delete_data in self.message_data:
-            self.message_data.remove(delete_data)
+    extra_data: Optional[MessageDataEntity] = Field(default=None)
+    references: List[MessageReferenceEntity] = Field(default_factory=list)
 
     @field_serializer("created_at", "updated_at")
     def serialize_dt(self, v: datetime | None, _info):

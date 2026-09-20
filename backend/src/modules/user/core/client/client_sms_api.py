@@ -11,7 +11,7 @@ def _get_client() -> ClientInterface:
     from .client_test import ClientTest
     from .client_sms_ru import ClientSMSRu
 
-    if Settings.ENV == "test":
+    if Settings.ENV == "test" or Settings.ENV == "development":
         return ClientTest()
     elif Settings.ENV == "sms_ru":
         return ClientSMSRu()
