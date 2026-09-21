@@ -6,7 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from src.core.settings import Settings
 from src.core.paths import STATIC_ROOT
-from src.core.database import init_db, close_db
+from src.core.database import close_db
 from src.core.logger import get_logger
 
 
@@ -33,10 +33,6 @@ def include_all_routers(app: FastAPI) -> FastAPI:
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    if Settings.DATABASE.INIT_DB:
-        logger.info("Initializing database...")
-        await init_db()
-
     logger.info(f"Application started in {Settings.ENV} mode")
     logger.info(f"Debug mode: {Settings.APP.DEBUG}")
 

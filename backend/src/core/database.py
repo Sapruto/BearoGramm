@@ -18,8 +18,15 @@ logger = get_logger(__name__)
 
 load_dotenv(dotenv_path=ENV_PATH)
 
-# DATABASE_URL = f"postgresql+asyncpg://{os.getenv('DB_USER')}:{os.getenv('DB_PASSWORD')}@{os.getenv('DB_HOST')}:{os.getenv('DB_PORT')}/{os.getenv('DB_NAME')}"
-DATABASE_URL = f"sqlite+aiosqlite:///{DATABASE_ROOT}/test.db"
+
+def get_database_url() -> str:
+    if Settings.DATABASE.DATABASE_URL:
+        return Settings.DATABASE.DATABASE_URL
+
+    return f"sqlite+aiosqlite:///{DATABASE_ROOT}/test.db"
+
+
+DATABASE_URL = get_database_url()
 
 connect_args = {}
 if "sqlite" in DATABASE_URL:
@@ -30,8 +37,10 @@ if "sqlite" in DATABASE_URL:
 
 engine_kwargs = {
     "echo": Settings.DATABASE.SQL_ECHO,
-    "connect_args": connect_args if connect_args else None,
 }
+if connect_args:
+    engine_kwargs["connect_args"] = connect_args
+
 if "postgresql" in DATABASE_URL:
     engine_kwargs.update(
         {
@@ -52,12 +61,6 @@ AsyncSessionLocal = async_sessionmaker(
     autoflush=False,
 )
 Base = declarative_base()
-
-
-async def init_db():
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
-    logger.info("Database tables created")
 
 
 async def get_db() -> AsyncGenerator[AsyncSession, None]:

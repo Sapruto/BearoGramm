@@ -8,6 +8,7 @@ export type Message = {
             text?: string;
         }
     ];
+    message_text: string;
     created_at: string;
     updated_at: string;
     chat_uuid: string;
