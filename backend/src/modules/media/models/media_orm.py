@@ -1,5 +1,5 @@
 from sqlalchemy.orm import mapped_column, Mapped
-from sqlalchemy import Uuid, DateTime, String, Integer, func
+from sqlalchemy import DateTime, String, Integer, func
 from datetime import datetime
 from uuid import uuid4
 
@@ -10,7 +10,7 @@ class MediaORM(Base):
     __tablename__ = "media"
 
     uuid: Mapped[str] = mapped_column(
-        Uuid(as_uuid=False),
+        String(36),
         primary_key=True,
         default=lambda: str(uuid4()),
     )

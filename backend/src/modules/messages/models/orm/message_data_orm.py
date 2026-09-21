@@ -1,5 +1,6 @@
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy import String, ForeignKey, Enum,  Integer, JSON
+from sqlalchemy.dialects.postgresql import JSONB
 
 from ..enums.extra_data_type import ExtraDataType
 
@@ -25,7 +26,7 @@ class MessageDataORM(Base):
         index=True,
     )
 
-    payload: Mapped[dict] = mapped_column(JSON, nullable=False, default=dict)
+    payload: Mapped[dict] = mapped_column(JSON().with_variant(JSONB(), "postgresql"), nullable=False, default=dict)
     schema_version: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
 
     message: Mapped["MessageORM"] = relationship(

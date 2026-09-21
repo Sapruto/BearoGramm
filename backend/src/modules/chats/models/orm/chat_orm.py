@@ -1,4 +1,4 @@
-from sqlalchemy import DateTime, func, Uuid, Index, Enum
+from sqlalchemy import DateTime, func, Index, Enum, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from src.core.database import Base
 from uuid import uuid4
@@ -12,7 +12,7 @@ class ChatORM(Base):
     __tablename__ = "chats"
 
     uuid: Mapped[str] = mapped_column(
-        Uuid(as_uuid=False), primary_key=True, default=lambda: str(uuid4())
+        String(36), primary_key=True, default=lambda: str(uuid4())
     )
     chat_type: Mapped[ChatType] = mapped_column(Enum(ChatType))
     created_at: Mapped[datetime] = mapped_column(

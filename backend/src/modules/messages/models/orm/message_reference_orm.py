@@ -1,5 +1,5 @@
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy import Uuid, DateTime, String, ForeignKey, func, Index, Enum, text, Integer, Boolean
+from sqlalchemy import DateTime, String, ForeignKey, func, Index, Enum, text, Integer, Boolean
 from typing import Optional
 
 from uuid import uuid4
@@ -14,7 +14,7 @@ class MessageReferenceORM(Base):
     __tablename__ = "message_reference"
 
     uuid: Mapped[str] = mapped_column(
-        Uuid(as_uuid=False), primary_key=True, default=lambda: str(uuid4())
+        String(36), primary_key=True, default=lambda: str(uuid4())
     )
 
     reference_type: Mapped[ReferenceType] = mapped_column(
