@@ -1,4 +1,6 @@
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
+import { Virtuoso, type VirtuosoHandle } from 'react-virtuoso';
 import type { Message } from '../../../shared/api/messages';
 import { useGetMessages } from '../../../shared/hooks/messages/useGetMessages';
 import { useSendMessage } from '../../../shared/hooks/messages/useSendMessage';
@@ -6,82 +8,168 @@ import { useGetChatPartner } from '../../../shared/hooks/personal/useGetChatPart
 import { useGetMyProfile } from '../../../shared/hooks/profile/useGetMyProfile';
 import { useAuthStore } from '../../../store/authStore';
 import ChatMessage from './ChatMessage';
+import { ChatSkeleton } from './ChatSkeleton';
 import MessageInput from './MessageInput';
 
 const GROUP_WINDOW_MS = 5 * 60 * 1000;
+const START_INDEX = 100000;
 
 const formatTime = (timestamp: number) =>
     new Date(timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
-const ChatPage = () => {
-    const { uuid: chatUUID } = useParams();
-    const { data } = useGetMessages(chatUUID!);
+const ChatHeader = ({ avatarUrl, name }: { avatarUrl?: string; name?: string }) => (
+    <div className="px-5 py-4 border-b border-[#1f1f23] flex items-center gap-2.5">
+        <img src={avatarUrl} className="w-9 h-9 rounded-full object-cover" />
+        <span className="text-[15px] font-medium text-[#f4f4f5]">{name}</span>
+    </div>
+);
+
+const Header = ({ context }: { context?: { hasPreviousPage: boolean } }) =>
+    context?.hasPreviousPage ? <ChatSkeleton /> : (
+        <div style={{ padding: 12, color: "#999" }}>
+            This is the beginning of your direct message history with <strong>USER</strong>.
+        </div>
+    );
+
+const ChatRoom = ({ chatUUID }: { chatUUID: string }) => {
+    const { data, fetchPreviousPage, hasPreviousPage, isFetchingPreviousPage } = useGetMessages(chatUUID);
     const { userUUID } = useAuthStore();
     const { data: myProfile } = useGetMyProfile();
-    const { mutate: sendMessage } = useSendMessage(chatUUID!);
-    const { data: partnerProfile } = useGetChatPartner(chatUUID!);
+    const { mutate: sendMessage } = useSendMessage();
+    const { data: partnerProfile } = useGetChatPartner(chatUUID);
+    const virtuosoRef = useRef<VirtuosoHandle>(null);
 
     const partnerAvatar = partnerProfile?.partner_profile.avatar_url;
     const partnerName = partnerProfile?.partner_profile.name;
 
-    const messages = data?.pages.flatMap((response) => response.message_entity) ?? [];
+    const messages = useMemo(() => {
+        const map = new Map<string, Message>();
+        for (const page of data?.pages ?? []) {
+            for (const msg of page.message_entity) {
+                map.set(msg.uuid, msg);
+            }
+        }
+        return [...map.values()].sort((a, b) => Date.parse(a.created_at) - Date.parse(b.created_at));
+    }, [data]);
+
+    const messageGroups = useMemo(() => {
+        return messages.reduce<Message[][]>((acc, msg, i, arr) => {
+            const prev = arr[i - 1];
+            const prevIsOwn = prev && prev.user_uuid == userUUID;
+            const isOwn = msg.user_uuid == userUUID;
+            const isSameGroup =
+                prev &&
+                prevIsOwn === isOwn &&
+                Date.parse(msg.created_at) - Date.parse(prev.created_at) < GROUP_WINDOW_MS;
+
+            const newGroup = acc.length === 0 || !isSameGroup;
+            if (newGroup) return [...acc, [msg]];
+            acc[acc.length - 1].push(msg);
+            return acc;
+        }, []);
+    }, [messages, userUUID]);
+
+    const flatItems = useMemo(() => {
+        return messageGroups.flatMap((group) =>
+            group.map((msg, i) => ({
+                msg,
+                isFirst: i === 0,
+                isLast: i === group.length - 1,
+            }))
+        );
+    }, [messageGroups]);
+
+    const [firstItemIndex, setFirstItemIndex] = useState(START_INDEX);
+    const [anchorId, setAnchorId] = useState<string | null>(null);
+
+    const firstId = flatItems[0]?.msg.uuid ?? null;
+
+    if (firstId !== anchorId) {
+        if (anchorId !== null) {
+            const shift = flatItems.findIndex((item) => item.msg.uuid === anchorId);
+            if (shift > 0) setFirstItemIndex((index) => index - shift);
+        }
+        setAnchorId(firstId);
+    }
+
+    const atBottomRef = useRef(true);
+    const prevLastIdRef = useRef<string | null>(null);
+
+    useEffect(() => {
+        const lastId = flatItems[flatItems.length - 1]?.msg.uuid ?? null;
+        const prevLastId = prevLastIdRef.current;
+        prevLastIdRef.current = lastId;
+
+        if (prevLastId !== null && lastId !== prevLastId && atBottomRef.current) {
+            virtuosoRef.current?.scrollToIndex({ index: 'LAST', align: 'end', behavior: 'smooth' });
+        }
+    }, [flatItems]);
 
     const handleSend = (text: string) => {
-        sendMessage(
-            { chat_uuid: chatUUID!, typing_to_data: [['text_type', text]] },
-        );
+        sendMessage({ chat_uuid: chatUUID, typing_to_data: [['text_type', text]] });
     };
 
-    const messageGroups = messages.reduce<Message[][]>((acc, msg, i, arr) => {
-        const prev = arr[i - 1];
-        const prevIsOwn = prev && prev.user_uuid == userUUID
-        const isOwn = msg.user_uuid == userUUID
-        const isSameGroup =
-            prev &&
-            prevIsOwn === isOwn &&
-            Date.parse(msg.created_at) - Date.parse(prev.created_at) < GROUP_WINDOW_MS;
-
-        const newGroup = acc.length == 0 || !isSameGroup;
-
-        if (newGroup) {
-            return [...acc, [msg]]
+    const loadMore = () => {
+        if (hasPreviousPage && !isFetchingPreviousPage) {
+            fetchPreviousPage();
         }
-        acc[acc.length - 1].push(msg);
-        return acc;
-    }, []);
+    };
+
+    if (!data) {
+        return (
+            <div className="flex-1 h-screen flex flex-col bg-[#0a0a0b]">
+                <ChatHeader avatarUrl={partnerAvatar} name={partnerName} />
+                <MessageInput onSend={handleSend} />
+            </div>
+        );
+    }
 
     return (
         <div className="flex-1 h-screen flex flex-col bg-[#0a0a0b]">
-            <div className="px-5 py-4 border-b border-[#1f1f23] flex items-center gap-2.5">
-                <img src={partnerAvatar} className="w-9 h-9 rounded-full object-cover" />
-                <span className="text-[15px] font-medium text-[#f4f4f5]">{partnerName}</span>
-            </div>
+            <ChatHeader avatarUrl={partnerAvatar} name={partnerName} />
 
-            <div className="flex-1 overflow-y-auto min-h-0 p-5 flex flex-col gap-1">
-                {messageGroups.map((group) =>
-                    group.map((msg, i) => {
-                        const isFirst = i === 0;
-                        const isLast = i === group.length - 1;
-                        const isOwn = msg.user_uuid == userUUID;
-
-                        return (
-                            <div key={msg.uuid} className={!(isFirst) ? 'mt-0.5' : 'mt-3.5'}>
-                                <ChatMessage
-                                    text={msg.message_data[0].text!}
-                                    time={formatTime(Date.parse(msg.created_at))}
-                                    isOwn={isOwn}
-                                    avatarUrl={isOwn ? myProfile?.profile?.avatar_url : partnerAvatar}
-                                    isFirst={isFirst}
-                                    isLast={isLast}
-                                />
-                            </div>
-                        );
-                    }))}
-            </div>
+            <Virtuoso
+                ref={virtuosoRef}
+                className="flex-1"
+                data={flatItems}
+                computeItemKey={(_, { msg }) => msg.uuid}
+                firstItemIndex={firstItemIndex}
+                initialTopMostItemIndex={{ index: 'LAST' }}
+                startReached={loadMore}
+                increaseViewportBy={{ top: 600, bottom: 0 }}
+                alignToBottom
+                atBottomStateChange={(atBottom) => {
+                    atBottomRef.current = atBottom;
+                }}
+                skipAnimationFrameInResizeObserver
+                itemContent={(_, { msg, isFirst, isLast }) => {
+                    const isOwn = msg.user_uuid == userUUID;
+                    return (
+                        <div className={`px-5 ${!isFirst ? 'pt-0.5' : 'pt-3.5'}`}>
+                            <ChatMessage
+                                text={msg.message_data[0].text!}
+                                time={formatTime(Date.parse(msg.created_at))}
+                                isOwn={isOwn}
+                                avatarUrl={isOwn ? myProfile?.profile?.avatar_url : partnerAvatar}
+                                isFirst={isFirst}
+                                isLast={isLast}
+                            />
+                        </div>
+                    );
+                }}
+                context={{ hasPreviousPage }}
+                components={{ Header }}
+            />
 
             <MessageInput onSend={handleSend} />
         </div>
     );
+};
+
+const ChatPage = () => {
+    const { uuid: chatUUID } = useParams();
+
+    return <ChatRoom key={chatUUID} chatUUID={chatUUID!} />;
 };
 
 export default ChatPage;

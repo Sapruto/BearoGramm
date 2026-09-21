@@ -1,5 +1,7 @@
 import { Send } from 'lucide-react';
 import { useState } from 'react';
+import { useParams } from 'react-router-dom';
+import { useSendMessage } from '../../../shared/hooks/messages/useSendMessage';
 
 type Props = {
     onSend: (text: string) => void;
@@ -7,6 +9,8 @@ type Props = {
 
 const MessageInput = ({ onSend }: Props) => {
     const [value, setValue] = useState('');
+    const { mutate: sendMessage } = useSendMessage();
+    const { uuid: chatUUID } = useParams();
 
     const handleSend = () => {
         const trimmed = value.trim();
@@ -23,6 +27,12 @@ const MessageInput = ({ onSend }: Props) => {
         }
     };
 
+    const handleSend2 = (text: string) => {
+        for (let i = 0; i <= 100; i++) {
+            sendMessage({ chat_uuid: chatUUID!, typing_to_data: [['text_type', i.toString()]] });
+        }
+    };
+
     return (
         <div className="px-4 py-3.5 border-t border-[#1f1f23] flex items-center gap-2.5">
             <input
@@ -35,6 +45,13 @@ const MessageInput = ({ onSend }: Props) => {
             />
             <button
                 onClick={handleSend}
+                className="w-10 h-10 rounded-[10px] bg-[#f4f4f5] flex items-center justify-center shrink-0 hover:bg-[#d4d4d8] transition-colors cursor-pointer"
+            >
+                <Send size={17} className="stroke-[#0a0a0b]" />
+            </button>
+
+            <button
+                onClick={handleSend2}
                 className="w-10 h-10 rounded-[10px] bg-[#f4f4f5] flex items-center justify-center shrink-0 hover:bg-[#d4d4d8] transition-colors cursor-pointer"
             >
                 <Send size={17} className="stroke-[#0a0a0b]" />

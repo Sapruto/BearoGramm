@@ -1,16 +1,21 @@
-import { useInfiniteQuery } from '@tanstack/react-query';
-import { getMessages } from '../../api/messages';
+import { useInfiniteQuery, type InfiniteData } from '@tanstack/react-query';
+import { getMessages, type GetMessagesResponse } from '../../api/messages';
 import { queryKeys } from '../../lib/queryKeys';
 
+const PAGE_SIZE = 10;
+
 export function useGetMessages(chatUUID: string) {
-    return useInfiniteQuery({
+    return useInfiniteQuery<GetMessagesResponse, Error, InfiniteData<GetMessagesResponse, number>, ReturnType<typeof queryKeys.messagesChat>, number>({
         queryKey: queryKeys.messagesChat(chatUUID),
-        queryFn: ({ pageParam = 0 }) =>
-            getMessages({ chat_uuid: chatUUID, limit: 30, offset: pageParam, show_new: true }, chatUUID),
+        refetchOnMount: false,
+        refetchOnWindowFocus: false,
+        queryFn: ({ pageParam }) =>
+            getMessages({ chat_uuid: chatUUID, limit: PAGE_SIZE, offset: pageParam, show_new: true }, chatUUID),
         initialPageParam: 0,
-        getNextPageParam: (lastPage, allPages) => {
-            const loaded = allPages.flatMap(p => p.message_entity).length;
-            return lastPage.message_entity.length < 30 ? undefined : loaded;
+        getNextPageParam: () => undefined,
+        getPreviousPageParam: (firstPage, allPages) => {
+            const loaded = allPages.flatMap((p) => p.message_entity).length;
+            return firstPage.message_entity.length < PAGE_SIZE ? undefined : loaded;
         },
     });
 }

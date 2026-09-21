@@ -22,6 +22,16 @@ export const theme = createTheme({
         },
     },
     components: {
+        MuiSkeleton: {
+            defaultProps: {
+                animation: 'wave',
+            },
+            styleOverrides: {
+                root: {
+                    backgroundColor: '#2a2a2e',
+                },
+            },
+        },
         MuiOutlinedInput: {
             styleOverrides: {
                 root: {

@@ -1,7 +1,8 @@
-import { Navigate, Outlet } from "react-router-dom";
-import { useAuthStore } from "../../store/authStore";
 import { useRef } from "react";
 import toast from "react-hot-toast";
+import { Navigate, Outlet } from "react-router-dom";
+import { useAuthStore } from "../../store/authStore";
+import { ChatSocketProvider } from "../providers/ChatSocketProvider";
 
 export function LoginRequiredRoute() {
     const { isLoggedIn } = useAuthStore();
@@ -16,5 +17,9 @@ export function LoginRequiredRoute() {
         return <Navigate to="/auth/phone" replace />
     }
 
-    return <Outlet />
+    return (
+        <ChatSocketProvider>
+            <Outlet />
+        </ChatSocketProvider>
+    );
 }

@@ -18,7 +18,7 @@ export type GetMessagesParams = {
     chat_uuid: string;
     limit: number;
     offset: number,
-    show_new: true
+    show_new: boolean
 };
 
 export type GetMessagesResponse = {

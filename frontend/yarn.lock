@@ -2151,6 +2151,11 @@ react-transition-group@^4.4.5:
     loose-envify "^1.4.0"
     prop-types "^15.6.2"
 
+react-virtuoso@^4.18.13:
+  version "4.18.13"
+  resolved "https://registry.yarnpkg.com/react-virtuoso/-/react-virtuoso-4.18.13.tgz#bce98859a172ce99b7863c55c0832c2a8568a354"
+  integrity sha512-M4kP7zbV7JmLrnJYs0X2FBA8gnNlHisSYuKMyeJVYtWz31CAJeP57dgPJzfneUdKDKmL9SiqvcBQ32si8CfQSQ==
+
 react@^19.2.8:
   version "19.3.0"
   resolved "https://registry.yarnpkg.com/react/-/react-19.3.0.tgz#e20aa3a14687075ce863351b5878b0608c3fbfb2"
@@ -2160,6 +2165,11 @@ readdirp@^5.0.0:
   version "5.1.1"
   resolved "https://registry.yarnpkg.com/readdirp/-/readdirp-5.1.1.tgz#520bca06f9d1ae1b96cc0800dbe84b983d19422c"
   integrity sha512-Kko+Y5XQ6fM+Ce3dq3m9YGxnacYZYl9cA1wZjaF3Vbry2L3i1qVg8+CAgNPsXRArPMUMCaOR7oa9Nqntc43JKA==
+
+reconnecting-websocket@^4.4.0:
+  version "4.4.0"
+  resolved "https://registry.yarnpkg.com/reconnecting-websocket/-/reconnecting-websocket-4.4.0.tgz#3b0e5b96ef119e78a03135865b8bb0af1b948783"
+  integrity sha512-D2E33ceRPga0NvTDhJmphEgJ7FUYF0v4lr1ki0csq06OdlxKfugGzN0dSkxM/NfqCxYELK4KcaTOUOjTV6Dcng==
 
 remove-accents@0.5.0:
   version "0.5.0"
