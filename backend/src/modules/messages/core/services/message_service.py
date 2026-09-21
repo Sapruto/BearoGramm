@@ -193,6 +193,33 @@ class MessageService:
         )
         return GetMessagesResponse(message_entity=list(messages))
 
+    async def get_around_message(
+        self,
+        message_uuid: str,
+        user_uuid: str,
+        span_start: int,
+        span_end: int,
+    ) -> GetMessagesResponse:
+        if span_start > 0:
+            raise ValueError("span_start must be <= 0")
+        if span_end < 0:
+            raise ValueError("span_end must be >= 0")
+
+        target = await self.get_message(message_uuid, user_uuid)
+
+        left = min(-span_start, self.max_limit)
+        right = min(span_end, self.max_limit - left)
+
+        messages = await self.message_repository.get_around(
+            chat_uuid=target.chat_uuid,
+            message_uuid=target.uuid,
+            created_at=target.created_at,
+            span_start=left,
+            span_end=right,
+            load_options=MessageLoadOptions(extra=True, references=True, user=True),
+        )
+        return GetMessagesResponse(message_entity=list(messages))
+
 
 def get_message_service() -> MessageService:
     return MessageService()

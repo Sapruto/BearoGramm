@@ -134,3 +134,26 @@ async def get_messages(
     except Exception as e:
         logger.error(f"Error in get_messages: {e}", exc_info=True)
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+
+
+@message_router.get(
+    MessageRoutes.get_around_message,
+    response_model=GetMessagesResponse,
+)
+async def get_around_message(
+    message_uuid: str = Path(..., description="UUID of target message"),
+    span_start: int = Query(default=-10, le=0),
+    span_end: int = Query(default=10, ge=0),
+    service: MessageService = Depends(get_message_service),
+    current_user: UserEntity = Depends(get_current_user_depends()),
+):
+    try:
+        return await service.get_around_message(
+            message_uuid=message_uuid,
+            user_uuid=current_user.uuid,
+            span_start=span_start,
+            span_end=span_end,
+        )
+    except Exception as e:
+        logger.error(f"Error in get_around_message: {e}", exc_info=True)
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))

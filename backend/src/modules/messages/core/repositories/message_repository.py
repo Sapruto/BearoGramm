@@ -1,5 +1,5 @@
-from typing import Optional, Sequence
-from sqlalchemy import select
+from typing import Optional, Sequence, List
+from sqlalchemy import select, union_all
 from sqlalchemy.orm import selectinload
 
 from src.core.database import AsyncSessionLocal
@@ -116,6 +116,60 @@ class MessageRepository(BaseRepository[MessageManager, MessageFields, MessageEnt
             res = await session.execute(stmt)
             orms = res.scalars().all()
             return await self._mapper.to_entity_many(list(orms), load_options)
+
+    async def get_around(
+        self,
+        chat_uuid: str,
+        message_uuid: str,
+        created_at,
+        span_start: int,
+        span_end: int,
+        load_options: Optional[MessageLoadOptions] = None,
+    ) -> Sequence[MessageEntity]:
+        load_options = load_options or MessageLoadOptions()
+
+        before_stmt = (
+            select(MessageORM)
+            .where(MessageORM.chat_uuid == chat_uuid)
+            .where(MessageORM.created_at < created_at)
+            .order_by(MessageORM.created_at.desc())
+            .limit(span_start)
+        )
+        for opt in load_options.loader_options():
+            before_stmt = before_stmt.options(opt)
+
+        after_stmt = (
+            select(MessageORM)
+            .where(MessageORM.chat_uuid == chat_uuid)
+            .where(MessageORM.created_at > created_at)
+            .order_by(MessageORM.created_at.asc())
+            .limit(span_end)
+        )
+        for opt in load_options.loader_options():
+            after_stmt = after_stmt.options(opt)
+
+        target_stmt = select(MessageORM).where(MessageORM.uuid == message_uuid)
+        for opt in load_options.loader_options():
+            target_stmt = target_stmt.options(opt)
+
+        async with AsyncSessionLocal() as session:
+            before_res = await session.execute(before_stmt)
+            before_orms = list(before_res.scalars().all())
+
+            after_res = await session.execute(after_stmt)
+            after_orms = list(after_res.scalars().all())
+
+            target_res = await session.execute(target_stmt)
+            target_orm = target_res.scalar_one_or_none()
+
+        before = await self._mapper.to_entity_many(list(reversed(before_orms)), load_options)
+        after = await self._mapper.to_entity_many(after_orms, load_options)
+
+        result: List[MessageEntity] = list(before)
+        if target_orm is not None:
+            result.append(await self._mapper.to_entity(target_orm, load_options))
+        result.extend(after)
+        return result
 
     async def save_with_relations(self, entity: MessageEntity) -> MessageEntity:
         orm = await self._mapper.to_orm(entity)

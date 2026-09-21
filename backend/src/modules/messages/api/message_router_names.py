@@ -7,9 +7,10 @@ class MessageRoutes(str, Enum):
     base = "/api/messages"
 
     send_message = "/send"
-    update_message = "/update"
-    delete_message = "/delete/{message_uuid}"
+    update_message = "/{message_uuid}"
+    delete_message = "/{message_uuid}"
     get_messages = "/get"
+    get_around_message = "/around/{message_uuid}"
 
     ws_messages = "/ws"
 
