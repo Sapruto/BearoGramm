@@ -11,5 +11,6 @@ class ChatRepository(BaseRepository[ChatManager, ChatFields, ChatEntity]):
         mapper = ChatMapper()
         super().__init__(manager=manager or get_chat_manager(), mapper=mapper)
 
+
 def get_chat_repository() -> ChatRepository:
     return ChatRepository()

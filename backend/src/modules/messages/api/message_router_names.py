@@ -11,8 +11,8 @@ class MessageRoutes(str, Enum):
     delete_message = "/{message_uuid}"
     get_messages = "/get"
     get_around_message = "/around/{message_uuid}"
-
-    ws_messages = "/ws"
+    get_messages_before = "/before/{message_uuid}"
+    get_messages_after = "/after/{message_uuid}"
 
     def __str__(self):
         return self.value
@@ -23,9 +23,6 @@ class MessageRoutesURL(str, Enum):
     update_message = f"{Settings.BASE_URL}{MessageRoutes.update_message}"
     delete_message = f"{Settings.BASE_URL}{MessageRoutes.delete_message}"
     get_messages = f"{Settings.BASE_URL}{MessageRoutes.get_messages}"
-    ws_messages = (
-        f"{Settings.BASE_URL}{MessageRoutes.ws_messages}"
-    )
 
     def __str__(self):
         return self.value

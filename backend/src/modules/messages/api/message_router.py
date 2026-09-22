@@ -1,12 +1,10 @@
-from fastapi import APIRouter, WebSocket, Depends, HTTPException, status, Path, Query
-import json
+from fastapi import APIRouter, Depends, HTTPException, status, Path, Query
 
-from src.modules.user import get_current_user_depends, UserEntity, authenticate_by_token
+from src.modules.user import get_current_user_depends, UserEntity
 from src.core.logger import get_logger
 
 from .message_router_names import MessageRoutes
 from ..core.services.message_service import get_message_service, MessageService
-from ..core.services.websocket_message_service import get_websocket_message_service
 from ..models.dto.requests import (
     SendMessageRequest,
     UpdateMessageRequest,
@@ -22,56 +20,6 @@ logger = get_logger(__name__)
 
 message_router = APIRouter(prefix=MessageRoutes.base, tags=["messages"])
 
-
-@message_router.websocket(MessageRoutes.ws_messages)
-async def listen_messages_websocket(websocket: WebSocket):
-    closed = False
-    try:
-        await websocket.accept()
-
-        ws_service = get_websocket_message_service()
-
-        raw_data = await websocket.receive_text()
-        try:
-            data = json.loads(raw_data)
-            token = data.get("auth")
-        except Exception:
-            await websocket.close(code=1008, reason="Invalid request to auth")
-            closed = True
-            return
-
-        if not token:
-            await websocket.send_text(json.dumps({"error": "Missing auth token"}))
-            await websocket.close(code=1008, reason="Missing auth token")
-            closed = True
-            return
-        user = await authenticate_by_token(token)
-        if not user:
-            await websocket.send_text(json.dumps({"error": "Invalid token"}))
-            await websocket.close(code=1008, reason="Invalid token")
-            closed = True
-            return
-        await websocket.send_text(
-            json.dumps({"status": "authenticated", "user_uuid": user.uuid})
-        )
-
-        async def send_message(data: str) -> None:
-            await websocket.send_text(data)
-
-        async def receive_message() -> str:
-            return await websocket.receive_text()
-
-        await ws_service.listen_messages(
-            user_uuid=user.uuid,
-            send_message=send_message,
-            receive_message=receive_message,
-        )
-    finally:
-        if not closed:
-            try:
-                await websocket.close(code=4000)
-            except Exception as e:
-                logger.error(f"Error closing websocket: {e}")
 
 @message_router.post(MessageRoutes.send_message, response_model=SendMessageResponse)
 async def send_message(
@@ -125,7 +73,8 @@ async def get_messages(
     current_user: UserEntity = Depends(get_current_user_depends()),
 ):
     try:
-        return await service.get_messages(chat_uuid=chat_uuid,
+        return await service.get_messages(
+            chat_uuid=chat_uuid,
             limit=limit,
             offset=offset,
             show_new=show_new,
@@ -156,4 +105,46 @@ async def get_around_message(
         )
     except Exception as e:
         logger.error(f"Error in get_around_message: {e}", exc_info=True)
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+
+
+@message_router.get(
+    MessageRoutes.get_messages_before,
+    response_model=GetMessagesResponse,
+)
+async def get_messages_before(
+    message_uuid: str = Path(..., description="UUID of the boundary message"),
+    limit: int = Query(default=10, ge=1, le=100, description="Count of messages"),
+    service: MessageService = Depends(get_message_service),
+    current_user: UserEntity = Depends(get_current_user_depends()),
+):
+    try:
+        return await service.get_messages_before(
+            before_uuid=message_uuid,
+            limit=limit,
+            user_uuid=current_user.uuid,
+        )
+    except Exception as e:
+        logger.error(f"Error in get_messages_before: {e}")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+
+
+@message_router.get(
+    MessageRoutes.get_messages_after,
+    response_model=GetMessagesResponse,
+)
+async def get_messages_after(
+    message_uuid: str = Path(..., description="UUID of the boundary message"),
+    limit: int = Query(default=10, ge=1, le=100, description="Count of messages"),
+    service: MessageService = Depends(get_message_service),
+    current_user: UserEntity = Depends(get_current_user_depends()),
+):
+    try:
+        return await service.get_messages_after(
+            after_uuid=message_uuid,
+            limit=limit,
+            user_uuid=current_user.uuid,
+        )
+    except Exception as e:
+        logger.error(f"Error in get_messages_after: {e}")
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))

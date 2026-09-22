@@ -3,10 +3,11 @@ from typing import Optional
 
 from src.general.repository.sql.sql_query import SqlQuery
 from src.modules.participants.core.exceptions import NotParticipant
-from .websocket_message_service import (
-    WebSocketMessageService,
-    get_websocket_message_service,
+from src.modules.event_notification import (
+    EventNotificationService,
+    get_notification_event_service,
 )
+from src.modules.chats import ChatService, get_chat_service
 from ..exceptions import (
     ChecksFailed,
     DatabaseSaveFailed,
@@ -44,12 +45,14 @@ class MessageService:
     def __init__(
         self,
         message_repository: Optional[MessageRepository] = None,
-        websocket_service: Optional[WebSocketMessageService] = None,
+        notification_service: Optional[EventNotificationService] = None,
         permission_service: Optional[PermissionService] = None,
+        chat_service: Optional[ChatService] = None,
     ):
         self.message_repository = message_repository or get_message_repository()
-        self.websocket_service = websocket_service or get_websocket_message_service()
+        self.notification_service = notification_service or get_notification_event_service()
         self.permission_service = permission_service or get_permission_service()
+        self.chat_service = chat_service or get_chat_service()
         self.max_limit = 100
 
     async def _check_access(
@@ -66,10 +69,11 @@ class MessageService:
 
     async def _notify(self, chat_uuid: str, notification: dict) -> None:
         try:
-            await self.websocket_service.notify_chat_participants(chat_uuid, notification)
+            user_uuids = await self.chat_service.get_participant_uuids(chat_uuid)
+            await self.notification_service.notify_users(user_uuids, notification)
         except Exception as e:
             logger.error(
-                f"Websocket notify failed for chat {chat_uuid}: {e}", exc_info=True
+                "Notification failed for chat %s: %s", chat_uuid, e, exc_info=True
             )
 
     async def send_message(
@@ -92,7 +96,7 @@ class MessageService:
 
         await self._notify(
             saved_entity.chat_uuid,
-            {"type": "new_message", "data": saved_entity.model_dump(mode="json")},
+            {"type": "message_created", "data": saved_entity.model_dump(mode="json")},
         )
         return SendMessageResponse(message_entity=saved_entity)
 
@@ -219,6 +223,22 @@ class MessageService:
             load_options=MessageLoadOptions(extra=True, references=True, user=True),
         )
         return GetMessagesResponse(message_entity=list(messages))
+
+    async def get_messages_before(self, before_uuid: str, limit: int, user_uuid: str) -> GetMessagesResponse:
+        return await self.get_around_message(
+            message_uuid=before_uuid,
+            user_uuid=user_uuid,
+            span_start=-min(limit, self.max_limit),
+            span_end=0,
+        )
+
+    async def get_messages_after(self, after_uuid: str, limit: int, user_uuid: str) -> GetMessagesResponse:
+        return await self.get_around_message(
+            message_uuid=after_uuid,
+            user_uuid=user_uuid,
+            span_start=0,
+            span_end=min(limit, self.max_limit),
+        )
 
 
 def get_message_service() -> MessageService:
