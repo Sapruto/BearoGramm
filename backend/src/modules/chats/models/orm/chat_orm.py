@@ -14,7 +14,14 @@ class ChatORM(Base):
     uuid: Mapped[str] = mapped_column(
         String(36), primary_key=True, default=lambda: str(uuid4())
     )
-    chat_type: Mapped[ChatType] = mapped_column(Enum(ChatType))
+    chat_type: Mapped[ChatType] = mapped_column(
+        Enum(
+            ChatType,
+            name="reference_type",
+            values_callable=lambda e: [m.value for m in e],
+        ),
+        nullable=False,
+    )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, default=func.now()
     )
