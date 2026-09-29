@@ -23,9 +23,6 @@ class ChatRepository(BaseRepository[ChatManager, ChatFields, ChatEntity]):
             user_uuids: List[str],
             chat_type: ChatType = ChatType.DEFAULT,
     ) -> Optional[ChatEntity]:
-        if len(user_uuids) != 2:
-            return None
-
         async with AsyncSessionLocal() as session:
             stmt = (
                 select(ChatORM)

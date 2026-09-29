@@ -24,12 +24,12 @@ class MessageReferenceFields(str, Enum):
 class MessageReferenceEntity(BaseModel):
     uuid: Optional[str] = Field(default=None)
     reference_type: ReferenceType
-    source_uuid: Optional[str] = Field(default=None)
-    target_uuid: Optional[str] = Field(default=None)
+    source_uuid: str = Field(default="")
+    target_uuid: str = Field(default="")
     span_start: Optional[int] = Field(default=None)
     span_end: Optional[int] = Field(default=None)
     span_all: Optional[bool] = Field(default=None)
-    created_at: Optional[datetime] = Field(default=None)
+    created_at: datetime = Field(default=None)
 
     @field_serializer("created_at")
     def serialize_dt(self, v: datetime | None, _info):
