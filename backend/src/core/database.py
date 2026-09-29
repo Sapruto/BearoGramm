@@ -90,6 +90,12 @@ async def execute_with_retry(session: AsyncSession, stmt):
     return await session.execute(stmt)
 
 
+async def init_db():
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+    logger.info("Database tables created")
+
+
 async def close_db():
     await engine.dispose()
     logger.info("Database connections closed")
