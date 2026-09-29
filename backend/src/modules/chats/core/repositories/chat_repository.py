@@ -20,11 +20,9 @@ class ChatRepository(BaseRepository[ChatManager, ChatFields, ChatEntity]):
 
     async def get_chat_by_participants(
             self,
-            user_uuids: List[str]
+            user_uuids: List[str],
+            chat_type: ChatType = ChatType.DEFAULT,
     ) -> Optional[ChatEntity]:
-        if len(user_uuids) != 2:
-            return None
-
         async with AsyncSessionLocal() as session:
             stmt = (
                 select(ChatORM)
@@ -36,7 +34,7 @@ class ChatRepository(BaseRepository[ChatManager, ChatFields, ChatEntity]):
                     )
                 )
                 .where(
-                    ChatORM.chat_type == ChatType.PERSONAL,
+                    ChatORM.chat_type == chat_type,
                     ParticipantORM.user_uuid.in_(user_uuids)
                 )
                 .group_by(ChatORM.uuid)

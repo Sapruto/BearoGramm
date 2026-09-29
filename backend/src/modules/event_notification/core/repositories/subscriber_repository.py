@@ -31,7 +31,7 @@ class SubscriberRepository(
         return True
 
     async def remove_subscriber(self, uuid: str) -> bool:
-        return await self.delete(uuid)
+        return await self.delete(RedisQuery[SubscriberFields]().add_filter(SubscriberFields.UUID, uuid))
 
     async def get_subscribers(self) -> List[SubscriberEntity]:
         query = RedisQuery[SubscriberFields]()
