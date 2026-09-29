@@ -3,8 +3,17 @@ import { useAuthStore } from '../../store/authStore';
 import type { MessageEntity } from './messages';
 
 export type WSMessage =
-    | { type: 'new_message'; data: MessageEntity }
-    // | { type: 'typing'; payload: { chat_uuid: string; user_uuid: string } };
+    | { type: 'message_created'; data: MessageEntity }
+    | { type: 'message_updated'; data: MessageEntity }
+    | { type: 'message_deleted'; data: MessageEntity }
+    | {
+        type: 'typing';
+        data: { user_uuid: string, chat_uuid: string }
+    }
+    | {
+        type: 'user_online';
+        data: { user_uuid: string, online: boolean }
+    }
 
 type WSHandler = (msg: WSMessage) => void;
 
