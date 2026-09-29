@@ -15,8 +15,7 @@ export function ChatSocketProvider({ children }: { children: React.ReactNode }) 
 
         const unsubscribe = chatSocket.subscribe((msg) => {
             switch (msg.type) {
-                case 'new_message':
-                    console.log('new message!', JSON.stringify(msg, null, 2))
+                case 'message_created':
                     addMessageToCache(queryClient, msg.data.chat_uuid, msg.data);
                     break;
                 // case 'typing':
