@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { Virtuoso, type VirtuosoHandle } from 'react-virtuoso';
 import type { Message } from '../../../shared/api/messages';
@@ -10,6 +10,9 @@ import { useAuthStore } from '../../../store/authStore';
 import ChatMessage from './ChatMessage';
 import { ChatSkeleton } from './ChatSkeleton';
 import MessageInput from './MessageInput';
+
+const INITIAL_COUNT = 30;
+const HISTORY_COUNT = 20;
 
 const GROUP_WINDOW_MS = 5 * 60 * 1000;
 const START_INDEX = 100000;
@@ -24,15 +27,31 @@ const ChatHeader = ({ avatarUrl, name }: { avatarUrl?: string; name?: string }) 
     </div>
 );
 
-const Header = ({ context }: { context?: { hasPreviousPage: boolean } }) =>
-    context?.hasPreviousPage ? <ChatSkeleton /> : (
-        <div style={{ padding: 12, color: "#999" }}>
-            This is the beginning of your direct message history with <strong>USER</strong>.
+const Header = ({ context }: { context?: { hasPreviousPage: boolean; partnerName: string | undefined } }) => {
+    const isHistoryEnd = !context?.hasPreviousPage;
+
+    return (
+        <div className="relative w-full">
+            <div className={isHistoryEnd ? "invisible" : "visible"}>
+                <ChatSkeleton />
+            </div>
+
+            {isHistoryEnd && (
+                <div className="absolute bottom-0 left-0 right-0 p-3 text-[#999]">
+                    This is the beginning of your direct message history with <strong>{context?.partnerName ?? "Loading..."}</strong>.
+                </div>
+            )}
         </div>
     );
+};
+
 
 const ChatRoom = ({ chatUUID }: { chatUUID: string }) => {
-    const { data, fetchPreviousPage, hasPreviousPage, isFetchingPreviousPage } = useGetMessages(chatUUID);
+    const { data, fetchPreviousPage, hasPreviousPage, isFetchingPreviousPage } = useGetMessages(
+        chatUUID,
+        INITIAL_COUNT,
+        HISTORY_COUNT
+    );
     const { userUUID } = useAuthStore();
     const { data: myProfile } = useGetMyProfile();
     const { mutate: sendMessage } = useSendMessage();
@@ -92,28 +111,44 @@ const ChatRoom = ({ chatUUID }: { chatUUID: string }) => {
         setAnchorId(firstId);
     }
 
-    const atBottomRef = useRef(true);
-    const prevLastIdRef = useRef<string | null>(null);
+    const prevCountRef = useRef(flatItems.length);
+    const scrollerRef = useRef<HTMLElement | null>(null);
+    const scrollerCbRef = useCallback((el: HTMLElement | Window | null) => {
+        scrollerRef.current = el instanceof HTMLElement ? el : null;
+    }, []);
 
     useEffect(() => {
-        const lastId = flatItems[flatItems.length - 1]?.msg.uuid ?? null;
-        const prevLastId = prevLastIdRef.current;
-        prevLastIdRef.current = lastId;
-
-        if (prevLastId !== null && lastId !== prevLastId && atBottomRef.current) {
-            virtuosoRef.current?.scrollToIndex({ index: 'LAST', align: 'end', behavior: 'smooth' });
-        }
-    }, [flatItems]);
+        const grew = flatItems.length > prevCountRef.current;
+        prevCountRef.current = flatItems.length;
+        if (!grew) return;
+        const settle = () => {
+            const sc = scrollerRef.current;
+            if (!sc) return;
+            const gap = sc.scrollHeight - sc.scrollTop - sc.clientHeight;
+            if (gap <= 0 || gap > 300) return;
+            sc.scrollTop = sc.scrollHeight;
+        };
+        const list = scrollerRef.current?.querySelector('[data-item-index]')?.parentElement;
+        const observer = new ResizeObserver(() => requestAnimationFrame(settle));
+        if (list) observer.observe(list);
+        const raf = requestAnimationFrame(settle);
+        const stop = setTimeout(() => observer.disconnect(), 2000);
+        return () => {
+            observer.disconnect();
+            cancelAnimationFrame(raf);
+            clearTimeout(stop);
+        };
+    }, [flatItems.length]);
 
     const handleSend = (text: string) => {
         sendMessage({ chat_uuid: chatUUID, typing_to_data: [['text_type', text]] });
     };
 
-    const loadMore = () => {
+    const loadMore = useCallback(() => {
         if (hasPreviousPage && !isFetchingPreviousPage) {
             fetchPreviousPage();
         }
-    };
+    }, [hasPreviousPage, isFetchingPreviousPage, fetchPreviousPage]);
 
     if (!data) {
         return (
@@ -138,10 +173,9 @@ const ChatRoom = ({ chatUUID }: { chatUUID: string }) => {
                 startReached={loadMore}
                 increaseViewportBy={{ top: 600, bottom: 0 }}
                 alignToBottom
-                atBottomStateChange={(atBottom) => {
-                    atBottomRef.current = atBottom;
-                }}
+                followOutput
                 skipAnimationFrameInResizeObserver
+                scrollerRef={scrollerCbRef}
                 itemContent={(_, { msg, isFirst, isLast }) => {
                     const isOwn = msg.user_uuid == userUUID;
                     return (
@@ -157,7 +191,7 @@ const ChatRoom = ({ chatUUID }: { chatUUID: string }) => {
                         </div>
                     );
                 }}
-                context={{ hasPreviousPage }}
+                context={{ hasPreviousPage, partnerName }}
                 components={{ Header }}
             />
 

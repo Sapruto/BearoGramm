@@ -14,12 +14,11 @@ export function addMessageToCache(queryClient: QueryClient, chatUUID: string, me
             if (exists) return old;
 
             const pages = [...old.pages];
-            const lastIndex = pages.length - 1;
-            const lastPage = pages[lastIndex];
+            const firstPage = pages[0];
 
-            pages[lastIndex] = {
-                ...lastPage,
-                message_entity: [...lastPage.message_entity, message],
+            pages[0] = {
+                ...firstPage,
+                message_entity: [message, ...firstPage.message_entity],
             };
 
             return { ...old, pages };
