@@ -13,37 +13,38 @@ class PersonalChatResponse(BaseModel):
     created_at: datetime
     updated_at: datetime
 
-    profiles: Optional[Dict[str, ProfileCustomEntity]] = None
+    partner_profile: Optional[ProfileCustomEntity] = None
 
 
 class PersonalChatPreview(BaseModel):
     uuid: str
     chat_type: str = ChatType.PERSONAL
     partner_uuid: str
+    partner_profile: Optional[ProfileCustomEntity] = None
     updated_at: datetime
 
 
-class PersonalChatCreateRequest(BaseModel):
+class CreatePersonalChatRequest(BaseModel):
     other_user_phone: str
 
 
-class PersonalChatListResponse(BaseModel):
+class GetPersonalChatsResponse(BaseModel):
     items: List[PersonalChatPreview]
     total: int
     limit: int
     offset: int
 
 
-class PartnerResponse(BaseModel):
-    chat_uuid: str
+class GetChatPartnerResponse(BaseModel):
     partner_uuid: str
+    partner_profile: Optional[ProfileCustomEntity] = None
 
 
-class ParticipantCheckResponse(BaseModel):
+class CheckParticipantResponse(BaseModel):
     chat_uuid: str
     is_participant: bool
 
 
-class DeleteChatResponse(BaseModel):
+class DeletePersonalChatResponse(BaseModel):
     message: str
     chat_uuid: str

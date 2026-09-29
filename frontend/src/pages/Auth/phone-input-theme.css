@@ -1,0 +1,164 @@
+:root {
+    --phone-bg: #0e0e10;
+    --phone-border: #27272c;
+    --phone-border-hover: #3a3a40;
+    --phone-border-focus: #4a4a52;
+    --phone-text: #f4f4f5;
+    --phone-text-secondary: #8b8b93;
+    --phone-error: #ef7878;
+    --phone-radius: 10px;
+    --phone-height: 56px;
+    --phone-font-family: 'Radio Canada Big', sans-serif;
+    --phone-font-size: 0.9rem;
+    --phone-font-weight: 400;
+    --phone-line-height: 1.4375em;
+    --phone-letter-spacing: normal;
+}
+
+.react-international-phone-input-container {
+    width: 100%;
+    display: flex;
+    align-items: stretch;
+    height: var(--phone-height);
+    box-sizing: border-box;
+    font-family: var(--phone-font-family);
+}
+
+.react-international-phone-country-selector-button {
+    background-color: var(--phone-bg) !important;
+    border: 1px solid var(--phone-border) !important;
+    border-right: none !important;
+    border-top-left-radius: var(--phone-radius) !important;
+    border-bottom-left-radius: var(--phone-radius) !important;
+    height: 100% !important;
+    box-sizing: border-box !important;
+    padding: 0 8px;
+    transition: border-color 0.15s ease-in-out;
+}
+
+.react-international-phone-country-selector-button__dropdown-arrow {
+    border-top-color: var(--phone-text-secondary) !important;
+}
+
+.react-international-phone-input {
+    background-color: var(--phone-bg) !important;
+    color: var(--phone-text) !important;
+    border: 1px solid var(--phone-border) !important;
+    border-top-right-radius: var(--phone-radius) !important;
+    border-bottom-right-radius: var(--phone-radius) !important;
+    height: 100% !important;
+    box-sizing: border-box !important;
+
+    font-family: var(--phone-font-family) !important;
+    font-size: var(--phone-font-size) !important;
+    font-weight: var(--phone-font-weight) !important;
+    line-height: var(--phone-line-height) !important;
+    letter-spacing: var(--phone-letter-spacing) !important;
+
+    padding: 0 14px;
+    width: 100%;
+    flex: 1;
+    transition: border-color 0.15s ease-in-out;
+}
+
+.react-international-phone-input::placeholder {
+    color: var(--phone-text-secondary);
+    opacity: 1;
+}
+
+.react-international-phone-input-container:has(.react-international-phone-country-selector-button:hover)
+    .react-international-phone-country-selector-button,
+.react-international-phone-input-container:has(.react-international-phone-country-selector-button:hover)
+    .react-international-phone-input,
+.react-international-phone-input-container:has(.react-international-phone-input:hover)
+    .react-international-phone-country-selector-button,
+.react-international-phone-input-container:has(.react-international-phone-input:hover)
+    .react-international-phone-input {
+    border-color: var(--phone-border-hover) !important;
+}
+
+.react-international-phone-input:focus {
+    outline: none;
+}
+
+.react-international-phone-input-container:focus-within
+    .react-international-phone-country-selector-button,
+.react-international-phone-input-container:focus-within
+    .react-international-phone-input {
+    border-color: var(--phone-border-focus) !important;
+}
+
+.react-international-phone-country-selector-button--active {
+    border-color: var(--phone-border-focus) !important;
+}
+
+.phone-input--error .react-international-phone-country-selector-button,
+.phone-input--error .react-international-phone-input {
+    border-color: var(--phone-error) !important;
+}
+
+.phone-input--error.react-international-phone-input-container:has(.react-international-phone-country-selector-button:hover)
+    .react-international-phone-country-selector-button,
+.phone-input--error.react-international-phone-input-container:has(.react-international-phone-country-selector-button:hover)
+    .react-international-phone-input,
+.phone-input--error.react-international-phone-input-container:has(.react-international-phone-input:hover)
+    .react-international-phone-country-selector-button,
+.phone-input--error.react-international-phone-input-container:has(.react-international-phone-input:hover)
+    .react-international-phone-input {
+    border-color: var(--phone-error) !important;
+}
+
+.phone-input--error.react-international-phone-input-container:focus-within {
+    box-shadow: 0 0 0 1px var(--phone-error);
+    border-radius: var(--phone-radius);
+}
+
+.phone-input--error.react-international-phone-input-container:focus-within
+    .react-international-phone-input,
+.phone-input--error.react-international-phone-input-container:focus-within
+    .react-international-phone-country-selector-button {
+    border-color: var(--phone-error) !important;
+}
+
+.react-international-phone-country-selector-dropdown {
+    background-color: var(--phone-bg) !important;
+    border: 1px solid var(--phone-border) !important;
+    border-radius: var(--phone-radius) !important;
+    color: var(--phone-text) !important;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+
+    font-family: var(--phone-font-family) !important;
+    font-size: var(--phone-font-size) !important;
+    font-weight: var(--phone-font-weight) !important;
+
+    margin: 0 !important;
+    padding: 0 !important;
+    list-style: none !important;
+}
+
+.react-international-phone-country-selector-dropdown__list-item {
+    color: var(--phone-text) !important;
+    padding: 10px 16px !important;
+    margin: 0 !important;
+}
+
+.react-international-phone-country-selector-dropdown__list-item:hover,
+.react-international-phone-country-selector-dropdown__list-item--focused {
+    background-color: #1a1a1d !important;
+}
+
+.react-international-phone-country-selector-dropdown__list-item--selected {
+    background-color: #1f1f23 !important;
+}
+
+.react-international-phone-country-selector-dropdown__list-item-dial-code {
+    color: var(--phone-text-secondary) !important;
+}
+
+.react-international-phone-country-selector-dropdown__preferred-list-divider {
+    border: none !important;
+    border-top: 1px solid var(--phone-border) !important;
+    margin: 4px 0 !important;
+    height: 0 !important;
+    background: none !important;
+}

@@ -1,27 +1,23 @@
 from pydantic import BaseModel, Field
-from typing import Optional, List
+from typing import List, Optional
 
 from ..entities.message_entity import MessageEntity
 
 
 class SendMessageResponse(BaseModel):
-    success: bool = Field(...)
-    message_entity: Optional[MessageEntity] = Field(default=None)
-    error_message: Optional[str] = Field(default=None)
+    success: bool = True
+    message_entity: Optional[MessageEntity] = None
 
 
 class UpdateMessageResponse(BaseModel):
-    success: bool = Field(...)
-    message_entity: Optional[MessageEntity] = Field(default=None)
-    error_message: Optional[str] = Field(default=None)
+    success: bool = True
+    message_entity: Optional[MessageEntity] = None
 
 
 class DeleteMessageResponse(BaseModel):
-    success: bool = Field(...)
-    error_message: Optional[str] = Field(default=None)
+    success: bool = True
 
 
 class GetMessagesResponse(BaseModel):
-    success: bool = Field(...)
-    message_entity: Optional[List[MessageEntity]] = Field(default=None)
-    error_message: Optional[str] = Field(default=None)
+    success: bool = True
+    messages: List[MessageEntity] = Field(default_factory=list)

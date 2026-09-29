@@ -36,6 +36,7 @@ class DataProcessor:
                 processed.append(result_data)
 
             except Exception as e:
+                logger.error(f"Exception in save_data: {e}")
                 return ProcessDataResponse(
                     success=False, error=f"Error creating {data_type}: {str(e)}"
                 )

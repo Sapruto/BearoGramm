@@ -3,7 +3,7 @@ from sqlalchemy.orm import InstrumentedAttribute
 
 from ..interfaces.base_repository_interface import BaseRepositoryInterface
 
-from src.general.db.base_manager import OnConflictAction
+from src.general.db.base_manager import OnConflictAction, ObjectAlreadyExistsError
 from src.core.database import Base
 from src.core.logger import get_logger
 
@@ -27,58 +27,68 @@ class BaseRepository(
 
         self._mapper = mapper
 
-    def _to_orm(self, EntityType: EntityType) -> Base:
-        return self._mapper.to_orm(EntityType)
+    async def _to_orm(self, EntityType: EntityType) -> Base:
+        return await self._mapper.to_orm(EntityType)
 
-    def _to_entity(self, orm: Any) -> EntityType:
-        return self._mapper.to_entity(orm)
+    async def _to_entity(self, orm: Any) -> EntityType:
+        return await self._mapper.to_entity(orm)
 
-    def _to_orm_value(
+    async def _to_orm_value(
         self, field: FieldsType, value: Any
     ) -> Tuple[InstrumentedAttribute, Any]:
-        return self._mapper.to_orm_value(field, value)
+        return await self._mapper.to_orm_value(field, value)
 
-    def _to_entity_value(
+    async def _to_entity_value(
         self, field: InstrumentedAttribute, value: Any
     ) -> Tuple[FieldsType, Any]:
-        return self._mapper.to_entity_value(field, value)
+        return await self._mapper.to_entity_value(field, value)
 
-    def _to_orm_field(self, field: FieldsType) -> InstrumentedAttribute:
-        return self._mapper.to_orm_field(field)
+    async def _to_orm_field(self, field: FieldsType) -> InstrumentedAttribute:
+        return await self._mapper.to_orm_field(field)
 
-    def _to_entity_field(self, field: InstrumentedAttribute) -> FieldsType:
-        return self._mapper.to_entity_field(field)
+    async def _to_entity_field(self, field: InstrumentedAttribute) -> FieldsType:
+        return await self._mapper.to_entity_field(field)
 
-    def _build_where(
+    async def _build_where(
         self, filters: Dict[FieldsType, Any]
     ) -> Dict[InstrumentedAttribute, Any]:
         result = {}
         for field, value in (filters or {}).items():
             try:
-                orm_field, orm_value = self._to_orm_value(field, value)
+                orm_field, orm_value = await self._to_orm_value(field, value)
                 result[orm_field] = orm_value
             except NotConvertableError as e:
                 logger.error(f"Skipping filter {field}={value}: {e}")
                 raise
         return result
 
-    async def save(self, EntityType: EntityType) -> EntityType:
+    async def save(self, entity: EntityType, to_update: bool = False) -> EntityType:
         try:
-            orm_obj = self._to_orm(EntityType)
-            result = await self.manager.create(
-                orm_obj, on_conflict=OnConflictAction.NOTHING
-            )
-            return self._to_entity(result)
-        except NotConvertableError as e:
-            logger.error(f"Conversion error in save: {e}")
+            orm_obj = await self._to_orm(entity)
+
+            if not to_update:
+                result = await self.manager.create(
+                    orm_obj, on_conflict=OnConflictAction.NOTHING
+                )
+            else:
+                result = await self.manager.create(
+                    orm_obj, on_conflict=OnConflictAction.UPDATE
+                )
+
+            if result is None:
+                raise ValueError(f"Failed to save entity: {entity}")
+
+            return await self._to_entity(result)
+        except ObjectAlreadyExistsError:
+            logger.warning(f"Object already exists: {entity}")
             raise
         except Exception as e:
-            logger.error(f"Unexpected error in save: {e}")
+            logger.error(f"Error saving entity: {e}")
             raise
 
     async def delete(self, query: SqlQuery[FieldsType]) -> int:
         try:
-            where = self._build_where(query.filters or {})
+            where = await self._build_where(query.filters or {})
             return await self.manager.delete(where=where)
         except NotConvertableError as e:
             logger.error(f"Conversion error in delete: {e}")
@@ -95,10 +105,10 @@ class BaseRepository(
                 logger.error("Field cannot be None in get_by_field")
                 return None
 
-            orm_field = self._to_orm_field(field)
-            _, orm_value = self._to_orm_value(field, value)
+            orm_field = await self._to_orm_field(field)
+            _, orm_value = await self._to_orm_value(field, value)
             orm_select_field = (
-                self._to_orm_field(select_field) if select_field else None
+                await self._to_orm_field(select_field) if select_field else None
             )
 
             result = await self.manager.get_by_field(
@@ -109,10 +119,10 @@ class BaseRepository(
                 return None
 
             if select_field is not None:
-                _, entity_value = self._to_entity_value(orm_select_field, result)
+                _, entity_value = await self._to_entity_value(orm_select_field, result)
                 return entity_value
 
-            return self._to_entity(result)
+            return await self._to_entity(result)
 
         except NotConvertableError as e:
             logger.error(f"Conversion error in get_by_field: {e}")
@@ -123,9 +133,9 @@ class BaseRepository(
 
     async def get(self, query: SqlQuery[FieldsType]) -> Optional[EntityType]:
         try:
-            where = self._build_where(query.filters or {})
+            where = await self._build_where(query.filters or {})
             results = await self.manager.get_all(where=where, limit=1)
-            return self._to_entity(results[0]) if results else None
+            return await self._to_entity(results[0]) if results else None
         except NotConvertableError as e:
             logger.error(f"Conversion error in get: {e}")
             raise
@@ -135,11 +145,20 @@ class BaseRepository(
 
     async def get_all(self, query: SqlQuery[FieldsType]) -> List[EntityType]:
         try:
-            where = self._build_where(query.filters or {})
+            where = await self._build_where(query.filters or {})
+
+            orm_order_by = []
+            for field, direction in (query.order_by or []):
+                orm_field = await self._to_orm_field(field)
+                orm_order_by.append((orm_field, direction))
+
             results = await self.manager.get_all(
-                where=where, limit=query.limit, offset=query.offset
+                where=where,
+                limit=query.limit,
+                offset=query.offset,
+                order_by=orm_order_by or None,
             )
-            return [self._to_entity(r) for r in results]
+            return [await self._to_entity(r) for r in results]
         except NotConvertableError as e:
             logger.error(f"Conversion error in get_all: {e}")
             raise
@@ -149,7 +168,7 @@ class BaseRepository(
 
     async def count(self, query: SqlQuery[FieldsType]) -> int:
         try:
-            where = self._build_where(query.filters or {})
+            where = await self._build_where(query.filters or {})
             return await self.manager.count(where=where)
         except NotConvertableError as e:
             logger.error(f"Conversion error in count: {e}")

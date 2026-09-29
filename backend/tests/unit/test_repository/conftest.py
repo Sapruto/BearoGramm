@@ -36,22 +36,22 @@ class MockRedisMapper(BaseRedisMapper[MockEntity, MockFields]):
         MockFields.NAME: "name",
     }
 
-    def to_redis(self, entity: MockEntity) -> dict:
+    async def to_redis(self, entity: MockEntity) -> dict:
         return {"id": entity.id, "name": entity.name}
 
-    def to_entity(self, data: dict) -> MockEntity:
+    async def to_entity(self, data: dict) -> MockEntity:
         return MockEntity(id=data.get("id", ""), name=data.get("name", ""))
 
-    def to_redis_value(self, field, value):
-        return self.to_redis_field(field), str(value)
+    async def to_redis_value(self, field, value):
+        return await self.to_redis_field(field), str(value)
 
-    def to_entity_value(self, redis_field, value):
-        return self.to_entity_field(redis_field), value
+    async def to_entity_value(self, redis_field, value):
+        return await self.to_entity_field(redis_field), value
 
-    def to_redis_field(self, field):
+    async def to_redis_field(self, field):
         return self.field_mapping.get(field, str(field))
 
-    def to_entity_field(self, redis_field):
+    async def to_entity_field(self, redis_field):
         return self.reverse_field_mapping.get(redis_field, MockFields.ID)
 
     def get_id_field(self):
@@ -67,22 +67,22 @@ class MockSqlMapper(BaseMapper[MockEntity, MockORM, MockFields]):
         MockFields.NAME: "name",
     }
 
-    def to_orm(self, entity):
+    async def to_orm(self, entity):
         return MockORM(id=entity.id, name=entity.name)
 
-    def to_entity(self, orm):
+    async def to_entity(self, orm):
         return MockEntity(id=orm.id, name=orm.name)
 
-    def to_orm_value(self, field, value):
-        return self.to_orm_field(field), value
+    async def to_orm_value(self, field, value):
+        return await self.to_orm_field(field), value
 
-    def to_entity_value(self, field, value):
-        return self.to_entity_field(field), value
+    async def to_entity_value(self, field, value):
+        return await self.to_entity_field(field), value
 
-    def to_orm_field(self, field):
+    async def to_orm_field(self, field):
         return self.field_mapping.get(field)
 
-    def to_entity_field(self, field):
+    async def to_entity_field(self, field):
         return self.reverse_field_mapping.get(field)
 
 

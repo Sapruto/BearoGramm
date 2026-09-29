@@ -1,13 +1,14 @@
 from typing import Optional, List, Tuple, Dict, Any
 
 from src.general.repository.sql.sql_query import SqlQuery
+from src.modules.participants.models.enums import ResourceType
 from src.modules.profiles_custom import ProfileCustomService, get_profile_custom_service
 from src.modules.user import UserServiceAPI, get_user_service_api
 from src.modules.participants import Permission, PermissionService, ChatAction, MessageAction
 
-from .personal_models import PersonalChatResponse, PersonalChatPreview
+from .personal_models import PersonalChatResponse, PersonalChatPreview, GetChatPartnerResponse
 from .personal_exceptions import CannotChatWithSelfError, NotFoundUser, ChatIsExisting
-from .personal_repository import get_personal_repository, PersonalRepository
+from src.modules.chats.core.repositories.chat_repository import get_chat_repository, ChatRepository
 from ..base.base_chat_service import BaseChatService
 from ..base.exceptions import (
     UserNotParticipantError,
@@ -16,20 +17,25 @@ from ..base.exceptions import (
     ChatNotFoundError,
 )
 from ..chat_types import ChatType
+from ...core.services.notify_chat_event import get_notificator_chat_event, NotificatorChatEvents, ChatEventType
 from ...models.entities.chat_entity import ChatFields
 
 
 class PersonalChatService(BaseChatService):
     def __init__(
             self,
-            repository: Optional[PersonalRepository] = None,
+            repository: Optional[ChatRepository] = None,
             permission_service: Optional[PermissionService] = None,
             user_service: Optional[UserServiceAPI] = None,
             profile_service: Optional[ProfileCustomService] = None,
+            notify_service: Optional[NotificatorChatEvents] = None,
+            max_limit: Optional[int] = None,
     ):
-        self.user_service = user_service or get_user_service_api()
-        self.profile_service = profile_service or get_profile_custom_service()
-        super().__init__(repository or get_personal_repository(), permission_service)
+        self._user_service = user_service or get_user_service_api()
+        self._profile_service = profile_service or get_profile_custom_service()
+        self._notify_service = notify_service or get_notificator_chat_event()
+        self._max_limit = max_limit or 50
+        super().__init__(repository or get_chat_repository(), permission_service)
 
     def _get_chat_type(self) -> str:
         return ChatType.PERSONAL.value
@@ -61,7 +67,7 @@ class PersonalChatService(BaseChatService):
             user_uuid: str,
             other_user_phone: str
     ) -> PersonalChatResponse:
-        user = await self.user_service.get_user_by_phone(other_user_phone)
+        user = await self._user_service.get_user_by_phone(other_user_phone)
         if not user:
             raise NotFoundUser()
         other_user_uuid = user.uuid
@@ -69,11 +75,12 @@ class PersonalChatService(BaseChatService):
         if user_uuid == other_user_uuid:
             raise CannotChatWithSelfError()
 
-        existing = await self._repository.get_personal_chat_by_participants([user_uuid, other_user_uuid])
+        existing = await self._repository.get_chat_by_participants([user_uuid, other_user_uuid], self._get_chat_type())
         if existing:
             raise ChatIsExisting()
 
         chat = await self.create_chat(user_uuid=user_uuid, uuids=[user_uuid, other_user_uuid])
+        await self._notify_service.notify_about_chat_event(chat.uuid, ChatEventType.CREATE)
 
         return PersonalChatResponse(
             uuid=chat.uuid,
@@ -102,45 +109,70 @@ class PersonalChatService(BaseChatService):
                 partner_uuid = p.user_uuid
                 break
 
-        profiles = self.profile_service.get_by_user_uuids([user_uuid, partner_uuid])
+        partner_profile = self._profile_service.get_by_user_uuid(partner_uuid)
 
         return PersonalChatResponse(
             uuid=chat.uuid,
             partner_uuid=partner_uuid,
             created_at=chat.created_at,
             updated_at=chat.updated_at,
-            profiles=profiles
+            partner_profile=partner_profile
         )
 
-    async def get_user_chats(
-            self,
-            user_uuid: str,
-            limit: int = 50,
-            offset: int = 0
+    async def get_user_personal_chats(
+        self,
+        user_uuid: str,
+        limit: int = 50,
+        offset: int = 0,
     ) -> Tuple[List[PersonalChatPreview], int]:
-        query = SqlQuery[ChatFields]().add_filter(
-            ChatFields.CHAT_TYPE, ChatType.PERSONAL
-        )
-        query.limit = limit
-        query.offset = offset
 
-        chats = await self._repository.get_all(query)
-        total = await self._repository.count(query)
+        chats, total = await self._repository.get_user_chats(
+            user_uuid=user_uuid,
+            limit=min(self._max_limit, limit),
+            offset=offset,
+            show_new=True,
+            chat_type=self._get_chat_type()
+        )
+
+        if not chats:
+            return [], total
+
+        chat_uuids = [c.uuid for c in chats]
+
+        participants_by_chat = await self._permission_service.get_by_resources(
+            resource_uuids=chat_uuids,
+            resource_type=ResourceType.CHAT,
+        )
+
+        partner_by_chat: dict[str, str] = {}
+        partner_uuids: set[str] = set()
+        for chat in chats:
+            for p in participants_by_chat.get(chat.uuid, []):
+                if p.user_uuid != user_uuid:
+                    partner_by_chat[chat.uuid] = p.user_uuid
+                    partner_uuids.add(p.user_uuid)
+                    break
+
+        profiles_by_uuid = await self._profile_service.get_by_user_uuids(
+            list(partner_uuids),
+        )
 
         previews: List[PersonalChatPreview] = []
         for chat in chats:
-            participants = await self._permission_service.get_by_resource(chat.uuid)
-            partner_uuid: str = ""
-            for p in participants:
-                if p.user_uuid != user_uuid:
-                    partner_uuid = p.user_uuid
-                    break
+            partner_uuid = partner_by_chat.get(chat.uuid)
+            if partner_uuid is None:
+                continue
+
+            partner_profile = profiles_by_uuid.get(partner_uuid)
+            if partner_profile is None:
+                continue
 
             previews.append(
                 PersonalChatPreview(
                     uuid=chat.uuid,
                     partner_uuid=partner_uuid,
-                    updated_at=chat.updated_at
+                    partner_profile=partner_profile,
+                    updated_at=chat.updated_at,
                 )
             )
 
@@ -164,13 +196,15 @@ class PersonalChatService(BaseChatService):
         query = SqlQuery[ChatFields]().add_filter(ChatFields.UUID, chat_uuid)
         deleted_count: int = await self._repository.delete(query)
 
+        await self._notify_service.notify_about_chat_event(chat_uuid, ChatEventType.DELETE)
+
         return deleted_count > 0
 
     async def get_chat_partner(
             self,
             chat_uuid: str,
             user_uuid: str
-    ) -> str:
+    ) -> GetChatPartnerResponse:
         query = SqlQuery[ChatFields]().add_filter(ChatFields.UUID, chat_uuid)
         chat = await self._repository.get(query)
 
@@ -182,7 +216,8 @@ class PersonalChatService(BaseChatService):
         participants = await self._permission_service.get_by_resource(chat_uuid)
         for p in participants:
             if p.user_uuid != user_uuid:
-                return p.user_uuid
+                profile = await self._profile_service.get_by_user_uuid(p.user_uuid)
+                return GetChatPartnerResponse(partner_uuid=p.user_uuid, partner_profile=profile)
 
         raise UserNotParticipantError(user_uuid, chat_uuid)
 

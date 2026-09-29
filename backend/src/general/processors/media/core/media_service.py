@@ -3,7 +3,7 @@ from typing import Any, Optional
 from .storages.storage_api import StorageAPI, get_storage_api
 from .utils.media_utils import MediaUtils
 from .validator.media_validator import MediaValidator
-from ..models.media_message_data import MediaData, MediaTypeName
+from ..models.media_data import MediaData, MediaTypeName
 from ...base.base_data_processor import BaseDataProcessor
 from src.core.logger import get_logger
 

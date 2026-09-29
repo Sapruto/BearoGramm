@@ -17,6 +17,8 @@ logger = get_logger(__name__)
 class ProfileCustomMapper(BaseMapper[ProfileCustomEntity, ProfileCustomORM, ProfileCustomFields]):
     field_mapping = {
         ProfileCustomFields.UUID: ProfileCustomORM.uuid,
+        ProfileCustomFields.NAME: ProfileCustomORM.name,
+        ProfileCustomFields.AVATAR_URL: ProfileCustomORM.avatar_url,
         ProfileCustomFields.DATA: ProfileCustomORM.data,
         ProfileCustomFields.UPDATED_AT: ProfileCustomORM.updated_at,
         ProfileCustomFields.USER_UUID: ProfileCustomORM.user_uuid,
@@ -24,6 +26,8 @@ class ProfileCustomMapper(BaseMapper[ProfileCustomEntity, ProfileCustomORM, Prof
 
     reverse_field_mapping = {
         ProfileCustomORM.uuid: ProfileCustomFields.UUID,
+        ProfileCustomORM.name: ProfileCustomFields.NAME,
+        ProfileCustomORM.avatar_url: ProfileCustomFields.AVATAR_URL,
         ProfileCustomORM.data: ProfileCustomFields.DATA,
         ProfileCustomORM.updated_at: ProfileCustomFields.UPDATED_AT,
         ProfileCustomORM.user_uuid: ProfileCustomFields.USER_UUID,
@@ -81,6 +85,24 @@ class ProfileCustomMapper(BaseMapper[ProfileCustomEntity, ProfileCustomORM, Prof
             return {}
         return value
 
+    def _deserialize_data(self, raw: List) -> List[Dict]:
+        result = []
+        for item in raw:
+            if not isinstance(item, dict):
+                continue
+            data_type = item.get("data_type")
+            service = self.profile_registry.get_data_service(data_type) if data_type else None
+            model_cls = getattr(service, "data_model", None) if service else None
+            if model_cls:
+                try:
+                    result.append(model_cls(**item))
+                    continue
+                except Exception as e:
+                    logger.error(f"Deserialize error for {data_type}: {e}")
+            logger.warning(f"Unknown data_type {data_type}, keeping dict")
+            result.append(item)
+        return result
+
     async def prepare_data_to_save(
         self, profile_data: List[base_data_type]
     ) -> List[base_data_type]:
@@ -91,26 +113,34 @@ class ProfileCustomMapper(BaseMapper[ProfileCustomEntity, ProfileCustomORM, Prof
     ) -> List[base_data_type]:
         return await self._prepare_list_to_use(profile_data)
 
-    def to_orm(self, entity: ProfileCustomEntity) -> ProfileCustomORM:
+    async def to_orm(self, entity: ProfileCustomEntity) -> ProfileCustomORM:
+        prepared = await self.prepare_data_to_save(entity.data or [])
         return ProfileCustomORM(
             uuid=entity.uuid,
-            data=entity.data,
+            name=entity.name,
+            avatar_url=entity.avatar_url,
+            data=[d.model_dump() for d in prepared],
             updated_at=entity.updated_at,
             user_uuid=entity.user_uuid,
         )
 
-    def to_entity(self, orm: ProfileCustomORM) -> ProfileCustomEntity:
+    async def to_entity(self, orm: ProfileCustomORM) -> ProfileCustomEntity:
+        raw = orm.data or []
+        data_models = self._deserialize_data(raw)
+        prepared = await self.prepare_data_to_use(data_models)
         return ProfileCustomEntity(
             uuid=orm.uuid,
-            data=orm.data or {},
+            name=orm.name,
+            avatar_url=orm.avatar_url,
+            data=prepared,
             updated_at=orm.updated_at,
             user_uuid=orm.user_uuid,
         )
 
-    def to_orm_value(
+    async def to_orm_value(
         self, field: ProfileCustomFields, value: Any
     ) -> Tuple[InstrumentedAttribute, Any]:
-        orm_field = self.to_orm_field(field)
+        orm_field = await self.to_orm_field(field)
 
         if field == ProfileCustomFields.DATA:
             validated_value = self._validate_profile_data(value)
@@ -118,10 +148,10 @@ class ProfileCustomMapper(BaseMapper[ProfileCustomEntity, ProfileCustomORM, Prof
 
         return orm_field, value
 
-    def to_entity_value(
+    async def to_entity_value(
         self, field: InstrumentedAttribute, value: Any
     ) -> Tuple[ProfileCustomFields, Any]:
-        entity_field = self.to_entity_field(field)
+        entity_field = await self.to_entity_field(field)
 
         if entity_field == ProfileCustomFields.DATA:
             normalized_value = self._normalize_profile_data(value)
@@ -129,13 +159,13 @@ class ProfileCustomMapper(BaseMapper[ProfileCustomEntity, ProfileCustomORM, Prof
 
         return entity_field, value
 
-    def to_orm_field(self, field: ProfileCustomFields) -> InstrumentedAttribute:
+    async def to_orm_field(self, field: ProfileCustomFields) -> InstrumentedAttribute:
         orm_field = self.field_mapping.get(field)
         if not orm_field:
             raise ValueError(f"No mapping found for field: {field}")
         return orm_field
 
-    def to_entity_field(self, field: InstrumentedAttribute) -> ProfileCustomFields:
+    async def to_entity_field(self, field: InstrumentedAttribute) -> ProfileCustomFields:
         entity_field = self.reverse_field_mapping.get(field)
         if entity_field:
             return entity_field

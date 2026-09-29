@@ -93,7 +93,7 @@ class TestMessageResponses:
 
     def test_get_messages_response_success(self, sample_message_entity):
         response = GetMessagesResponse(
-            success=True, message_entity=[sample_message_entity]
+            success=True, messages=[sample_message_entity]
         )
         assert response.success is True
-        assert len(response.message_entity) == 1
+        assert len(response.messages) == 1

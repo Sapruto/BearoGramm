@@ -1,6 +1,5 @@
-from .api.chat_service_api import ChatServiceAPI, get_chat_service_api
+from .core.services.chat_service import ChatService, get_chat_service
 
 __all__ = [
-    "ChatServiceAPI",
-    "get_chat_service_api",
+    "ChatService", "get_chat_service",
 ]

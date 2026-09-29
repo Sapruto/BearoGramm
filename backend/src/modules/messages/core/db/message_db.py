@@ -8,6 +8,7 @@ class MessageManager(BaseManager[MessageORM]):
     def __init__(self):
         super().__init__(MessageORM, [MessageORM.uuid, MessageORM.created_at])
 
+    @property
     def identifier_field(self) -> InstrumentedAttribute:
         return MessageORM.uuid
 

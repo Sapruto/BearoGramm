@@ -1,9 +1,9 @@
-from typing import Optional, List
+from typing import Optional, List, Dict
 
 from src.core.logger import get_logger
 from src.general.repository.sql.sql_query import SqlQuery
 
-from ..exceptions import ParticipantNotFoundError, PermissionAlreadyExistsError
+from ..exceptions import ParticipantNotFoundError, PermissionAlreadyExistsError, NotParticipant
 from ..repositories.participant_repository import ParticipantRepository
 from ...models.enums import ResourceType, ActionTypification
 from ...models.entities.participant_entity import ParticipantEntity
@@ -74,6 +74,24 @@ class PermissionService:
     ) -> List[ParticipantEntity]:
         return await self.participant_repository.find_by_resource(resource_uuid)
 
+    async def get_by_resources(
+            self,
+            resource_uuids: List[str],
+            resource_type: Optional[ResourceType] = None,
+    ) -> Dict[str, List[ParticipantEntity]]:
+        if not resource_uuids:
+            return {}
+
+        entities = await self.participant_repository.find_by_resources(
+            resource_uuids, resource_type
+        )
+    
+        result: Dict[str, List[ParticipantEntity]] = {uuid: [] for uuid in resource_uuids}
+        for entity in entities:
+            result.setdefault(entity.resource_uuid, []).append(entity)
+    
+        return result
+
     async def update(
         self,
         uuid: str,
@@ -101,15 +119,16 @@ class PermissionService:
         user_uuid: str,
         resource_uuid: str,
         resource_type: ResourceType,
-        action: ActionTypification
+        action: Optional[ActionTypification] = None,
     ) -> bool:
         participant = await self.participant_repository.find_user_resource(
             user_uuid, resource_uuid, resource_type
         )
         if not participant:
-            return False
-        if not participant.permissions.get(action, False):
-            return False
+            raise NotParticipant()
+        if action:
+            if not participant.permissions.get(action, False):
+                return False
         return True
 
 

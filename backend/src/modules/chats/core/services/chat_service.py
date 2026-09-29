@@ -1,96 +1,61 @@
-from typing import Optional, List
-from sqlalchemy import select
+from typing import List, Optional
 
-from src.modules.user import UserEntity
 from src.core.logger import get_logger
+from src.modules.participants import (
+    PermissionService,
+    get_permission_service,
+)
+from src.modules.participants.models.entities.participant_entity import ParticipantEntity
 
-from ..repositories.chat_repository import ChatRepository, get_chat_repository
+from ..repositories.chat_repository import (
+    ChatRepository,
+    get_chat_repository,
+)
 from ...models.entities.chat_entity import ChatEntity
-from ...models.orm.chat_orm import ChatORM
-
 
 logger = get_logger(__name__)
 
 
 class ChatService:
-    def __init__(self, chat_repository: Optional[ChatRepository] = None):
+    def __init__(
+        self,
+        chat_repository: Optional[ChatRepository] = None,
+        permission_service: Optional[PermissionService] = None,
+    ):
         self.chat_repository = chat_repository or get_chat_repository()
-
-    async def chat_exists(self, chat_uuid: str) -> bool:
-        try:
-            chat = await self.chat_repository.get_by_id(chat_uuid)
-            return chat is not None
-        except Exception as e:
-            logger.error(f"Error checking chat exists: {e}")
-            return False
-
-    async def user_in_chat(self, chat_uuid: str, user: UserEntity) -> bool:
-        try:
-            chat = await self.chat_repository.get_by_id(chat_uuid)
-            if not chat:
-                return False
-
-            for access in chat.accesses:
-                if hasattr(access, "user_uuid") and access.user_uuid == user.uuid:
-                    return True
-                if hasattr(access, "get_user_uuid"):
-                    if access.get_user_uuid() == user.uuid:
-                        return True
-
-            return False
-
-        except Exception as e:
-            logger.error(f"Error checking user in chat: {e}")
-            return False
+        self.permission_service = permission_service or get_permission_service()
 
     async def get_chat(self, chat_uuid: str) -> Optional[ChatEntity]:
+        return await self.chat_repository.get_by_uuid(chat_uuid)
+
+    async def get_participants(self, chat_uuid: str) -> List[ParticipantEntity]:
         try:
-            return await self.chat_repository.get_by_id(chat_uuid)
+            participants = await self.permission_service.get_by_resource(chat_uuid)
         except Exception as e:
-            logger.error(f"Error getting chat: {e}")
-            return None
-
-    async def get_chat_by_uuid(self, chat_uuid: str) -> Optional[ChatEntity]:
-        return await self.get_chat(chat_uuid)
-
-    async def get_chats_by_user(self, user_uuid: str) -> List[ChatEntity]:
-        try:
-            stmt = select(ChatORM).where(
-                ChatORM.accesses.contains([{"user_uuid": user_uuid}])
+            logger.error(
+                "Failed to get participants for chat %s: %s",
+                chat_uuid, e, exc_info=True,
             )
-            results = await self.chat_repository.manager.get_all_by_stmt(stmt)
-            return [self.chat_repository._to_entity(r) for r in results]
-        except Exception as e:
-            logger.error(f"Error getting chats for user: {e}")
             return []
+        return participants or []
 
-    async def delete_chat(self, chat_uuid: str) -> bool:
-        try:
-            deleted_count = await self.chat_repository.delete_by_id(chat_uuid)
-            return deleted_count > 0
-        except Exception as e:
-            logger.error(f"Error deleting chat: {e}")
-            return False
+    async def get_participant_uuids(self, chat_uuid: str) -> List[str]:
+        participants = await self.get_participants(chat_uuid)
 
-    async def get_chat_participants(self, chat_uuid: str) -> List[str]:
-        try:
-            chat = await self.get_chat(chat_uuid)
-            if not chat:
-                logger.warning(f"Chat {chat_uuid} not found")
-                return []
+        result: List[str] = []
+        for p in participants:
+            uuid = (
+                getattr(p, "user_uuid", None)
+                or getattr(p, "uuid", None)
+                or p
+            )
+            if uuid:
+                result.append(str(uuid))
+        return result
 
-            participants = []
-            for access in chat.accesses:
-                if hasattr(access, "user_uuid"):
-                    participants.append(access.user_uuid)
-                elif hasattr(access, "get_user_uuid"):
-                    participants.append(access.get_user_uuid())
-
-            return participants
-
-        except Exception as e:
-            logger.error(f"Error getting chat participants: {e}")
-            return []
+    async def is_participant(self, chat_uuid: str, user_uuid: str) -> bool:
+        uuids = await self.get_participant_uuids(chat_uuid)
+        return user_uuid in uuids
 
 
 def get_chat_service() -> ChatService:

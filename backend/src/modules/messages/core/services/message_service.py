@@ -1,17 +1,27 @@
+from datetime import datetime, timezone
 from typing import Optional
 
-from .websocket_message_service import (
-    WebSocketMessageService,
-    get_websocket_message_service,
+from src.general.repository.sql.sql_query import SqlQuery
+from src.modules.participants.core.exceptions import NotParticipant
+from src.modules.event_notification import (
+    EventNotificationService,
+    get_notification_event_service,
 )
-from src.general.processors.data_processor import DataProcessor
-from ..repositories.message_repository import MessageRepository, get_message_repository
-from ...models.dto.requests import (
-    SendMessageRequest,
-    GetMessagesRequest,
-    UpdateMessageRequest,
-    DeleteMessageRequest,
+from src.modules.chats import ChatService, get_chat_service
+from ..exceptions import (
+    ChecksFailed,
+    DatabaseSaveFailed,
+    MessageNotFoundError,
+    MessageNotOwnedByUserError,
+    DatabaseUpdateFailed,
+    DatabaseDeleteFailed,
+    HasNotChat,
 )
+from ..repositories.message_repository import (
+    MessageRepository,
+    get_message_repository,
+)
+from ...models.dto.requests import SendMessageRequest, UpdateMessageRequest
 from ...models.dto.responses import (
     SendMessageResponse,
     GetMessagesResponse,
@@ -19,10 +29,14 @@ from ...models.dto.responses import (
     DeleteMessageResponse,
 )
 from ...models.entities.message_entity import MessageEntity, MessageFields
+from ...models.message_load_options import MessageLoadOptions
 
-from src.modules.chats import ChatServiceAPI, get_chat_service_api
-from src.modules.participants import PermissionService, get_permission_service, MessageAction, ResourceType
-from src.general.repository.sql.sql_query import SqlQuery
+from src.modules.participants import (
+    PermissionService,
+    get_permission_service,
+    MessageAction,
+    ResourceType,
+)
 from src.core.logger import get_logger
 
 logger = get_logger(__name__)
@@ -32,217 +46,203 @@ class MessageService:
     def __init__(
         self,
         message_repository: Optional[MessageRepository] = None,
-        data_processor: Optional[DataProcessor] = None,
-        websocket_service: Optional[WebSocketMessageService] = None,
+        notification_service: Optional[EventNotificationService] = None,
         permission_service: Optional[PermissionService] = None,
-        chat_service: Optional[ChatServiceAPI] = None,
+        chat_service: Optional[ChatService] = None,
     ):
         self.message_repository = message_repository or get_message_repository()
-        self.data_processor = data_processor or DataProcessor()
-        self.websocket_service = websocket_service or get_websocket_message_service()
-
+        self.notification_service = notification_service or get_notification_event_service()
         self.permission_service = permission_service or get_permission_service()
-        self.chat_service = chat_service or get_chat_service_api()
-
+        self.chat_service = chat_service or get_chat_service()
         self.max_limit = 100
 
-    async def _checks_in_chat_service(
-        self, chat_uuid: str, user_uuid: str, action_type: MessageAction
-    ) -> bool:
-        if not self.chat_service.chat_exists(chat_uuid):
-            return False
-        if not self.chat_service.user_in_chat(chat_uuid, user_uuid):
-            return False
-        if not self.permission_service.validate(user_uuid, chat_uuid, ResourceType.CHAT, action_type):
-            return False
-        return True
-
-    async def _get_chat_participants(self, chat_uuid: str) -> list[str]:
-        return await self.chat_service.get_chat_participants(chat_uuid) or []
-
-    async def send_message(self, request: SendMessageRequest) -> SendMessageResponse:
-        process_result = None
+    async def _check_access(
+        self, chat_uuid: str, user_uuid: str, action: MessageAction
+    ) -> None:
+        has_chat = await self.chat_service.get_chat(chat_uuid)
+        if not has_chat:
+            raise HasNotChat()
         try:
-            if not await self._checks_in_chat_service(
-                request.chat_uuid, request.user_uuid, MessageAction.CREATE
-            ):
-                return SendMessageResponse(
-                    success=False, error_message="_checks_in_chat_service failed"
-                )
-
-            process_result = await self.data_processor.save_data(request.typing_to_data)
-
-            if not process_result.success:
-                return SendMessageResponse(
-                    success=False,
-                    error_message=process_result.error_message
-                    or "Failed to process message data",
-                )
-
-            entity = MessageEntity(
-                chat_uuid=request.chat_uuid,
-                message_data=process_result.processed_data,
-                user_uuid=request.user_uuid,
+            ok = await self.permission_service.validate(
+                user_uuid, chat_uuid, ResourceType.CHAT, action
             )
+        except NotParticipant:
+            raise NotParticipant()
+        if not ok:
+            raise ChecksFailed()
 
-            saved_entity = await self.message_repository.save(entity)
-            if not saved_entity or not isinstance(saved_entity, MessageEntity):
-                return SendMessageResponse(
-                    success=False, error_message="Database error"
-                )
-
-            notification = {
-                "type": "new_message",
-                "data": saved_entity.model_dump(mode="json"),
-            }
-            await self.websocket_service.notify_chat_participants(
-                saved_entity.chat_uuid, notification
-            )
-
-            return SendMessageResponse(success=True, message_entity=saved_entity)
-
+    async def _notify(self, chat_uuid: str, notification: dict) -> None:
+        try:
+            user_uuids = await self.chat_service.get_participant_uuids(chat_uuid)
+            await self.notification_service.notify_users(user_uuids, notification)
         except Exception as e:
-            logger.error(f"Error in send_message: {e}")
-            await self.data_processor.delete_data(
-                process_result.processed_data if process_result else []
+            logger.error(
+                "Notification failed for chat %s: %s", chat_uuid, e, exc_info=True
             )
 
-            return SendMessageResponse(success=False, error_message=str(e))
+    async def send_message(
+        self, request: SendMessageRequest, user_uuid: str
+    ) -> SendMessageResponse:
+        await self._check_access(request.chat_uuid, user_uuid, MessageAction.CREATE)
+
+        entity = MessageEntity(
+            chat_uuid=request.chat_uuid,
+            message_text=request.message_text,
+            extra_data=request.extra_data,
+            references=request.references,
+            user_uuid=user_uuid,
+            created_at=datetime.now(timezone.utc),
+        )
+
+        saved_entity = await self.message_repository.save_with_relations(entity)
+        if not saved_entity:
+            raise DatabaseSaveFailed()
+
+        await self._notify(
+            saved_entity.chat_uuid,
+            {"type": "message_created", "data": saved_entity.model_dump(mode="json")},
+        )
+        return SendMessageResponse(message_entity=saved_entity)
 
     async def update_message(
-        self, request: UpdateMessageRequest
+        self, request: UpdateMessageRequest, user_uuid: str
     ) -> UpdateMessageResponse:
-        try:
-            query = SqlQuery[MessageFields]()
-            query.add_filter(MessageFields.UUID, request.message_uuid)
-            message = await self.message_repository.get(query)
-            if not message:
-                return UpdateMessageResponse(
-                    success=False, error_message="Message not found"
-                )
+        message = await self.message_repository.get_by_uuid(
+            request.message_uuid,
+            load_options=MessageLoadOptions(extra=True),
+        )
+        if not message:
+            raise MessageNotFoundError()
 
-            if message.user_uuid != request.user_uuid:
-                return UpdateMessageResponse(
-                    success=False, error_message="Message not belong to user"
-                )
+        if message.user_uuid != user_uuid:
+            raise MessageNotOwnedByUserError()
 
-            if not await self._checks_in_chat_service(
-                message.chat_uuid, request.user_uuid, MessageAction.UPDATE
-            ):
-                return UpdateMessageResponse(
-                    success=False, error_message="_checks_in_chat_service failed"
-                )
+        await self._check_access(message.chat_uuid, user_uuid, MessageAction.UPDATE)
 
-            process_result = await self.data_processor.update_data(
-                old_message_data=message.message_data,
-                new_typing_to_data=request.typing_to_data,
-            )
-            if not process_result.success:
-                return UpdateMessageResponse(
-                    success=False,
-                    error_message=process_result.error_message
-                    or "Failed to process message data",
-                )
+        if request.message_text is not None:
+            message.message_text = request.message_text
 
-            message.message_data = process_result.processed_data
-            saved_entity = await self.message_repository.update(message)
+        if request.extra_data is not None:
+            message.extra_data = request.extra_data
+        elif request.clear_extra_data:
+            message.extra_data = None
 
-            if not saved_entity:
-                return UpdateMessageResponse(
-                    success=False, error_message="Failed to update message"
-                )
+        message.updated_at = datetime.now(timezone.utc)
 
-            notification = {
-                "type": "message_updated",
-                "data": saved_entity.model_dump(mode="json"),
-            }
-            await self.websocket_service.notify_chat_participants(
-                saved_entity.chat_uuid, notification
-            )
+        saved_entity = await self.message_repository.update(message)
+        if not saved_entity:
+            raise DatabaseUpdateFailed()
 
-            return UpdateMessageResponse(success=True, message_entity=saved_entity)
-
-        except Exception as e:
-            logger.error(f"Error in update_message: {e}")
-            return UpdateMessageResponse(success=False, error_message=str(e))
+        await self._notify(
+            saved_entity.chat_uuid,
+            {"type": "message_updated", "data": saved_entity.model_dump(mode="json")},
+        )
+        return UpdateMessageResponse(message_entity=saved_entity)
 
     async def delete_message(
-        self, request: DeleteMessageRequest
+        self, message_uuid: str, user_uuid: str
     ) -> DeleteMessageResponse:
-        try:
-            query = SqlQuery[MessageFields]()
-            query.add_filter(MessageFields.UUID, request.message_uuid)
-            message = await self.message_repository.get(query)
-            if not message:
-                return DeleteMessageResponse(
-                    success=False, error_message="Message not found"
-                )
+        message = await self.message_repository.get_by_uuid(message_uuid)
+        if not message:
+            raise MessageNotFoundError()
 
-            if message.user_uuid != request.user_uuid:
-                return DeleteMessageResponse(
-                    success=False, error_message="Message not belong to user"
-                )
+        if message.user_uuid != user_uuid:
+            raise MessageNotOwnedByUserError()
 
-            if not await self._checks_in_chat_service(
-                message.chat_uuid, request.user_uuid, MessageAction.DELETE
-            ):
-                return DeleteMessageResponse(
-                    success=False, error_message="_checks_in_chat_service failed"
-                )
+        await self._check_access(message.chat_uuid, user_uuid, MessageAction.DELETE)
 
-            query = SqlQuery[MessageFields]()
-            query.add_filter(MessageFields.UUID, request.message_uuid)
-            deleted_count = await self.message_repository.delete(query)
+        deleted = await self.message_repository.delete_by_uuid(message_uuid)
+        if not deleted:
+            raise DatabaseDeleteFailed()
 
-            if deleted_count == 0:
-                return DeleteMessageResponse(
-                    success=False, error_message="Failed to delete message"
-                )
+        await self._notify(
+            message.chat_uuid,
+            {"type": "message_deleted", "data": {"message_uuid": message_uuid}},
+        )
+        return DeleteMessageResponse()
 
-            notification = {
-                "type": "message_deleted",
-                "data": {"message_uuid": request.message_uuid},
-            }
-            await self.websocket_service.notify_chat_participants(
-                message.chat_uuid, notification
-            )
-            return DeleteMessageResponse(success=True)
+    async def get_message(
+        self, message_uuid: str, user_uuid: str
+    ) -> MessageEntity:
+        message = await self.message_repository.get_by_uuid(
+            message_uuid,
+            load_options=MessageLoadOptions(extra=True, references=True, user=True),
+        )
+        if not message:
+            raise MessageNotFoundError()
 
-        except Exception as e:
-            logger.error(f"Error in delete_message: {e}")
-            return DeleteMessageResponse(success=False, error_message=str(e))
+        await self._check_access(message.chat_uuid, user_uuid, MessageAction.GET)
+        return message
 
-    async def get_messages(self, request: GetMessagesRequest) -> GetMessagesResponse:
-        try:
-            if not await self._checks_in_chat_service(
-                request.chat_uuid, request.user_uuid, MessageAction.GET
-            ):
-                return GetMessagesResponse(
-                    success=False,
-                    error_message="User not in chat or chat_uuid not correct",
-                )
+    async def get_messages(
+            self,
+            chat_uuid: str,
+            limit: int,
+            offset: int,
+            user_uuid: str,
+            show_new: bool,
+    ) -> GetMessagesResponse:
+        await self._check_access(chat_uuid, user_uuid, MessageAction.GET)
 
-            query = SqlQuery[MessageFields]()
-            query.add_filter(MessageFields.CHAT_UUID, request.chat_uuid)
+        query = SqlQuery[MessageFields]()
+        query.add_filter(MessageFields.CHAT_UUID, chat_uuid)
 
-            if request.limit > self.max_limit:
-                query.limit = self.max_limit
-            else:
-                query.limit = request.limit
-            query.offset = request.offset
+        query.limit = min(limit, self.max_limit)
+        query.offset = offset
 
-            if request.show_new:
-                query.add_order_by(MessageFields.CREATED_AT, "desc")
-            else:
-                query.add_order_by(MessageFields.CREATED_AT, "asc")
+        if show_new:
+            query.add_order_by(MessageFields.CREATED_AT, "desc")
+        else:
+            query.add_order_by(MessageFields.CREATED_AT, "asc")
 
-            messages = await self.message_repository.get_all(query)
+        messages = await self.message_repository.get_all_with_options(
+            query,
+            load_options=MessageLoadOptions(extra=True, references=True, user=True),
+        )
+        return GetMessagesResponse(messages=list(messages))
 
-            return GetMessagesResponse(success=True, message_entity=messages)
+    async def get_around_message(
+        self,
+        message_uuid: str,
+        user_uuid: str,
+        span_start: int,
+        span_end: int,
+    ) -> GetMessagesResponse:
+        if span_start > 0:
+            raise ValueError("span_start must be <= 0")
+        if span_end < 0:
+            raise ValueError("span_end must be >= 0")
 
-        except Exception as e:
-            logger.error(f"Error in get_messages: {e}")
-            return GetMessagesResponse(success=False, error_message=str(e))
+        target = await self.get_message(message_uuid, user_uuid)
+
+        left = min(-span_start, self.max_limit)
+        right = min(span_end, self.max_limit - left)
+
+        messages = await self.message_repository.get_around(
+            chat_uuid=target.chat_uuid,
+            message_uuid=target.uuid,
+            created_at=target.created_at,
+            span_start=left,
+            span_end=right,
+            load_options=MessageLoadOptions(extra=True, references=True, user=True),
+        )
+        return GetMessagesResponse(messages=list(messages))
+
+    async def get_messages_before(self, before_uuid: str, limit: int, user_uuid: str) -> GetMessagesResponse:
+        return await self.get_around_message(
+            message_uuid=before_uuid,
+            user_uuid=user_uuid,
+            span_start=-min(limit, self.max_limit),
+            span_end=0,
+        )
+
+    async def get_messages_after(self, after_uuid: str, limit: int, user_uuid: str) -> GetMessagesResponse:
+        return await self.get_around_message(
+            message_uuid=after_uuid,
+            user_uuid=user_uuid,
+            span_start=0,
+            span_end=min(limit, self.max_limit),
+        )
 
 
 def get_message_service() -> MessageService:

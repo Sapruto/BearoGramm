@@ -22,27 +22,27 @@ class BaseRedisMapper(Generic[Entity, Fields], ABC):
             }
 
     @abstractmethod
-    def to_redis(self, entity: Entity) -> Dict[str, Any]:
+    async def to_redis(self, entity: Entity) -> Dict[str, Any]:
         pass
 
     @abstractmethod
-    def to_entity(self, data: Dict[str, Any]) -> Entity:
+    async def to_entity(self, data: Dict[str, Any]) -> Entity:
         pass
 
     @abstractmethod
-    def to_redis_value(self, field: Fields, value: Any) -> Tuple[str, Any]:
+    async def to_redis_value(self, field: Fields, value: Any) -> Tuple[str, Any]:
         pass
 
     @abstractmethod
-    def to_entity_value(self, redis_field: str, value: Any) -> Tuple[Fields, Any]:
+    async def to_entity_value(self, redis_field: str, value: Any) -> Tuple[Fields, Any]:
         pass
 
     @abstractmethod
-    def to_redis_field(self, field: Fields) -> str:
+    async def to_redis_field(self, field: Fields) -> str:
         pass
 
     @abstractmethod
-    def to_entity_field(self, redis_field: str) -> Fields:
+    async def to_entity_field(self, redis_field: str) -> Fields:
         pass
 
     def get_key(self, entity_id: Any) -> str:
@@ -55,8 +55,13 @@ class BaseRedisMapper(Generic[Entity, Fields], ABC):
 
     def get_id_from_entity(self, entity: Entity) -> Optional[Any]:
         id_field = self.get_id_field()
-        if id_field and hasattr(entity, id_field):
-            return getattr(entity, id_field)
+        if id_field is None:
+            return None
+
+        field_name = id_field.value if hasattr(id_field, "value") else str(id_field)
+
+        if hasattr(entity, field_name):
+            return getattr(entity, field_name)
         return None
 
     def serialize_value(self, value: Any) -> str:

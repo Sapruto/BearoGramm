@@ -27,7 +27,7 @@ class ChatMapper(BaseMapper[ChatEntity, ChatORM, ChatFields]):
         ChatORM.updated_at: ChatFields.UPDATED_AT,
     }
 
-    def to_orm(self, entity: ChatEntity) -> ChatORM:
+    async def to_orm(self, entity: ChatEntity) -> ChatORM:
         return ChatORM(
             uuid=entity.uuid,
             chat_type=entity.chat_type,
@@ -35,34 +35,34 @@ class ChatMapper(BaseMapper[ChatEntity, ChatORM, ChatFields]):
             updated_at=entity.updated_at,
         )
 
-    def to_entity(self, orm: ChatORM) -> ChatEntity:
+    async def to_entity(self, orm: ChatORM) -> ChatEntity:
         return ChatEntity(
             uuid=orm.uuid,
             created_at=orm.created_at,
             updated_at=orm.updated_at,
         )
 
-    def to_orm_value(
+    async def to_orm_value(
         self, field: ChatFields, value: Any
     ) -> Tuple[InstrumentedAttribute, Any]:
-        orm_field = self.to_orm_field(field)
+        orm_field = await self.to_orm_field(field)
 
         return orm_field, value
 
-    def to_entity_value(
+    async def to_entity_value(
         self, field: InstrumentedAttribute, value: Any
     ) -> Tuple[ChatFields, Any]:
-        entity_field = self.to_entity_field(field)
+        entity_field = await self.to_entity_field(field)
 
         return entity_field, value
 
-    def to_orm_field(self, field: ChatFields) -> InstrumentedAttribute:
+    async def to_orm_field(self, field: ChatFields) -> InstrumentedAttribute:
         orm_field = self.field_mapping.get(field)
         if not orm_field:
             raise ValueError(f"No mapping found for field: {field}")
         return orm_field
 
-    def to_entity_field(self, field: InstrumentedAttribute) -> ChatFields:
+    async def to_entity_field(self, field: InstrumentedAttribute) -> ChatFields:
         entity_field = self.reverse_field_mapping.get(field)
         if entity_field:
             return entity_field

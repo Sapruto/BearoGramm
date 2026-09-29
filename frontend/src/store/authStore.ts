@@ -1,28 +1,48 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { queryClient } from '../shared/api/queryClient';
+import { queryKeys } from '../shared/lib/queryKeys';
 
 type AuthStore = {
     phone: string;
     setPhone: (phone: string) => void;
 
     token: string | null;
+    userUUID: string | null;
     setToken: (token: string) => void;
+    setUserUUID: (userUUID: string) => void;
     logout: () => void;
+
+    isLoggedIn: () => boolean;
 };
 
 export const useAuthStore = create<AuthStore>()(
     persist(
-        (set) => ({
+        (set, get) => ({
             phone: '',
             setPhone: (phone) => set({ phone }),
 
             token: null,
+            userUUID: null,
             setToken: (token) => set({ token }),
-            logout: () => set({ token: null, phone: '' }),
+            setUserUUID: (userUUID) => set({ userUUID }),
+            logout: () => {
+                const { token } = get();
+                if (token === null)
+                    return;
+
+                queryClient.removeQueries({ queryKey: queryKeys.myProfile });
+                set({ token: null, userUUID: null, phone: '' });
+            },
+
+            isLoggedIn: () => {
+                const state = get();
+                return Boolean(state.token && state.userUUID);
+            },
         }),
         {
             name: 'auth-storage',
-            partialize: (state) => ({ token: state.token }),
+            partialize: (state) => ({ token: state.token, userUUID: state.userUUID }),
         }
     )
 );

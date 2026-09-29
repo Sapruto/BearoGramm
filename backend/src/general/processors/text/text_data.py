@@ -1,7 +1,7 @@
 from pydantic import Field
 from ..base.base_data import BaseData
 
-TextTypeName = "text_message_type"
+TextTypeName = "text_type"
 
 
 class TextData(BaseData):

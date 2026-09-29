@@ -1,0 +1,13 @@
+services:
+  backend:
+    volumes:
+      - ./backend:/app
+      - backend_uploads:/app/uploads
+      - backend_static:/app/static
+    command: ["python", "run.py"]
+    environment:
+      ENV: development
+
+  frontend:
+    ports:
+      - "5173:80"

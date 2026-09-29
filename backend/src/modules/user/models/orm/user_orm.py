@@ -1,6 +1,6 @@
 from src.core.database import Base
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy import String, DateTime, func, Uuid
+from sqlalchemy import String, DateTime, func
 
 from typing import List
 from uuid import uuid4
@@ -11,7 +11,7 @@ class UserORM(Base):
     __tablename__ = "users"
 
     uuid: Mapped[str] = mapped_column(
-        Uuid(as_uuid=False), primary_key=True, default=lambda: str(uuid4())
+        String(36), primary_key=True, default=lambda: str(uuid4())
     )
 
     phone_number_encrypted: Mapped[str] = mapped_column(String(512), nullable=True)

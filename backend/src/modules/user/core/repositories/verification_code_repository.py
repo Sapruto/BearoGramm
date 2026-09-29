@@ -16,14 +16,12 @@ logger = get_logger(__name__)
 
 
 class VerificationCodeEntity(BaseModel):
-    user_uuid: str
     phone: str
     code: str
     expired_at: datetime
 
 
 class VerificationCodeFields(str, Enum):
-    USER_UUID = "user_uuid"
     PHONE = "phone"
     CODE = "code"
     EXPIRED_AT = "expired_at"
@@ -36,23 +34,20 @@ class VerificationCodeMapper(
     storage_type = "hash"
 
     field_mapping = {
-        VerificationCodeFields.USER_UUID: "user_uuid",
         VerificationCodeFields.PHONE: "phone",
         VerificationCodeFields.CODE: "code",
         VerificationCodeFields.EXPIRED_AT: "expired_at",
     }
 
-    def to_redis(self, entity: VerificationCodeEntity) -> dict:
+    async def to_redis(self, entity: VerificationCodeEntity) -> dict:
         return {
-            "user_uuid": entity.user_uuid,
             "phone": entity.phone,
             "code": entity.code,
             "expired_at": entity.expired_at.isoformat(),
         }
 
-    def to_entity(self, data: dict) -> VerificationCodeEntity:
+    async def to_entity(self, data: dict) -> VerificationCodeEntity:
         return VerificationCodeEntity(
-            user_uuid=data.get("user_uuid", ""),
             phone=data.get("phone", ""),
             code=data.get("code", ""),
             expired_at=datetime.fromisoformat(
@@ -60,16 +55,16 @@ class VerificationCodeMapper(
             ),
         )
 
-    def to_redis_value(self, field: VerificationCodeFields, value) -> tuple[str, any]:
-        redis_field = self.to_redis_field(field)
+    async def to_redis_value(self, field: VerificationCodeFields, value) -> tuple[str, any]:
+        redis_field = await self.to_redis_field(field)
         if field == VerificationCodeFields.EXPIRED_AT and isinstance(value, datetime):
             return redis_field, value.isoformat()
         return redis_field, str(value) if value is not None else ""
 
-    def to_entity_value(
+    async def to_entity_value(
         self, redis_field: str, value
     ) -> tuple[VerificationCodeFields, any]:
-        entity_field = self.to_entity_field(redis_field)
+        entity_field = await self.to_entity_field(redis_field)
         if value is None:
             return entity_field, None
         if isinstance(value, bytes):
@@ -81,10 +76,10 @@ class VerificationCodeMapper(
                 return entity_field, None
         return entity_field, value
 
-    def to_redis_field(self, field: VerificationCodeFields) -> str:
+    async def to_redis_field(self, field: VerificationCodeFields) -> str:
         return self.field_mapping.get(field, field.value)
 
-    def to_entity_field(self, redis_field: str) -> VerificationCodeFields:
+    async def to_entity_field(self, redis_field: str) -> VerificationCodeFields:
         for entity_field, redis_str in self.field_mapping.items():
             if redis_str == redis_field:
                 return entity_field

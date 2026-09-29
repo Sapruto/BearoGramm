@@ -6,7 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from src.core.settings import Settings
 from src.core.paths import STATIC_ROOT
-from src.core.database import init_db, close_db
+from src.core.database import close_db, init_db
 from src.core.logger import get_logger
 
 
@@ -19,12 +19,16 @@ def include_all_routers(app: FastAPI) -> FastAPI:
     from src.modules.messages import message_router
     from src.modules.calls import calls_router
     from src.modules.profiles_custom import profile_custom_router
+    from src.modules.media import media_router
+    from src.modules.event_notification import event_notification_router
 
     app.include_router(auth_router)
     app.include_router(personal_chats_router)
     app.include_router(message_router)
     app.include_router(calls_router)
     app.include_router(profile_custom_router)
+    app.include_router(media_router)
+    app.include_router(event_notification_router)
 
     return app
 
@@ -61,7 +65,7 @@ def create_app() -> FastAPI:
     )
 
     if STATIC_ROOT.exists():
-        app.mount("/static", StaticFiles(directory=str(STATIC_ROOT)), name="static")
+        app.mount("/media", StaticFiles(directory=str(STATIC_ROOT)), name="media")
 
     app = include_all_routers(app)
 
