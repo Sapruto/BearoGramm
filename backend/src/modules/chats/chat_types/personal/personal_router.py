@@ -5,11 +5,11 @@ from src.modules.user import get_current_user_depends
 from .personal_chat_service import PersonalChatService, get_personal_chat_service
 from .personal_models import (
     PersonalChatResponse,
-    PersonalChatCreateRequest,
-    PartnerResponse,
-    ParticipantCheckResponse,
-    DeleteChatResponse,
-    PersonalChatListResponse,
+    CreatePersonalChatRequest,
+    GetChatPartnerResponse,
+    CheckParticipantResponse,
+    DeletePersonalChatResponse,
+    GetPersonalChatsResponse,
 )
 from .personal_exceptions import CannotChatWithSelfError, NotFoundUser, ChatIsExisting
 from ..base.exceptions import (
@@ -29,7 +29,7 @@ personal_chats_router = APIRouter(prefix="/api/personal", tags=["personal_chat"]
     status_code=status.HTTP_201_CREATED
 )
 async def create_personal_chat(
-        request: PersonalChatCreateRequest,
+        request: CreatePersonalChatRequest,
         current_user = Depends(get_current_user_depends()),
         service: PersonalChatService = Depends(get_personal_chat_service)
 ) -> PersonalChatResponse:
@@ -95,14 +95,14 @@ async def get_personal_chat(
 
 @personal_chats_router.get(
     "/",
-    response_model=PersonalChatListResponse
+    response_model=GetPersonalChatsResponse
 )
 async def get_personal_chats(
         limit: int = Query(50, ge=1, le=100),
         offset: int = Query(0, ge=0),
         current_user = Depends(get_current_user_depends()),
         service: PersonalChatService = Depends(get_personal_chat_service)
-) -> PersonalChatListResponse:
+) -> GetPersonalChatsResponse:
     try:
         chats, total = await service.get_user_personal_chats(
             user_uuid=current_user.uuid,
@@ -110,7 +110,7 @@ async def get_personal_chats(
             offset=offset
         )
 
-        return PersonalChatListResponse(
+        return GetPersonalChatsResponse(
             items=chats,
             total=total,
             limit=limit,
@@ -125,13 +125,13 @@ async def get_personal_chats(
 
 @personal_chats_router.delete(
     "/{chat_uuid}",
-    response_model=DeleteChatResponse
+    response_model=DeletePersonalChatResponse
 )
 async def delete_personal_chat(
         chat_uuid: str,
         current_user = Depends(get_current_user_depends()),
         service: PersonalChatService = Depends(get_personal_chat_service)
-) -> DeleteChatResponse:
+) -> DeletePersonalChatResponse:
     try:
         result = await service.delete_chat(chat_uuid, current_user.uuid)
 
@@ -141,7 +141,7 @@ async def delete_personal_chat(
                 detail=f"Chat {chat_uuid} not found"
             )
 
-        return DeleteChatResponse(
+        return DeletePersonalChatResponse(
             message="Chat deleted successfully",
             chat_uuid=chat_uuid
         )
@@ -174,13 +174,13 @@ async def delete_personal_chat(
 
 @personal_chats_router.get(
     "/{chat_uuid}/partner",
-    response_model=PartnerResponse
+    response_model=GetChatPartnerResponse
 )
 async def get_chat_partner(
         chat_uuid: str,
         current_user = Depends(get_current_user_depends()),
         service: PersonalChatService = Depends(get_personal_chat_service)
-) -> PartnerResponse:
+) -> GetChatPartnerResponse:
     try:
         return await service.get_chat_partner(chat_uuid, current_user.uuid)
     except ChatNotFoundError as e:
@@ -202,16 +202,16 @@ async def get_chat_partner(
 
 @personal_chats_router.get(
     "/{chat_uuid}/exists",
-    response_model=ParticipantCheckResponse
+    response_model=CheckParticipantResponse
 )
 async def check_participant(
         chat_uuid: str,
         current_user= Depends(get_current_user_depends()),
         service: PersonalChatService = Depends(get_personal_chat_service)
-) -> ParticipantCheckResponse:
+) -> CheckParticipantResponse:
     try:
         is_participant = await service.is_participant(chat_uuid, current_user.uuid)
-        return ParticipantCheckResponse(
+        return CheckParticipantResponse(
             chat_uuid=chat_uuid,
             is_participant=is_participant
         )

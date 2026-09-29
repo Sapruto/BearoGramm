@@ -46,7 +46,7 @@ class TestMessageService:
         response = await message_service.send_message(request)
 
         assert response.success is True
-        assert response.message_entity is not None
+        assert response.messages is not None
         assert response.error_message is None
         mock_websocket_service.notify_chat_participants.assert_called_once()
 
@@ -136,7 +136,7 @@ class TestMessageService:
         response = await message_service.update_message(request)
 
         assert response.success is True
-        assert response.message_entity is not None
+        assert response.messages is not None
         mock_websocket_service.notify_chat_participants.assert_called_once()
 
     @pytest.mark.asyncio
@@ -249,7 +249,7 @@ class TestMessageService:
         response = await message_service.get_messages(request)
 
         assert response.success is True
-        assert len(response.message_entity) == 2
+        assert len(response.messages) == 2
         assert response.error_message is None
 
     @pytest.mark.asyncio

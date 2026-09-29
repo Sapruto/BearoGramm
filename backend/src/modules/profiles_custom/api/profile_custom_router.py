@@ -6,21 +6,17 @@ from src.modules.user.api.routers.login_required import get_current_user_depends
 from ..core.exceptions import (
     ProfileCustomNotFoundError,
     ProfileCustomDataError,
-    ProfileCustomAlreadyExistsError,
 )
 from ..core.services.profile_custom_service import (
     ProfileCustomService,
     get_profile_custom_service,
 )
 from ..models.dto.profile_custom_requests import (
-    CreateProfileRequest,
     UpdateProfileRequest,
 )
 from ..models.dto.profile_custom_responses import (
-    CreateProfileResponse,
     GetProfileResponse,
     UpdateProfileResponse,
-    DeleteProfileResponse,
 )
 
 logger = get_logger(__name__)

@@ -195,7 +195,7 @@ class MessageService:
             query,
             load_options=MessageLoadOptions(extra=True, references=True, user=True),
         )
-        return GetMessagesResponse(message_entity=list(messages))
+        return GetMessagesResponse(messages=list(messages))
 
     async def get_around_message(
         self,
@@ -222,7 +222,7 @@ class MessageService:
             span_end=right,
             load_options=MessageLoadOptions(extra=True, references=True, user=True),
         )
-        return GetMessagesResponse(message_entity=list(messages))
+        return GetMessagesResponse(messages=list(messages))
 
     async def get_messages_before(self, before_uuid: str, limit: int, user_uuid: str) -> GetMessagesResponse:
         return await self.get_around_message(

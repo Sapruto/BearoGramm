@@ -20,4 +20,4 @@ class DeleteMessageResponse(BaseModel):
 
 class GetMessagesResponse(BaseModel):
     success: bool = True
-    message_entity: List[MessageEntity] = Field(default_factory=list)
+    messages: List[MessageEntity] = Field(default_factory=list)
