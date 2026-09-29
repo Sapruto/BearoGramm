@@ -1,6 +1,7 @@
 from enum import Enum
 from datetime import datetime, timezone
 from typing import Optional
+from uuid import uuid4
 
 from pydantic import BaseModel, Field, field_serializer
 
@@ -22,14 +23,14 @@ class MessageReferenceFields(str, Enum):
 
 
 class MessageReferenceEntity(BaseModel):
-    uuid: Optional[str] = Field(default=None)
+    uuid: str = Field(default_factory=lambda: str(uuid4()))
     reference_type: ReferenceType
     source_uuid: str = Field(default="")
     target_uuid: str = Field(default="")
     span_start: Optional[int] = Field(default=None)
     span_end: Optional[int] = Field(default=None)
     span_all: Optional[bool] = Field(default=None)
-    created_at: datetime = Field(default=None)
+    created_at: datetime = Field(default=datetime.now(timezone.utc))
 
     @field_serializer("created_at")
     def serialize_dt(self, v: datetime | None, _info):

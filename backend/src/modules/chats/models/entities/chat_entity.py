@@ -1,7 +1,9 @@
+from uuid import uuid4
+
 from pydantic import BaseModel, Field
 from enum import Enum
 from typing import Optional, List
-from datetime import datetime
+from datetime import datetime, timezone
 
 from ...chat_types.chat_types import ChatType
 
@@ -19,9 +21,9 @@ class ChatFields(str, Enum):
 
 
 class ChatEntity(BaseModel):
-    uuid: Optional[str] = Field(default=None)
+    uuid: str = Field(default_factory=lambda: str(uuid4()))
 
     chat_type: ChatType = Field(default=ChatType.DEFAULT)
 
-    created_at: Optional[datetime] = Field(default=None)
+    created_at: datetime = Field(default=datetime.now(timezone.utc))
     updated_at: Optional[datetime] = Field(default=None)

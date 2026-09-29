@@ -3,11 +3,9 @@ from typing import Optional
 
 from src.general.repository.sql.sql_query import SqlQuery
 from src.modules.participants.core.exceptions import NotParticipant
-from src.modules.event_notification import (
-    EventNotificationService,
-    get_notification_event_service,
-)
 from src.modules.chats import ChatService, get_chat_service
+
+from .notify_message_event import NotificatorMessageEvents, get_notificator_message_event, MessageEventType
 from ..exceptions import (
     ChecksFailed,
     DatabaseSaveFailed,
@@ -46,39 +44,30 @@ class MessageService:
     def __init__(
         self,
         message_repository: Optional[MessageRepository] = None,
-        notification_service: Optional[EventNotificationService] = None,
+        notify_service: Optional[NotificatorMessageEvents] = None,
         permission_service: Optional[PermissionService] = None,
         chat_service: Optional[ChatService] = None,
     ):
-        self.message_repository = message_repository or get_message_repository()
-        self.notification_service = notification_service or get_notification_event_service()
-        self.permission_service = permission_service or get_permission_service()
-        self.chat_service = chat_service or get_chat_service()
-        self.max_limit = 100
+        self._message_repository = message_repository or get_message_repository()
+        self._notify_service = notify_service or get_notificator_message_event()
+        self._permission_service = permission_service or get_permission_service()
+        self._chat_service = chat_service or get_chat_service()
+        self._max_limit = 100
 
     async def _check_access(
         self, chat_uuid: str, user_uuid: str, action: MessageAction
     ) -> None:
-        has_chat = await self.chat_service.get_chat(chat_uuid)
+        has_chat = await self._chat_service.get_chat(chat_uuid)
         if not has_chat:
             raise HasNotChat()
         try:
-            ok = await self.permission_service.validate(
+            ok = await self._permission_service.validate(
                 user_uuid, chat_uuid, ResourceType.CHAT, action
             )
         except NotParticipant:
             raise NotParticipant()
         if not ok:
             raise ChecksFailed()
-
-    async def _notify(self, chat_uuid: str, notification: dict) -> None:
-        try:
-            user_uuids = await self.chat_service.get_participant_uuids(chat_uuid)
-            await self.notification_service.notify_users(user_uuids, notification)
-        except Exception as e:
-            logger.error(
-                "Notification failed for chat %s: %s", chat_uuid, e, exc_info=True
-            )
 
     async def send_message(
         self, request: SendMessageRequest, user_uuid: str
@@ -94,20 +83,20 @@ class MessageService:
             created_at=datetime.now(timezone.utc),
         )
 
-        saved_entity = await self.message_repository.save_with_relations(entity)
+        saved_entity = await self._message_repository.save_with_relations(entity)
         if not saved_entity:
             raise DatabaseSaveFailed()
 
-        await self._notify(
-            saved_entity.chat_uuid,
-            {"type": "message_created", "data": saved_entity.model_dump(mode="json")},
+        await self._notify_service.notify_about_message_event(
+            message=saved_entity,
+            event_type=MessageEventType.CREATE,
         )
         return SendMessageResponse(message_entity=saved_entity)
 
     async def update_message(
         self, request: UpdateMessageRequest, user_uuid: str
     ) -> UpdateMessageResponse:
-        message = await self.message_repository.get_by_uuid(
+        message = await self._message_repository.get_by_uuid(
             request.message_uuid,
             load_options=MessageLoadOptions(extra=True),
         )
@@ -129,20 +118,20 @@ class MessageService:
 
         message.updated_at = datetime.now(timezone.utc)
 
-        saved_entity = await self.message_repository.update(message)
+        saved_entity = await self._message_repository.update(message)
         if not saved_entity:
             raise DatabaseUpdateFailed()
 
-        await self._notify(
-            saved_entity.chat_uuid,
-            {"type": "message_updated", "data": saved_entity.model_dump(mode="json")},
+        await self._notify_service.notify_about_message_event(
+            message=saved_entity,
+            event_type=MessageEventType.UPDATE,
         )
         return UpdateMessageResponse(message_entity=saved_entity)
 
     async def delete_message(
         self, message_uuid: str, user_uuid: str
     ) -> DeleteMessageResponse:
-        message = await self.message_repository.get_by_uuid(message_uuid)
+        message = await self._message_repository.get_by_uuid(message_uuid)
         if not message:
             raise MessageNotFoundError()
 
@@ -151,20 +140,20 @@ class MessageService:
 
         await self._check_access(message.chat_uuid, user_uuid, MessageAction.DELETE)
 
-        deleted = await self.message_repository.delete_by_uuid(message_uuid)
+        deleted = await self._message_repository.delete_by_uuid(message_uuid)
         if not deleted:
             raise DatabaseDeleteFailed()
 
-        await self._notify(
-            message.chat_uuid,
-            {"type": "message_deleted", "data": {"message_uuid": message_uuid}},
+        await self._notify_service.notify_about_message_event(
+            message=message,
+            event_type=MessageEventType.DELETE,
         )
         return DeleteMessageResponse()
 
     async def get_message(
         self, message_uuid: str, user_uuid: str
     ) -> MessageEntity:
-        message = await self.message_repository.get_by_uuid(
+        message = await self._message_repository.get_by_uuid(
             message_uuid,
             load_options=MessageLoadOptions(extra=True, references=True, user=True),
         )
@@ -187,7 +176,7 @@ class MessageService:
         query = SqlQuery[MessageFields]()
         query.add_filter(MessageFields.CHAT_UUID, chat_uuid)
 
-        query.limit = min(limit, self.max_limit)
+        query.limit = min(limit, self._max_limit)
         query.offset = offset
 
         if show_new:
@@ -195,7 +184,7 @@ class MessageService:
         else:
             query.add_order_by(MessageFields.CREATED_AT, "asc")
 
-        messages = await self.message_repository.get_all_with_options(
+        messages = await self._message_repository.get_all_with_options(
             query,
             load_options=MessageLoadOptions(extra=True, references=True, user=True),
         )
@@ -215,10 +204,10 @@ class MessageService:
 
         target = await self.get_message(message_uuid, user_uuid)
 
-        left = min(-span_start, self.max_limit)
-        right = min(span_end, self.max_limit - left)
+        left = min(-span_start, self._max_limit)
+        right = min(span_end, self._max_limit - left)
 
-        messages = await self.message_repository.get_around(
+        messages = await self._message_repository.get_around(
             chat_uuid=target.chat_uuid,
             message_uuid=target.uuid,
             created_at=target.created_at,
@@ -232,7 +221,7 @@ class MessageService:
         return await self.get_around_message(
             message_uuid=before_uuid,
             user_uuid=user_uuid,
-            span_start=-min(limit, self.max_limit),
+            span_start=-min(limit, self._max_limit),
             span_end=0,
         )
 
@@ -241,7 +230,7 @@ class MessageService:
             message_uuid=after_uuid,
             user_uuid=user_uuid,
             span_start=0,
-            span_end=min(limit, self.max_limit),
+            span_end=min(limit, self._max_limit),
         )
 
 

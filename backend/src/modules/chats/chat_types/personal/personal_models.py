@@ -47,4 +47,3 @@ class CheckParticipantResponse(BaseModel):
 
 class DeletePersonalChatResponse(BaseModel):
     message: str
-    chat_uuid: str

@@ -1,8 +1,10 @@
+from uuid import uuid4
+
 from pydantic import BaseModel, Field
 from enum import Enum
 
 from typing import Optional
-from datetime import datetime
+from datetime import datetime, timezone
 
 
 class UserFields(str, Enum):
@@ -20,9 +22,9 @@ class UserFields(str, Enum):
 
 
 class UserEntity(BaseModel):
-    uuid: Optional[str] = Field(default=None)
+    uuid: str = Field(default_factory=lambda: str(uuid4()))
 
     phone_number: str = Field()
 
-    created_at: Optional[datetime] = Field(default=None)
+    created_at: datetime = Field(default=datetime.now(timezone.utc))
     updated_at: Optional[datetime] = Field(default=None)

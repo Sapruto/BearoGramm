@@ -21,10 +21,13 @@ class NotificatorChatEvents:
 
     async def notify_about_chat_event(self, chat_uuid: str, event_type: ChatEventType):
         user_uuids = await self._chat_service.get_participant_uuids(chat_uuid)
-        await self._notification_service.notify_users(user_uuids, {
-            "event_type": event_type.value,
-            "chat_uuid": chat_uuid,
-        })
+        await self._notification_service.notify_users(
+            user_uuids=user_uuids or [],
+            notification={
+                "event_type": event_type.value,
+                "chat_uuid": chat_uuid,
+            }
+        )
 
 
 def get_notificator_chat_event() -> NotificatorChatEvents:
