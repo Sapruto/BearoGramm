@@ -44,7 +44,11 @@ async def listen_messages_websocket(websocket: WebSocket):
             json.dumps({"status": "authenticated", "user_uuid": user.uuid})
         )
 
-        async def send_message(message: str) -> None:
+        async def send_message(message: bytes | str) -> None:
+            if isinstance(message, (bytes, bytearray)):
+                message = message.decode("utf-8")
+            elif not isinstance(message, str):
+                message = json.dumps(message, default=str)
             await websocket.send_text(message)
 
         async def receive_message() -> str:
