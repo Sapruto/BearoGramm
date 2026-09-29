@@ -72,7 +72,7 @@ class PersonalChatService(BaseChatService):
         if user_uuid == other_user_uuid:
             raise CannotChatWithSelfError()
 
-        existing = await self._repository.get_chat_by_participants([user_uuid, other_user_uuid])
+        existing = await self._repository.get_chat_by_participants([user_uuid, other_user_uuid], self._get_chat_type())
         if existing:
             raise ChatIsExisting()
 
