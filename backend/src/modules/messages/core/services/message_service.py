@@ -15,6 +15,7 @@ from ..exceptions import (
     MessageNotOwnedByUserError,
     DatabaseUpdateFailed,
     DatabaseDeleteFailed,
+    HasNotChat,
 )
 from ..repositories.message_repository import (
     MessageRepository,
