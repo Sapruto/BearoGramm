@@ -73,12 +73,12 @@ class DatabaseSettings(BaseSettings):
 
 
 class Boto3Settings(BaseSettings):
-    USE_S3: bool = False
     S3_ENDPOINT: str = "https://s3.ru1.storage.beget.cloud"
     S3_BUCKET_NAME: str = "your-bucket"
     S3_REGION: str = "ru1"
     S3_ACCESS_KEY: Optional[str] = None
     S3_SECRET_KEY: Optional[str] = None
+    USE_S3: bool = Field(default=False)
 
     model_config = {"extra": "ignore"}
 
@@ -153,7 +153,7 @@ class SettingsModel(BaseSettings):
     ENCRYPTER: EncrypterSettings = Field(default_factory=EncrypterSettings)
     PHONE: PhoneSettings = Field(default_factory=PhoneSettings)
 
-    MEDIA_BASE_URL: str = "http://localhost:8000"
+    MEDIA_BASE_URL: str = "http://localhost:8000/media"
 
     CLIENT_SMS_TYPE: str = "test"
 

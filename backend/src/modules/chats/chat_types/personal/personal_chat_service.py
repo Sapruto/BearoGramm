@@ -1,7 +1,6 @@
 from typing import Optional, List, Tuple, Dict, Any
 
 from src.general.repository.sql.sql_query import SqlQuery
-from src.modules.participants.core.exceptions import NotParticipant
 from src.modules.participants.models.enums import ResourceType
 from src.modules.profiles_custom import ProfileCustomService, get_profile_custom_service
 from src.modules.user import UserServiceAPI, get_user_service_api
@@ -9,7 +8,7 @@ from src.modules.participants import Permission, PermissionService, ChatAction, 
 
 from .personal_models import PersonalChatResponse, PersonalChatPreview, PartnerResponse
 from .personal_exceptions import CannotChatWithSelfError, NotFoundUser, ChatIsExisting
-from .personal_repository import get_personal_repository, PersonalRepository
+from src.modules.chats.core.repositories.chat_repository import get_chat_repository, ChatRepository
 from ..base.base_chat_service import BaseChatService
 from ..base.exceptions import (
     UserNotParticipantError,
@@ -24,7 +23,7 @@ from ...models.entities.chat_entity import ChatFields
 class PersonalChatService(BaseChatService):
     def __init__(
             self,
-            repository: Optional[PersonalRepository] = None,
+            repository: Optional[ChatRepository] = None,
             permission_service: Optional[PermissionService] = None,
             user_service: Optional[UserServiceAPI] = None,
             profile_service: Optional[ProfileCustomService] = None,
@@ -33,7 +32,7 @@ class PersonalChatService(BaseChatService):
         self.user_service = user_service or get_user_service_api()
         self.profile_service = profile_service or get_profile_custom_service()
         self.max_limit = max_limit or 50
-        super().__init__(repository or get_personal_repository(), permission_service)
+        super().__init__(repository or get_chat_repository(), permission_service)
 
     def _get_chat_type(self) -> str:
         return ChatType.PERSONAL.value
@@ -73,7 +72,7 @@ class PersonalChatService(BaseChatService):
         if user_uuid == other_user_uuid:
             raise CannotChatWithSelfError()
 
-        existing = await self._repository.get_personal_chat_by_participants([user_uuid, other_user_uuid])
+        existing = await self._repository.get_chat_by_participants([user_uuid, other_user_uuid], self._get_chat_type())
         if existing:
             raise ChatIsExisting()
 
@@ -123,11 +122,12 @@ class PersonalChatService(BaseChatService):
         offset: int = 0,
     ) -> Tuple[List[PersonalChatPreview], int]:
 
-        chats, total = await self._repository.get_user_personal_chats(
+        chats, total = await self._repository.get_user_chats(
             user_uuid=user_uuid,
             limit=min(self.max_limit, limit),
             offset=offset,
             show_new=True,
+            chat_type=self._get_chat_type()
         )
 
         if not chats:

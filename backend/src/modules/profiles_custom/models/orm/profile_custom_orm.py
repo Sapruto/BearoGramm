@@ -1,5 +1,6 @@
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy import JSON, Uuid, DateTime, String, ForeignKey, Index
+from sqlalchemy import JSON, DateTime, String, ForeignKey, Index
 from typing import Optional, Dict, Any
 
 from uuid import uuid4
@@ -17,7 +18,7 @@ class ProfileCustomORM(Base):
     __tablename__ = "profile_custom"
 
     uuid: Mapped[str] = mapped_column(
-        Uuid(as_uuid=False),
+        String(36),
         primary_key=True,
         default=lambda: str(uuid4())
     )
@@ -25,7 +26,7 @@ class ProfileCustomORM(Base):
     name: Mapped[str] = mapped_column(String(67), nullable=False, default="Unnamed")
     avatar_url: Mapped[str] = mapped_column(String(555), nullable=False, default=lambda: str(randomizer.get_random_avatar()))
 
-    data: Mapped[Dict[str, Any]] = mapped_column(JSON)
+    data: Mapped[Dict[str, Any]] = mapped_column(JSON().with_variant(JSONB(), "postgresql"))
 
     updated_at: Mapped[Optional[datetime]] = mapped_column(
         DateTime(timezone=True), nullable=True

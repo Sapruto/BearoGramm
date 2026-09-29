@@ -32,3 +32,22 @@ Create your own `.env` file based on `.env.example`
 ```sh
 python run.py
 ```
+
+## Migrations:
+Schema is managed by Alembic.
+
+To reset a dev database: delete the `*.db` file and run `alembic upgrade head` again.
+
+## Environments:
+| | Dev | Production |
+|---|---|---|
+| **Database** | SQLite (`data/test.db`) | PostgreSQL |
+| **Switch by** | `ENV != "production"` | `ENV == "production"` |
+
+Set `ENV` in `.env` to switch.
+
+## Testing:
+```sh
+pytest
+pytest --cov=src
+```

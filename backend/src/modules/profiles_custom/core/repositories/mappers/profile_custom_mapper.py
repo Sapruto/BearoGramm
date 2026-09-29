@@ -119,14 +119,13 @@ class ProfileCustomMapper(BaseMapper[ProfileCustomEntity, ProfileCustomORM, Prof
             uuid=entity.uuid,
             name=entity.name,
             avatar_url=entity.avatar_url,
-            data=[d.model_dump() for d in prepared],  # ← JSON-friendly
+            data=[d.model_dump() for d in prepared],
             updated_at=entity.updated_at,
             user_uuid=entity.user_uuid,
         )
 
     async def to_entity(self, orm: ProfileCustomORM) -> ProfileCustomEntity:
         raw = orm.data or []
-        # Восстанавливаем BaseData по data_type через registry
         data_models = self._deserialize_data(raw)
         prepared = await self.prepare_data_to_use(data_models)
         return ProfileCustomEntity(

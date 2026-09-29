@@ -1,4 +1,5 @@
-from sqlalchemy import ForeignKey, Uuid, Enum, JSON, Index, DateTime, func
+from sqlalchemy import ForeignKey, String, Enum, JSON, Index, DateTime, func
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column
 from src.core.database import Base
 from uuid import uuid4
@@ -11,17 +12,17 @@ class ParticipantORM(Base):
     __tablename__ = "participants"
 
     uuid: Mapped[str] = mapped_column(
-        Uuid(as_uuid=False), primary_key=True, default=lambda: str(uuid4())
+        String(36), primary_key=True, default=lambda: str(uuid4())
     )
 
     user_uuid: Mapped[str] = mapped_column(
-        Uuid(as_uuid=False),
+        String(36),
         ForeignKey("users.uuid", ondelete="CASCADE"),
         nullable=False,
     )
 
     resource_uuid: Mapped[str] = mapped_column(
-        Uuid(as_uuid=False), nullable=False
+        String(36), nullable=False
     )
 
     resource_type: Mapped[ResourceType] = mapped_column(
@@ -29,7 +30,7 @@ class ParticipantORM(Base):
     )
 
     permissions: Mapped[Dict[str, bool]] = mapped_column(
-        JSON,
+        JSON().with_variant(JSONB(), "postgresql"),
         nullable=False,
         default=dict
     )
