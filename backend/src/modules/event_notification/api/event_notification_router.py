@@ -12,7 +12,7 @@ logger = get_logger(__name__)
 event_notification_router = APIRouter(tags=["event_notification"])
 
 
-@event_notification_router.websocket("ws/listen_events")
+@event_notification_router.websocket("/ws/listen_events/")
 async def listen_messages_websocket(websocket: WebSocket):
     closed = False
     try:
