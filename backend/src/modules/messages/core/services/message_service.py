@@ -58,6 +58,9 @@ class MessageService:
     async def _check_access(
         self, chat_uuid: str, user_uuid: str, action: MessageAction
     ) -> None:
+        has_chat = await self.chat_service.get_chat(chat_uuid)
+        if not has_chat:
+            raise HasNotChat()
         try:
             ok = await self.permission_service.validate(
                 user_uuid, chat_uuid, ResourceType.CHAT, action

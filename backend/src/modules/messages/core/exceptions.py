@@ -7,6 +7,11 @@ class ChecksFailed(MessageException):
         super().__init__(message)
 
 
+class HasNotChat(MessageException):
+    def __init__(self, message: str = "Chat not found or not be"):
+        super().__init__(message)
+
+
 class FailedToProcessData(MessageException):
     def __init__(self, message: str = "Failed to process message data"):
         super().__init__(message)
