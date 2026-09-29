@@ -65,8 +65,6 @@ class SubscriberService:
 
         try:
             async for event in pubsub.listen():
-                if event.get("type") != "message":
-                    continue
                 data = event["data"]
                 if isinstance(data, bytes):
                     data = data.decode()
