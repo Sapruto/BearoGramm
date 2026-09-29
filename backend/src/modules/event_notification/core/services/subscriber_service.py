@@ -1,6 +1,6 @@
 import asyncio
 import json
-from typing import Awaitable, Callable, Optional
+from typing import Any, Awaitable, Callable, Dict, Optional
 
 from src.core.logger import get_logger
 
@@ -11,6 +11,8 @@ from ..repositories.subscriber_repository import (
 )
 
 logger = get_logger(__name__)
+
+SendMessage = Callable[[str], Awaitable[None]]
 
 
 class SubscriberService:
@@ -27,53 +29,90 @@ class SubscriberService:
     async def unsubscribe(self, user_uuid: str) -> bool:
         return await self.repo.remove_subscriber(user_uuid)
 
-    async def _handle_event(
-        self,
-        raw: str,
-        send_message: Callable[[str], Awaitable[None]],
-    ) -> None:
+    async def handle_incoming(self, user_uuid: str, raw: str) -> Optional[str]:
         try:
             parsed = json.loads(raw)
         except (json.JSONDecodeError, TypeError):
-            logger.warning("Invalid event payload: ", raw)
-            return
+            logger.warning("Invalid incoming payload: %r", raw)
+            return None
 
         event_type = parsed.get("type")
+        if not event_type:
+            return None
+
+        data: Dict[str, Any] = parsed.get("data") or {}
+        data.setdefault("user_uuid", user_uuid)
+
         handler = self.registry.get(event_type)
         if handler is None:
-            logger.warning("No handler for event type: ", event_type)
-            return
+            logger.warning("No handler for event type: %s", event_type)
+            return None
 
-        result = await handler(parsed.get("data", {}))
-        if result is not None:
-            await send_message(result)
+        try:
+            return await handler(data)
+        except Exception as e:
+            logger.error("Handler error for %s: %s", event_type, e, exc_info=True)
+            return None
 
-    async def listen_events(
+    async def _redis_to_send(
         self,
         user_uuid: str,
-        send_message: Callable[[str], Awaitable[None]],
+        send_message: SendMessage,
     ) -> None:
-        await self.subscribe(user_uuid)
-
         pubsub = self.repo.redis.pubsub()
         channel = f"user:notifications:{user_uuid}"
         await pubsub.subscribe(channel)
 
         try:
-            async for message in pubsub.listen():
-                if message["type"] != "message":
-                    continue
-                data = message["data"]
+            async for event in pubsub.listen():
+                data = event["data"]
                 if isinstance(data, bytes):
                     data = data.decode()
-                await self._handle_event(data, send_message)
+                try:
+                    await send_message(data)
+                except Exception as e:
+                    logger.error("send_message failed: %s", e, exc_info=True)
+                    break
         except asyncio.CancelledError:
-            pass
+            raise
         except Exception as e:
-            logger.error(f"Subscriber listen error: {e}", exc_info=True)
+            logger.error("Redis listen error: %s", e, exc_info=True)
         finally:
-            await pubsub.unsubscribe(channel)
+            try:
+                await pubsub.unsubscribe(channel)
+            except Exception:
+                pass
             await pubsub.close()
+
+    async def listen_events(
+        self,
+        user_uuid: str,
+        receive_message: Callable[[], Awaitable[str]],
+        send_message: SendMessage,
+    ) -> None:
+        await self.subscribe(user_uuid)
+
+        redis_task = asyncio.create_task(
+            self._redis_to_send(user_uuid, send_message),
+            name=f"redis->send:{user_uuid}",
+        )
+
+        try:
+            while True:
+                raw = await receive_message()
+                reply = await self.handle_incoming(user_uuid, raw)
+                if reply is not None:
+                    await send_message(reply)
+        except asyncio.CancelledError:
+            raise
+        except Exception as e:
+            logger.error("listen_events loop error for %s: %s", user_uuid, e, exc_info=True)
+        finally:
+            redis_task.cancel()
+            try:
+                await redis_task
+            except (asyncio.CancelledError, Exception):
+                pass
             await self.unsubscribe(user_uuid)
 
 

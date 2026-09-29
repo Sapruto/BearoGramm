@@ -47,9 +47,13 @@ async def listen_messages_websocket(websocket: WebSocket):
         async def send_message(message: str) -> None:
             await websocket.send_text(message)
 
+        async def receive_message() -> str:
+            return await websocket.receive_text()
+
         await ws_service.listen_events(
             user_uuid=user.uuid,
             send_message=send_message,
+            receive_message=receive_message
         )
     finally:
         if not closed:

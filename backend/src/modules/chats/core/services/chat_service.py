@@ -5,6 +5,7 @@ from src.modules.participants import (
     PermissionService,
     get_permission_service,
 )
+from src.modules.participants.models.entities.participant_entity import ParticipantEntity
 
 from ..repositories.chat_repository import (
     ChatRepository,
@@ -27,7 +28,7 @@ class ChatService:
     async def get_chat(self, chat_uuid: str) -> Optional[ChatEntity]:
         return await self.chat_repository.get_by_uuid(chat_uuid)
 
-    async def get_participants(self, chat_uuid: str) -> List:
+    async def get_participants(self, chat_uuid: str) -> List[ParticipantEntity]:
         try:
             participants = await self.permission_service.get_by_resource(chat_uuid)
         except Exception as e:
