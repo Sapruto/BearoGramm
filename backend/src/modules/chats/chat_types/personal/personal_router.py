@@ -143,7 +143,6 @@ async def delete_personal_chat(
 
         return DeletePersonalChatResponse(
             message="Chat deleted successfully",
-            chat_uuid=chat_uuid
         )
     except ChatNotFoundError as e:
         raise HTTPException(

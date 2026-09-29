@@ -18,7 +18,7 @@ class MessageDataFields(str, Enum):
 
 
 class MessageDataEntity(BaseModel):
-    message_uuid: Optional[str] = Field(default=None)
+    message_uuid: str = Field(default="")
     extra_data_type: ExtraDataType
     payload: ExtraData
     schema_version: int = Field(default=1)

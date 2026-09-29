@@ -1,6 +1,7 @@
 from typing import List, Optional
 
 from src.core.logger import get_logger
+from src.general.repository.sql.sql_query import SqlQuery
 from src.modules.participants import (
     PermissionService,
     get_permission_service,
@@ -11,7 +12,7 @@ from ..repositories.chat_repository import (
     ChatRepository,
     get_chat_repository,
 )
-from ...models.entities.chat_entity import ChatEntity
+from ...models.entities.chat_entity import ChatEntity, ChatFields
 
 logger = get_logger(__name__)
 
@@ -26,7 +27,7 @@ class ChatService:
         self.permission_service = permission_service or get_permission_service()
 
     async def get_chat(self, chat_uuid: str) -> Optional[ChatEntity]:
-        return await self.chat_repository.get_by_uuid(chat_uuid)
+        return await self.chat_repository.get(SqlQuery[ChatFields]().add_filter(ChatFields.UUID, chat_uuid))
 
     async def get_participants(self, chat_uuid: str) -> List[ParticipantEntity]:
         try:

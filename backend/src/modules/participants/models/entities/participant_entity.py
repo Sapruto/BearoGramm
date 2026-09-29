@@ -2,7 +2,7 @@ from pydantic import BaseModel, Field
 from uuid import uuid4
 from enum import Enum
 from typing import Dict, Optional
-from datetime import datetime
+from datetime import datetime, timezone
 
 from ..enums import ResourceType
 
@@ -24,7 +24,7 @@ class ParticipantEntity(BaseModel):
     resource_uuid: str
     resource_type: ResourceType
     permissions: Dict[str, bool] = Field(default_factory=dict)
-    created_at: Optional[datetime] = None
+    created_at: datetime = Field(default=datetime.now(timezone.utc))
     updated_at: Optional[datetime] = None
 
     model_config = {"use_enum_values": True, "frozen": False, "extra": "forbid"}

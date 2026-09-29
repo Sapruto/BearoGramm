@@ -1,3 +1,5 @@
+from uuid import uuid4
+
 from pydantic import BaseModel, Field, field_serializer
 from enum import Enum
 from datetime import datetime, timezone
@@ -23,16 +25,16 @@ class MessageFields(str, Enum):
 
 
 class MessageEntity(BaseModel):
-    uuid: Optional[str] = Field(default=None)
-    message_text: Optional[str] = Field(default=None)
+    uuid: str = Field(default_factory=lambda: str(uuid4()))
+    message_text: str = Field(default="")
 
-    created_at: Optional[datetime] = Field(default=None)
+    created_at: datetime = Field(default=datetime.now(timezone.utc))
     updated_at: Optional[datetime] = Field(default=None)
 
     has_extra_data: bool = Field(default=False)
 
-    chat_uuid: Optional[str] = Field(default=None)
-    user_uuid: Optional[str] = Field(default=None)
+    chat_uuid: str = Field(default="")
+    user_uuid: str = Field(default="")
 
     extra_data: Optional[MessageDataEntity] = Field(default=None)
     references: List[MessageReferenceEntity] = Field(default_factory=list)
