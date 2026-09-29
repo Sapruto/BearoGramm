@@ -4,10 +4,15 @@ from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 
+from slowapi import _rate_limit_exceeded_handler
+from slowapi.middleware import SlowAPIMiddleware
+from slowapi.errors import RateLimitExceeded
+
 from src.core.settings import Settings
 from src.core.paths import STATIC_ROOT
 from src.core.database import close_db, init_db
 from src.core.logger import get_logger
+from src.core.limiter import limiter
 
 
 logger = get_logger(__name__)
@@ -49,12 +54,16 @@ async def lifespan(app: FastAPI):
 
 
 def create_app() -> FastAPI:
-    app = FastAPI(
+    app: FastAPI = FastAPI(
         title=Settings.APP.APP_NAME,
         version=Settings.APP.APP_VERSION,
         debug=Settings.APP.DEBUG,
         lifespan=lifespan,
     )
+
+    app.state.limiter = limiter
+    app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+    app.add_middleware(SlowAPIMiddleware)
 
     app.add_middleware(
         CORSMiddleware,

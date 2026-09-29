@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 
+from src.core.limiter import limiter
 from .auth_route_names import AuthRoutes
 from ...core.services.user_service import UserService, get_user_service
 from ...core.exceptions import (
@@ -24,6 +25,7 @@ auth_router = APIRouter(prefix=AuthRoutes.base, tags=["auth"])
     response_model=SendCodeResponse,
     status_code=status.HTTP_200_OK
 )
+@limiter.limit("10/10minutes")
 async def send_code(
     request: SendCodeRequest,
     service: UserService = Depends(get_user_service)
@@ -81,6 +83,7 @@ async def send_code(
     response_model=VerifyCodeResponse,
     status_code=status.HTTP_200_OK
 )
+@limiter.limit("10/10minutes")
 async def verify_code(
     request: VerifyCodeRequest,
     service: UserService = Depends(get_user_service)
