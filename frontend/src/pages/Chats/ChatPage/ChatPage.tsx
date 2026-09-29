@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { Virtuoso, type VirtuosoHandle } from 'react-virtuoso';
-import type { Message } from '../../../shared/api/messages';
+import type { MessageEntity } from '../../../shared/api/messages';
 import { useGetMessages } from '../../../shared/hooks/messages/useGetMessages';
 import { useSendMessage } from '../../../shared/hooks/messages/useSendMessage';
 import { useGetChatPartner } from '../../../shared/hooks/personal/useGetChatPartner';
@@ -62,9 +62,9 @@ const ChatRoom = ({ chatUUID }: { chatUUID: string }) => {
     const partnerName = partnerProfile?.partner_profile.name;
 
     const messages = useMemo(() => {
-        const map = new Map<string, Message>();
+        const map = new Map<string, MessageEntity>();
         for (const page of data?.pages ?? []) {
-            for (const msg of page.message_entity) {
+            for (const msg of page.messages) {
                 map.set(msg.uuid, msg);
             }
         }
@@ -72,7 +72,7 @@ const ChatRoom = ({ chatUUID }: { chatUUID: string }) => {
     }, [data]);
 
     const messageGroups = useMemo(() => {
-        return messages.reduce<Message[][]>((acc, msg, i, arr) => {
+        return messages.reduce<MessageEntity[][]>((acc, msg, i, arr) => {
             const prev = arr[i - 1];
             const prevIsOwn = prev && prev.user_uuid == userUUID;
             const isOwn = msg.user_uuid == userUUID;
@@ -141,7 +141,7 @@ const ChatRoom = ({ chatUUID }: { chatUUID: string }) => {
     }, [flatItems.length]);
 
     const handleSend = (text: string) => {
-        sendMessage({ chat_uuid: chatUUID, typing_to_data: [['text_type', text]] });
+        sendMessage({ chat_uuid: chatUUID, message_text: text, references: [] });
     };
 
     const loadMore = useCallback(() => {
@@ -181,10 +181,10 @@ const ChatRoom = ({ chatUUID }: { chatUUID: string }) => {
                     return (
                         <div className={`px-5 ${!isFirst ? 'pt-0.5' : 'pt-3.5'}`}>
                             <ChatMessage
-                                text={msg.message_data[0].text!}
+                                text={msg.message_text}
                                 time={formatTime(Date.parse(msg.created_at))}
                                 isOwn={isOwn}
-                                avatarUrl={isOwn ? myProfile?.profile?.avatar_url : partnerAvatar}
+                                avatarUrl={isOwn ? myProfile?.profile.avatar_url : partnerAvatar}
                                 isFirst={isFirst}
                                 isLast={isLast}
                             />

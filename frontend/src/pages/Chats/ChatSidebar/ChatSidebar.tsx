@@ -66,11 +66,11 @@ const ChatSidebar = ({ activeChatId, onSelectAddFriend, onSelectChat }: Props) =
                                 }`}
                         >
                             <img
-                                src={chat.partner_profile?.avatar_url}
+                                src={chat.partner_profile.avatar_url}
                                 className="w-9 h-9 rounded-full object-cover shrink-0"
                             />
                             <span className="text-sm text-[#f4f4f5] truncate" title={chat.uuid}>
-                                {chat.partner_profile?.name}
+                                {chat.partner_profile.name}
                             </span>
                         </div>
                     ))}

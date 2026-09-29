@@ -1,9 +1,9 @@
 import ReconnectingWebSocket from 'reconnecting-websocket';
 import { useAuthStore } from '../../store/authStore';
-import type { Message } from './messages';
+import type { MessageEntity } from './messages';
 
 export type WSMessage =
-    | { type: 'new_message'; data: Message }
+    | { type: 'new_message'; data: MessageEntity }
     // | { type: 'typing'; payload: { chat_uuid: string; user_uuid: string } };
 
 type WSHandler = (msg: WSMessage) => void;

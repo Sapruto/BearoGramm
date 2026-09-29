@@ -72,7 +72,7 @@ const HomePage = () => {
 
                 <div className="bg-[#131316] border border-[#1f1f23] rounded-xl p-4">
                     <p className="text-[13px] text-[#8b8b93] mb-2">Profile</p>
-                    {data?.success && data.profile ? (
+                    {data?.success ? (
                         <div className="flex items-center gap-3">
                             <img
                                 src={data.profile.avatar_url}

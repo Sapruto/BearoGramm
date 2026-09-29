@@ -9,14 +9,14 @@ export type PersonalChat = {
     updated_at: string;
 };
 
-export type GetPersonalChatsResponse = {
-    items: PersonalChat[];
-    total: number;
+export type GetPersonalChatsParams = {
     limit: number;
     offset: number;
 };
 
-export type GetPersonalChatsParams = {
+export type GetPersonalChatsResponse = {
+    items: PersonalChat[];
+    total: number;
     limit: number;
     offset: number;
 };
@@ -26,11 +26,11 @@ export const getPersonalChats = async (params: GetPersonalChatsParams): Promise<
     return res.data;
 };
 
-export type AddPersonalRequest = {
+export type CreatePersonalChatRequest = {
     other_user_phone: string;
 };
 
-export type AddPersonalResponse = {
+export type CreatePersonalChatResponse = {
     uuid: string;
     chat_type: 'personal';
     partner_uuid: string;
@@ -39,7 +39,7 @@ export type AddPersonalResponse = {
     partner_profile: Profile;
 };
 
-export const addFriend = async (data: AddPersonalRequest): Promise<AddPersonalResponse> => {
+export const addFriend = async (data: CreatePersonalChatRequest): Promise<CreatePersonalChatResponse> => {
     const res = await apiClient.post('/api/personal/create', data);
     return res.data;
 };

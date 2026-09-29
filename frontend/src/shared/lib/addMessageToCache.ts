@@ -1,15 +1,15 @@
 import type { InfiniteData, QueryClient } from "@tanstack/react-query";
-import type { GetMessagesResponse, Message } from "../api/messages";
+import type { GetMessagesResponse, MessageEntity } from "../api/messages";
 import { queryKeys } from "./queryKeys";
 
-export function addMessageToCache(queryClient: QueryClient, chatUUID: string, message: Message) {
+export function addMessageToCache(queryClient: QueryClient, chatUUID: string, message: MessageEntity) {
     queryClient.setQueryData<InfiniteData<GetMessagesResponse>>(
         queryKeys.messagesChat(chatUUID),
         (old) => {
             if (!old) return old;
 
             const exists = old.pages.some(p =>
-                p.message_entity.some(m => m.uuid === message.uuid)
+                p.messages.some(m => m.uuid === message.uuid)
             );
             if (exists) return old;
 
@@ -18,7 +18,7 @@ export function addMessageToCache(queryClient: QueryClient, chatUUID: string, me
 
             pages[0] = {
                 ...firstPage,
-                message_entity: [message, ...firstPage.message_entity],
+                messages: [message, ...firstPage.messages],
             };
 
             return { ...old, pages };

@@ -9,12 +9,12 @@ export type Profile = {
     user_uuid: string;
 };
 
-export type GetMyProfileResponse = {
+export type GetProfileResponse = {
     success: boolean;
-    profile?: Profile;
+    profile: Profile;
 };
 
-export const getMyProfile = async (): Promise<GetMyProfileResponse> => {
+export const getMyProfile = async (): Promise<GetProfileResponse> => {
     const res = await apiClient.get('/api/profile/me');
     return res.data;
 };

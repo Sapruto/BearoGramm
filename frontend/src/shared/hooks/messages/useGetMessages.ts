@@ -22,8 +22,8 @@ export function useGetMessages(chatUUID: string, initialCount = 30, historyCount
         initialPageParam: 0,
         getNextPageParam: () => undefined,
         getPreviousPageParam: (firstPage, allPages) => {
-            if (firstPage.message_entity.length < historyCount) return undefined;
-            const loaded = allPages.flatMap((p) => p.message_entity).length;
+            if (firstPage.messages.length < historyCount) return undefined;
+            const loaded = allPages.flatMap((p) => p.messages).length;
             return -loaded;
         },
     });
