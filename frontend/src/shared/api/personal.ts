@@ -53,3 +53,13 @@ export const getChatPartner = async (chatUUID: string): Promise<GetChatPartnerRe
     const res = await apiClient.get(`/api/personal/${chatUUID}/partner`);
     return res.data;
 };
+
+export type DeletePersonalChatResponse = {
+    message: string;
+    chat_uuid: string;
+};
+
+export const deletePersonalChat = async (chatUUID: string): Promise<DeletePersonalChatResponse> => {
+    const res = await apiClient.delete('/api/personal/' + chatUUID);
+    return res.data;
+};

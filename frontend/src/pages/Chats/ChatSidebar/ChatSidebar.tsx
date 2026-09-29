@@ -3,6 +3,7 @@ import { useEffect, useRef } from 'react';
 import type { PersonalChat } from '../../../shared/api/personal';
 import { useGetPersonalChats } from '../../../shared/hooks/personal/useGetPersonalChats';
 import ProfileWidget from './ProfileWidget';
+import { ChatListItem } from './ChatListItem';
 
 type Props = {
     activeChatId: string | null;
@@ -59,20 +60,12 @@ const ChatSidebar = ({ activeChatId, onSelectAddFriend, onSelectChat }: Props) =
                     className="flex flex-col gap-0.5 flex-1"
                 >
                     {chats.map((chat: PersonalChat) => (
-                        <div
+                        <ChatListItem
                             key={chat.uuid}
-                            onClick={() => onSelectChat(chat.uuid)}
-                            className={`flex items-center gap-2.5 px-2 py-2 rounded-lg cursor-pointer transition-colors min-w-0 ${activeChatId === chat.uuid ? 'bg-[#1a1a1d]' : 'hover:bg-[#1a1a1d]'
-                                }`}
-                        >
-                            <img
-                                src={chat.partner_profile.avatar_url}
-                                className="w-9 h-9 rounded-full object-cover shrink-0"
-                            />
-                            <span className="text-sm text-[#f4f4f5] truncate" title={chat.uuid}>
-                                {chat.partner_profile.name}
-                            </span>
-                        </div>
+                            chat={chat}
+                            isActive={activeChatId === chat.uuid}
+                            onSelect={onSelectChat}
+                        />
                     ))}
 
                     <div ref={sentinelRef} className="h-8 flex items-center justify-center shrink-0">
