@@ -7,7 +7,7 @@ type Props = {
     isLast: boolean;
 };
 
-const ChatMessage = ({ text, time, isOwn, avatarUrl, isFirst, isLast }: Props) => {
+const ChatMessage = ({ text, time, avatarUrl, isFirst, isLast }: Props) => {
     return (
         <div className={`flex flex-col items-start ${isFirst || isLast ? 'gap-1' : 'gap-0'}`}>
             <div className="flex gap-2 items-center">
