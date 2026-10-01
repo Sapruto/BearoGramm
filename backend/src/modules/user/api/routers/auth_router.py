@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, status
+from starlette.requests import Request
 
 from src.core.limiter import limiter
 from .auth_route_names import AuthRoutes
@@ -27,11 +28,12 @@ auth_router = APIRouter(prefix=AuthRoutes.base, tags=["auth"])
 )
 @limiter.limit("10/10minutes")
 async def send_code(
-    request: SendCodeRequest,
+    request: Request,
+    data: SendCodeRequest,
     service: UserService = Depends(get_user_service)
 ) -> SendCodeResponse:
     try:
-        return await service.send_code_and_register_if_not(request)
+        return await service.send_code_and_register_if_not(data)
     except InvalidPhoneNumber as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -85,11 +87,12 @@ async def send_code(
 )
 @limiter.limit("10/10minutes")
 async def verify_code(
-    request: VerifyCodeRequest,
+    request: Request,
+    data: VerifyCodeRequest,
     service: UserService = Depends(get_user_service)
 ) -> VerifyCodeResponse:
     try:
-        return await service.verify_phone(request)
+        return await service.verify_phone(data)
     except InvalidPhoneNumber as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
