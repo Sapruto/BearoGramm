@@ -12,9 +12,6 @@ export function ChatSocketProvider({ children }: { children: React.ReactNode }) 
     const token = useAuthStore((state) => state.token);
     const { uuid: chatUUID } = useParams();
 
-    const { data: partnerData } = useGetChatPartner(chatUUID);
-    const partnerProfile = partnerData && partnerData?.partner_profile;
-
     if (Notification.permission === 'default') {
         Notification.requestPermission();
     }
@@ -27,7 +24,7 @@ export function ChatSocketProvider({ children }: { children: React.ReactNode }) 
         const unsubscribe = chatSocket.subscribe((msg) => {
             switch (msg.type) {
                 case 'message_created':
-                    messageNotify(chatUUID, partnerProfile, msg.data);
+                    messageNotify(chatUUID, msg.data);
                     addMessageToCache(queryClient, msg.data.chat_uuid, msg.data);
                     break;
                 // case 'typing':
