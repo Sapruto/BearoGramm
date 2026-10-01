@@ -3,7 +3,6 @@ import { useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { useAuthStore } from '../../store/authStore';
 import { chatSocket } from '../api/wsClient';
-import { useGetChatPartner } from '../hooks/personal/useGetChatPartner';
 import { addMessageToCache } from '../lib/addMessageToCache';
 import { messageNotify } from '../lib/messageNotify';
 

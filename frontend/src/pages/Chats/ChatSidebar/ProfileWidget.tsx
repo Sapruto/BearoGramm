@@ -1,3 +1,4 @@
+import { Settings } from "lucide-react";
 import { useGetMyProfile } from "../../../shared/hooks/profile/useGetMyProfile";
 
 const ProfileWidget = () => {
@@ -23,9 +24,9 @@ const ProfileWidget = () => {
                     )}
                 </button>
 
-                {/* <button className="w-8 h-8 flex items-center justify-center rounded-lg text-[#8b8b93] hover:bg-[#242427] hover:text-[#f4f4f5] transition-colors cursor-pointer shrink-0">
+                <button className="w-8 h-8 flex items-center justify-center rounded-lg text-[#8b8b93] hover:bg-[#242427] hover:text-[#f4f4f5] transition-colors cursor-pointer shrink-0">
                     <Settings size={18} />
-                </button> */}
+                </button>
             </div>
         </div>
     )
