@@ -37,7 +37,7 @@ const ChatSidebar = ({ activeChatId, onSelectAddFriend, onSelectChat }: Props) =
     const chats = data?.pages.flatMap((page) => page.items) ?? [];
 
     return (
-        <div className="w-full h-screen bg-[#131316] border-r border-[#1f1f23] p-4 flex flex-col">
+        <div className="w-full h-screen bg-[#131316] border-r border-[#1f1f23] p-4 flex flex-col bg-[url('https://iv.okcdn.ru/getVideoPreview?id=8052769098399&idx=7&type=39&tkn=PpKyej2HVeLYEG3bwrb_2rMmLvY&fn=vid_w')] bg-cover bg-center">
             <div className='h-full flex flex-col overflow-y-auto min-h-0'>
                 <div>
                     <button

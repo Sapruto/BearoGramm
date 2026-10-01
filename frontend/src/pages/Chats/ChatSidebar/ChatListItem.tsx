@@ -32,7 +32,7 @@ export function ChatListItem({ chat, isActive, onSelect }: ChatListItemProps) {
             <div
                 onClick={() => onSelect(chat.uuid)}
                 className={`group flex items-center gap-2.5 px-2 py-2 rounded-lg cursor-pointer transition-colors min-w-0 ${
-                    isActive ? 'bg-[#1a1a1d]' : 'hover:bg-[#1a1a1d]'
+                    isActive ? 'bg-[linear-gradient(to_bottom,rgba(0,0,0,0.6),rgba(0,0,0,0.6)),url(\'https://iv.okcdn.ru/getVideoPreview?id=8052769098399&idx=7&type=39&tkn=PpKyej2HVeLYEG3bwrb_2rMmLvY&fn=vid_w\')] bg-cover bg-center' : 'hover:bg-[#1a1a1d]'
                 }`}
             >
                 <img

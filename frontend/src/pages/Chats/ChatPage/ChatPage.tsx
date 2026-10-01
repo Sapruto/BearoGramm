@@ -160,7 +160,7 @@ const ChatRoom = ({ chatUUID }: { chatUUID: string }) => {
     }
 
     return (
-        <div className="flex-1 h-screen flex flex-col bg-[#0a0a0b]">
+        <div className="flex-1 h-screen flex flex-col bg-[url('https://iv.okcdn.ru/getVideoPreview?id=8052769098399&idx=7&type=39&tkn=PpKyej2HVeLYEG3bwrb_2rMmLvY&fn=vid_w')] bg-cover bg-center">
             <ChatHeader avatarUrl={partnerAvatar} name={partnerName} />
 
             <Virtuoso

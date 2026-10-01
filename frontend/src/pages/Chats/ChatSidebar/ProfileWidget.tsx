@@ -4,7 +4,7 @@ const ProfileWidget = () => {
     const { data } = useGetMyProfile();
 
     return (
-        <div className="bg-[#1a1a1d] border border-[#27272c] rounded-xl px-3 py-2.5 flex items-center gap-2.5">
+        <div className="bg-[linear-gradient(to_bottom,rgba(0,0,0,0.6),rgba(0,0,0,0.6)),url('https://iv.okcdn.ru/getVideoPreview?id=8052769098399&idx=7&type=39&tkn=PpKyej2HVeLYEG3bwrb_2rMmLvY&fn=vid_w')] bg-cover bg-center border border-[#27272c] rounded-xl px-3 py-2.5 flex items-center gap-2.5">
             <div className="w-full flex items-center justify-between gap-5">
                 <button className="flex items-center gap-3 text-left flex-1 min-w-0 rounded-lg px-1.5 py-1.5 -mx-1.5 -my-1 hover:bg-[#242427] transition-colors cursor-pointer">
                     {data?.profile ? (
