@@ -1,6 +1,5 @@
 import { Trash2, X } from 'lucide-react';
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import type { PersonalChat } from '../../../shared/api/personal';
 import { ConfirmDialog } from '../../../shared/components/ConfirmDialog';
 import { useDeletePersonalChat } from '../../../shared/hooks/personal/useDeletePersonalChat';
@@ -14,16 +13,10 @@ interface ChatListItemProps {
 export function ChatListItem({ chat, isActive, onSelect }: ChatListItemProps) {
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const { mutate: deleteChat, isPending } = useDeletePersonalChat();
-    const navigate = useNavigate();
 
     const handleDelete = () => {
         deleteChat(chat.uuid, {
-            onSuccess: () => {
-                setIsDialogOpen(false);
-                if (isActive) {
-                    navigate('/chats');
-                }
-            },
+            onSuccess: () => setIsDialogOpen(false),
         });
     };
 
@@ -31,9 +24,8 @@ export function ChatListItem({ chat, isActive, onSelect }: ChatListItemProps) {
         <>
             <div
                 onClick={() => onSelect(chat.uuid)}
-                className={`group flex items-center gap-2.5 px-2 py-2 rounded-lg cursor-pointer transition-colors min-w-0 ${
-                    isActive ? 'bg-[#1a1a1d]' : 'hover:bg-[#1a1a1d]'
-                }`}
+                className={`group flex items-center gap-2.5 px-2 py-2 rounded-lg cursor-pointer transition-colors min-w-0 ${isActive ? 'bg-[#1a1a1d]' : 'hover:bg-[#1a1a1d]'
+                    }`}
             >
                 <img
                     src={chat.partner_profile.avatar_url}

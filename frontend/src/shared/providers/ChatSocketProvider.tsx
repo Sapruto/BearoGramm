@@ -5,6 +5,8 @@ import { useAuthStore } from '../../store/authStore';
 import { chatSocket } from '../api/wsClient';
 import { addMessageToCache } from '../lib/addMessageToCache';
 import { messageNotify } from '../lib/messageNotify';
+import { queryKeys } from '../lib/queryKeys';
+import { useRemovePersonalChat } from '../lib/useRemovePersonalChat';
 
 export function ChatSocketProvider({ children }: { children: React.ReactNode }) {
     const queryClient = useQueryClient();
@@ -13,6 +15,8 @@ export function ChatSocketProvider({ children }: { children: React.ReactNode }) 
 
     const chatUUIDRef = useRef(chatUUID);
     chatUUIDRef.current = chatUUID;
+
+    const removePersonalChat = useRemovePersonalChat();
 
     useEffect(() => {
         if (Notification.permission === 'default') {
@@ -31,6 +35,12 @@ export function ChatSocketProvider({ children }: { children: React.ReactNode }) 
                     messageNotify(chatUUIDRef.current, msg.data);
                     addMessageToCache(queryClient, msg.data.chat_uuid, msg.data);
                     break;
+                case 'chat_created':
+                    queryClient.invalidateQueries({ queryKey: queryKeys.personalChats });
+                    break;
+                case 'chat_deleted':
+                    removePersonalChat(msg.data.chat_uuid);
+                    break;
             }
         });
 
@@ -38,7 +48,7 @@ export function ChatSocketProvider({ children }: { children: React.ReactNode }) 
             unsubscribe();
             chatSocket.disconnect();
         };
-    }, [token, queryClient]);
+    }, [token, queryClient, removePersonalChat]);
 
     return <>{children}</>;
 }
