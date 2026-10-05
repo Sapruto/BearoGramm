@@ -1,5 +1,5 @@
 import { useQueryClient } from '@tanstack/react-query';
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useParams } from 'react-router-dom';
 import { useAuthStore } from '../../store/authStore';
 import { chatSocket } from '../api/wsClient';
@@ -11,9 +11,14 @@ export function ChatSocketProvider({ children }: { children: React.ReactNode }) 
     const token = useAuthStore((state) => state.token);
     const { uuid: chatUUID } = useParams();
 
-    if (Notification.permission === 'default') {
-        Notification.requestPermission();
-    }
+    const chatUUIDRef = useRef(chatUUID);
+    chatUUIDRef.current = chatUUID;
+
+    useEffect(() => {
+        if (Notification.permission === 'default') {
+            Notification.requestPermission();
+        }
+    }, []);
 
     useEffect(() => {
         if (!token) return;
@@ -23,12 +28,9 @@ export function ChatSocketProvider({ children }: { children: React.ReactNode }) 
         const unsubscribe = chatSocket.subscribe((msg) => {
             switch (msg.type) {
                 case 'message_created':
-                    messageNotify(chatUUID, msg.data);
+                    messageNotify(chatUUIDRef.current, msg.data);
                     addMessageToCache(queryClient, msg.data.chat_uuid, msg.data);
                     break;
-                // case 'typing':
-                // TODO: implement typing bubble
-                // break;
             }
         });
 
@@ -36,7 +38,7 @@ export function ChatSocketProvider({ children }: { children: React.ReactNode }) 
             unsubscribe();
             chatSocket.disconnect();
         };
-    }, [token, chatUUID, queryClient]);
+    }, [token, queryClient]);
 
     return <>{children}</>;
 }
