@@ -16,9 +16,6 @@ const HISTORY_COUNT = 20;
 const GROUP_WINDOW_MS = 5 * 60 * 1000;
 const START_INDEX = 100000;
 
-const formatTime = (timestamp: number) =>
-    new Date(timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-
 const ChatHeader = ({ avatarUrl, name }: { avatarUrl?: string; name?: string }) => (
     <div className="px-5 py-4 border-b border-[#1f1f23] flex items-center gap-2.5">
         <img src={avatarUrl} className="w-9 h-9 rounded-full object-cover" />
@@ -220,7 +217,7 @@ const ChatRoom = ({ chatUUID }: { chatUUID: string }) => {
                         <div className={`px-5 ${!isFirst ? 'pt-0.5' : 'pt-3.5'}`}>
                             <ChatMessage
                                 text={msg.message_text}
-                                time={formatTime(Date.parse(msg.created_at))}
+                                timestamp={Date.parse(msg.created_at)}
                                 isOwn={isOwn}
                                 avatarUrl={isOwn ? myProfile?.profile.avatar_url : partnerAvatar}
                                 isFirst={isFirst}
