@@ -10,7 +10,7 @@ type Props = {
 const ChatMessage = ({ text, time, isOwn, avatarUrl, isFirst, isLast }: Props) => {
     return (
         <div className={`flex flex-col items-start ${isFirst || isLast ? 'gap-1' : 'gap-0'}`}>
-            <div className="flex gap-2 items-center">
+            <div className="flex gap-2 items-center min-w-0 max-w-full">
                 {isFirst ? (
                     avatarUrl ? (
                         <img src={avatarUrl} className="w-7 h-7 rounded-full object-cover shrink-0" />
@@ -21,10 +21,10 @@ const ChatMessage = ({ text, time, isOwn, avatarUrl, isFirst, isLast }: Props) =
                     <div className="w-7 shrink-0" />
                 )}
                 <div
-                    className={`rounded-xl rounded-bl-sm px-3 py-2 max-w-[320px] ${isOwn ? 'bg-[#f4f4f5]' : 'bg-[#1a1a1d]'
+                    className={`rounded-xl rounded-bl-sm px-3 py-2 max-w-[320px] min-w-0 ${isOwn ? 'bg-[#f4f4f5]' : 'bg-[#1a1a1d]'
                         }`}
                 >
-                    <span className={`text-sm ${isOwn ? 'text-[#0a0a0b]' : 'text-[#f4f4f5]'}`}>
+                    <span className={`block text-sm break-words whitespace-pre-wrap ${isOwn ? 'text-[#0a0a0b]' : 'text-[#f4f4f5]'}`}>
                         {text}
                     </span>
                 </div>
