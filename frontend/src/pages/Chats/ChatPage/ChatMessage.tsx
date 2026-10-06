@@ -1,3 +1,4 @@
+import ProfileTrigger from "../../../shared/components/ProfileTrigger";
 import { formatMessageTime } from "../../../shared/lib/formatMessageTime";
 
 type Props = {
@@ -7,20 +8,19 @@ type Props = {
     avatarUrl?: string;
     isFirst: boolean;
     isLast: boolean;
+    userUUID: string;
 };
 
-const ChatMessage = ({ text, timestamp, isOwn, avatarUrl, isFirst, isLast }: Props) => {
+const ChatMessage = ({ text, timestamp, isOwn, avatarUrl, isFirst, isLast, userUUID }: Props) => {
     const { label, fullDate, iso } = formatMessageTime(timestamp);
 
     return (
         <div className={`flex flex-col items-start ${isFirst || isLast ? 'gap-1' : 'gap-0'}`}>
             <div className="flex gap-2 items-center min-w-0 max-w-full">
                 {isFirst ? (
-                    avatarUrl ? (
+                    <ProfileTrigger userUUID={userUUID} side="right">
                         <img src={avatarUrl} className="w-7 h-7 rounded-full object-cover shrink-0" />
-                    ) : (
-                        <div className="w-7 h-7 shrink-0" />
-                    )
+                    </ProfileTrigger>
                 ) : (
                     <div className="w-7 shrink-0" />
                 )}

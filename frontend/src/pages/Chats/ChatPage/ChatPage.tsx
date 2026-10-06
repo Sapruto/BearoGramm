@@ -223,6 +223,7 @@ const ChatRoom = ({ chatUUID }: { chatUUID: string }) => {
                                 avatarUrl={isOwn ? myProfile?.profile.avatar_url : partnerAvatar}
                                 isFirst={isFirst}
                                 isLast={isLast}
+                                userUUID={msg.user_uuid}
                             />
                         </div>
                     );

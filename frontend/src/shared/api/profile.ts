@@ -35,3 +35,13 @@ export const updateProfile = async (data: UpdateProfileRequest): Promise<UpdateP
     const res = await apiClient.patch('/api/profile/me', data);
     return res.data;
 };
+
+export type GetProfileByUserResponse = {
+    success: boolean;
+    profile: Profile;
+};
+
+export const getProfileByUser = async (userUUID: string): Promise<GetProfileByUserResponse> => {
+    const res = await apiClient.get(`/api/profile/user/${userUUID}`);
+    return res.data;
+};
