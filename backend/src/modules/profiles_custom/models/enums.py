@@ -6,6 +6,7 @@ class BannerColor(str, Enum):
     RED = "red"
     GREEN = "green"
     BLUE = "blue"
+    HEX = "hex"
 
     def __str__(self):
         return self.value
