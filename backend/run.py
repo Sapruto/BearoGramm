@@ -11,7 +11,7 @@ if __name__ == "__main__":
     port = parsed.port or 8000
 
     uvicorn.run(
-        app,
+        "run:app",
         host=host,
         port=port,
         reload=Settings.APP.DEBUG,
