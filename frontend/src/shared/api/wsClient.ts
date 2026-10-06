@@ -14,6 +14,14 @@ export type WSMessage =
         type: 'user_online';
         data: { user_uuid: string, online: boolean }
     }
+    | {
+        type: 'chat_created';
+        data: { chat_uuid: string };
+    }
+    | {
+        type: 'chat_deleted';
+        data: { chat_uuid: string };
+    }
 
 type WSHandler = (msg: WSMessage) => void;
 

@@ -7,8 +7,8 @@ from src.modules.event_notification import EventNotificationService, get_notific
 
 
 class ChatEventType(str, Enum):
-    CREATE = "create"
-    DELETE = "delete"
+    CREATE = "chat_created"
+    DELETE = "chat_deleted"
 
     def __str__(self):
         return self.value
@@ -24,8 +24,8 @@ class NotificatorChatEvents:
         await self._notification_service.notify_users(
             user_uuids=user_uuids or [],
             notification={
-                "event_type": event_type.value,
-                "chat_uuid": chat_uuid,
+                "type": event_type.value,
+                "data": { "chat_uuid": chat_uuid },
             }
         )
 
