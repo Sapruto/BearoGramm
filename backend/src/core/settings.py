@@ -210,5 +210,3 @@ class SettingsModel(BaseSettings):
 
 
 Settings = SettingsModel.load_from_configs()
-
-print(Settings.SESSIONS.SESSION_TTL_HOURS)
