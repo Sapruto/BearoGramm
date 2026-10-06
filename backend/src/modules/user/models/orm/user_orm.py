@@ -13,7 +13,7 @@ class UserORM(Base):
     uuid: Mapped[str] = mapped_column(
         String(36), primary_key=True, default=lambda: str(uuid4())
     )
-    username: Mapped[str] = mapped_column(String(10), nullable=True)
+    #username: Mapped[str] = mapped_column(String(10), nullable=True)
 
     phone_number_encrypted: Mapped[str] = mapped_column(String(512), nullable=True)
     phone_number_hash: Mapped[str] = mapped_column(
@@ -21,7 +21,7 @@ class UserORM(Base):
     )
     phone_number_mask: Mapped[str] = mapped_column(String(20), nullable=True)
 
-    email: Mapped[str] = mapped_column(String(100), nullable=True)
+    #email: Mapped[str] = mapped_column(String(100), nullable=True)
 
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, default=func.now()
