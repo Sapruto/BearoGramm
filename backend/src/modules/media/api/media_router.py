@@ -21,14 +21,13 @@ media_router = APIRouter(prefix="/api/medias", tags=["medias"])
 )
 async def upload_media(
     file: UploadFile = File(...),
-    content_type: Optional[str] = Form(default=None),
     service: MediaService = Depends(get_media_service),
 ) -> MediaUploadResponse:
     content = await file.read()
     result = await service.upload_media(
         content=content,
         filename=file.filename or "file",
-        content_type=content_type or file.content_type,
+        content_type=file.content_type,
     )
     if not result.success:
         raise HTTPException(

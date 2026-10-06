@@ -17,7 +17,7 @@ class AvatarRandomizer:
 
     def get_random_avatar(self) -> str:
         if not self.avatars:
-            return None
+            return ""
             
         random_file = choice(self.avatars)
         
