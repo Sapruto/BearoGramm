@@ -8,20 +8,16 @@ import { useGetChatPartner } from '../../../shared/hooks/personal/useGetChatPart
 import { useGetMyProfile } from '../../../shared/hooks/profile/useGetMyProfile';
 import { useAuthStore } from '../../../store/authStore';
 import ChatMessage from './ChatMessage';
+import { ChatSkeleton } from './ChatSkeleton';
 import MessageInput from './MessageInput';
+import ChatHeader from './ChatHeader';
+import { ChatHeaderSkeleton } from './ChatHeaderSkeleton';
 
 const INITIAL_COUNT = 30;
 const HISTORY_COUNT = 20;
 
 const GROUP_WINDOW_MS = 5 * 60 * 1000;
 const START_INDEX = 100000;
-
-const ChatHeader = ({ avatarUrl, name }: { avatarUrl?: string; name?: string }) => (
-    <div className="px-5 py-4 border-b border-[#1f1f23] flex items-center gap-2.5">
-        <img src={avatarUrl} className="w-9 h-9 rounded-full object-cover" />
-        <span className="text-[15px] font-medium text-[#f4f4f5]">{name}</span>
-    </div>
-);
 
 const HistoryBeginLabel = ({ name }: { name?: string }) => (
     <div className="px-5 py-3 text-[#999]">
@@ -176,7 +172,12 @@ const ChatRoom = ({ chatUUID }: { chatUUID: string }) => {
     if (!data) {
         return (
             <div className="flex-1 h-screen flex flex-col bg-[#0a0a0b]">
-                <ChatHeader avatarUrl={partnerAvatar} name={partnerName} />
+                <ChatHeaderSkeleton />
+                <div className='flex-1 px-5 overflow-y-hidden'>
+                    {new Array(10).fill(0).map(() => (
+                        <ChatSkeleton />
+                    ))}
+                </div>
                 <MessageInput onSend={handleSend} />
             </div>
         );
@@ -228,6 +229,7 @@ const ChatRoom = ({ chatUUID }: { chatUUID: string }) => {
                 }}
                 context={{ hasPreviousPage, partnerName, scrollerRef }}
                 components={{ Header }}
+                defaultItemHeight={60}
             />
 
             <MessageInput onSend={handleSend} />
