@@ -3,7 +3,7 @@ import { Trash2, User, X } from 'lucide-react';
 import { useState } from 'react';
 import type { PersonalChat } from '../../../shared/api/personal';
 import { ConfirmDialog } from '../../../shared/components/ConfirmDialog';
-import ProfileTrigger from '../../../shared/components/ProfileTrigger';
+import ProfileTrigger from '../../../shared/components/ProfileCard/ProfileTrigger';
 import { useDeletePersonalChat } from '../../../shared/hooks/personal/useDeletePersonalChat';
 interface ChatListItemProps {
     chat: PersonalChat;

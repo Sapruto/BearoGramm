@@ -27,3 +27,4 @@ logs/
 *.log.*
 
 data/test.db
+uploads/media

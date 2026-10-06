@@ -1,4 +1,4 @@
-import ProfileTrigger from "../../../shared/components/ProfileTrigger";
+import ProfileTrigger from "../../../shared/components/ProfileCard/ProfileTrigger";
 import { formatMessageTime } from "../../../shared/lib/formatMessageTime";
 
 type Props = {
