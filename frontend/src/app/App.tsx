@@ -9,7 +9,6 @@ import ProfileCustomizationPage from "../pages/Auth/ProfileSettingsPage"
 import AddFriendPage from "../pages/Chats/AddFriendPage"
 import ChatsLayout from "../pages/Chats/ChatLayout"
 import ChatPage from "../pages/Chats/ChatPage/ChatPage"
-import ChatList from "../pages/Chats/ChatPage/ChatPage2"
 import HomePage from "../pages/HomePage/HomePage"
 import NotFoundPage from "../pages/NotFoundPage/NotFoundPage"
 import { queryClient } from "../shared/api/queryClient"
@@ -29,7 +28,6 @@ function App() {
 
         <Routes>
           <Route path="/" element={<HomePage />} />
-          <Route path="/test" element={<ChatList />} />
 
           <Route path="/auth" element={<NoLoginRequiredRoute />}>
             <Route index element={<Navigate to="/auth/phone" />} />
