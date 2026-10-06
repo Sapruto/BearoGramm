@@ -56,7 +56,7 @@ export function ConfirmDialog({
             }}
             slotProps={{
                 backdrop: {
-                    sx: { backgroundColor: 'rgba(0, 0, 0, 0.65)', backdropFilter: 'blur(2px)' },
+                    sx: { backgroundColor: 'rgba(0, 0, 0, 0.75)' },
                 },
                 paper: {
                     sx: {
