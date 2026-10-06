@@ -1,5 +1,5 @@
 import { Send } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 type Props = {
     onSend: (text: string) => void;
@@ -7,6 +7,41 @@ type Props = {
 
 const MessageInput = ({ onSend }: Props) => {
     const [value, setValue] = useState('');
+    const inputRef = useRef<HTMLInputElement>(null);
+
+    useEffect(() => {
+        const handleGlobalKeyDown = (e: KeyboardEvent) => {
+            if (e.ctrlKey || e.metaKey || e.altKey) return;
+
+            if (e.key.length !== 1 && e.key !== 'Backspace') return;
+
+            const active = document.activeElement as HTMLElement | null;
+            const isEditable =
+                active instanceof HTMLInputElement ||
+                active instanceof HTMLTextAreaElement ||
+                active instanceof HTMLSelectElement ||
+                active?.isContentEditable;
+
+            if (isEditable) return;
+
+            inputRef.current?.focus();
+        };
+
+        const handleGlobalPaste = () => {
+            const active = document.activeElement;
+            if (active instanceof HTMLInputElement || active instanceof HTMLTextAreaElement) return;
+
+            inputRef.current?.focus();
+        };
+
+        window.addEventListener('keydown', handleGlobalKeyDown);
+        window.addEventListener('paste', handleGlobalPaste);
+
+        return () => {
+            window.removeEventListener('keydown', handleGlobalKeyDown);
+            window.removeEventListener('paste', handleGlobalPaste);
+        };
+    }, []);
 
     const handleSend = () => {
         const trimmed = value.trim();
@@ -26,6 +61,7 @@ const MessageInput = ({ onSend }: Props) => {
     return (
         <div className="px-4 py-3.5 border-t border-[#1f1f23] flex items-center gap-2.5">
             <input
+                ref={inputRef}
                 type="text"
                 value={value}
                 onChange={(e) => setValue(e.target.value)}
