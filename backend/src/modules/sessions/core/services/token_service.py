@@ -12,7 +12,7 @@ class TokenService:
     def __init__(self, secret_key: str = None):
         self.secret_key = secret_key or Settings.JWT.SECRET_KEY
         self.algorithm_type = Settings.JWT.ALGORITHM
-        self.token_live_time_expire_minuts = Settings.JWT.EXPIRE_MINUTES
+        self.token_live_time_expire_minutes = Settings.JWT.EXPIRE_MINUTES
 
     def create_access_token(
         self, data: Dict[str, Any], expires_delta: Optional[timedelta] = None
@@ -23,7 +23,7 @@ class TokenService:
             expire = datetime.now(timezone.utc) + expires_delta
         else:
             expire = datetime.now(timezone.utc) + timedelta(
-                minutes=self.token_live_time_expire_minuts
+                minutes=self.token_live_time_expire_minutes
             )
 
         to_encode.update({"exp": expire})

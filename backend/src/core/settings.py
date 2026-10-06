@@ -140,6 +140,12 @@ class PhoneSettings(BaseSettings):
     model_config = {"extra": "ignore"}
 
 
+class SessionSettings(BaseSettings):
+    SESSION_TTL_HOURS: int = Field(default=24)
+
+    model_config = {"extra": "ignore"}
+
+
 class SettingsModel(BaseSettings):
     ENV: str = "development"
     BASE_URL: str = "http://localhost:8000"
@@ -152,6 +158,7 @@ class SettingsModel(BaseSettings):
     JWT: JWTSettings = Field(default_factory=JWTSettings)
     ENCRYPTER: EncrypterSettings = Field(default_factory=EncrypterSettings)
     PHONE: PhoneSettings = Field(default_factory=PhoneSettings)
+    SESSIONS: SessionSettings = Field(default_factory=SessionSettings)
 
     MEDIA_BASE_URL: str = "http://localhost:8000/media"
 
@@ -203,3 +210,5 @@ class SettingsModel(BaseSettings):
 
 
 Settings = SettingsModel.load_from_configs()
+
+print(Settings.SESSIONS.SESSION_TTL_HOURS)

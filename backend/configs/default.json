@@ -38,5 +38,9 @@
             "S3_REGION": "ru1"
         }
     },
-    "CLIENT_SMS_TYPE": "test"
+    "CLIENT_SMS_TYPE": "test",
+
+    "SESSIONS": {
+        "SESSION_TTL_HOURS": 24
+    }
 }

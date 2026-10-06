@@ -3,6 +3,7 @@ from datetime import datetime, timedelta, timezone
 import uuid
 
 from src.core.logger import get_logger
+from src.core.settings import Settings
 from src.general.repository.redis.redis_query import RedisQuery
 
 from .token_service import TokenService, get_token_service
@@ -18,12 +19,12 @@ class SessionService:
         self,
         session_repository: Optional[SessionRepository] = None,
         token_service: Optional[TokenService] = None,
-        session_ttl_hours: int = 24,
+        session_ttl_hours: Optional[int] = None,
         max_sessions_per_user: Optional[int] = None,
     ):
         self._session_repo = session_repository or get_session_repository()
         self._token_service = token_service or get_token_service()
-        self._ttl_hours = session_ttl_hours
+        self._ttl_hours = session_ttl_hours or Settings.SESSIONS.SESSION_TTL_HOURS
         self._max_sessions = max_sessions_per_user
 
     async def create_session(self, dto: CreateSessionDTO) -> SessionResultDTO:

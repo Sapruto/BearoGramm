@@ -59,6 +59,11 @@ async def listen_messages_websocket(websocket: WebSocket):
             send_message=send_message,
             receive_message=receive_message
         )
+    except Exception as e:
+        logger.error(e)
+        closed = True
+        await websocket.close(code=5000)
+
     finally:
         if not closed:
             try:
