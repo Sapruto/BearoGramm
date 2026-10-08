@@ -60,10 +60,11 @@ class MediaService:
         return MediaDTO(
             uuid=entity.uuid,
             filename=entity.filename,
-            url=entity.url,
+            url=entity.full_url,
             content_type=entity.content_type,
             size=entity.size,
             uploaded_at=entity.created_at,
+            castrated_url=entity.url
         )
 
     async def upload_media(
@@ -94,11 +95,12 @@ class MediaService:
                 success=False, error=url_or_err or "Upload failed"
             )
 
-        url = url_or_err
+        full_url = url_or_err
 
         entity = MediaEntity(
             uuid=self._make_media_uuid(),
-            url=url,
+            full_url=full_url,
+            url=full_url,
             hash=media_hash,
             filename=filename,
             content_type=content_type or "application/octet-stream",

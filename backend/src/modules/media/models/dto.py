@@ -20,6 +20,8 @@ class MediaDTO(BaseModel):
     size: int
     uploaded_at: datetime
 
+    castrated_url: str
+
 
 class MediaUploadResponse(BaseModel):
     success: bool

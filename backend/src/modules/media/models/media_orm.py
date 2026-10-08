@@ -15,6 +15,7 @@ class MediaORM(Base):
         default=lambda: str(uuid4()),
     )
 
+    full_url: Mapped[str] = mapped_column(String, nullable=False, unique=True)
     url: Mapped[str] = mapped_column(String, nullable=False, unique=True)
     hash: Mapped[str] = mapped_column(String, nullable=False, unique=True, index=True)
     filename: Mapped[str] = mapped_column(String, nullable=False)

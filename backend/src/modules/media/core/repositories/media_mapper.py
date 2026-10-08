@@ -15,6 +15,7 @@ logger = get_logger(__name__)
 class MediaMapper(BaseMapper[MediaEntity, MediaORM, MediaFields]):
     field_mapping = {
         MediaFields.UUID: MediaORM.uuid,
+        MediaFields.FULL_URL: MediaORM.full_url,
         MediaFields.URL: MediaORM.url,
         MediaFields.HASH: MediaORM.hash,
         MediaFields.FILENAME: MediaORM.filename,
@@ -26,6 +27,7 @@ class MediaMapper(BaseMapper[MediaEntity, MediaORM, MediaFields]):
 
     reverse_field_mapping = {
         MediaORM.uuid: MediaFields.UUID,
+        MediaORM.full_url: MediaFields.FULL_URL,
         MediaORM.url: MediaFields.URL,
         MediaORM.hash: MediaFields.HASH,
         MediaORM.filename: MediaFields.FILENAME,
@@ -38,6 +40,7 @@ class MediaMapper(BaseMapper[MediaEntity, MediaORM, MediaFields]):
     async def to_orm(self, entity: MediaEntity) -> MediaORM:
         return MediaORM(
             uuid=entity.uuid,
+            full_url=entity.full_url,
             url=entity.url,
             hash=entity.hash,
             filename=entity.filename,
@@ -50,6 +53,7 @@ class MediaMapper(BaseMapper[MediaEntity, MediaORM, MediaFields]):
     async def to_entity(self, orm: MediaORM) -> MediaEntity:
         return MediaEntity(
             uuid=orm.uuid,
+            full_url=orm.full_url,
             url=orm.url,
             hash=orm.hash,
             filename=orm.filename,

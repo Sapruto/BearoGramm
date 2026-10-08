@@ -7,6 +7,7 @@ from datetime import datetime
 
 class MediaFields(str, Enum):
     UUID = "uuid"
+    FULL_URL = "full_url"
     URL = "url"
     HASH = "hash"
     FILENAME = "filename"
@@ -22,6 +23,7 @@ class MediaFields(str, Enum):
 class MediaEntity(BaseModel):
     uuid: Optional[str] = Field(default=None)
 
+    full_url: str = Field()
     url: str = Field()
     hash: str = Field()
     filename: str = Field()
