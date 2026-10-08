@@ -2,7 +2,7 @@ from src.core.database import Base
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy import String, DateTime, func
 
-from typing import List
+from typing import List, Optional
 from uuid import uuid4
 from datetime import datetime
 
@@ -13,15 +13,14 @@ class UserORM(Base):
     uuid: Mapped[str] = mapped_column(
         String(36), primary_key=True, default=lambda: str(uuid4())
     )
-    #username: Mapped[str] = mapped_column(String(10), nullable=True)
+    username: Mapped[Optional[str]] = mapped_column(String(10), nullable=True)
+    email: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
 
     phone_number_encrypted: Mapped[str] = mapped_column(String(512), nullable=True)
     phone_number_hash: Mapped[str] = mapped_column(
         String(64), nullable=True, index=True
     )
     phone_number_mask: Mapped[str] = mapped_column(String(20), nullable=True)
-
-    #email: Mapped[str] = mapped_column(String(100), nullable=True)
 
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, default=func.now()

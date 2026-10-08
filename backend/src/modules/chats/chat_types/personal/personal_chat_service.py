@@ -1,6 +1,7 @@
 from typing import Optional, List, Tuple, Dict, Any
 
 from src.general.repository.sql.sql_query import SqlQuery
+from src.modules.friends import get_friend_service, FriendService, NotFriends
 from src.modules.participants.models.enums import ResourceType
 from src.modules.profiles_custom import ProfileCustomService, get_profile_custom_service
 from src.modules.user import UserServiceAPI, get_user_service_api
@@ -28,11 +29,13 @@ class PersonalChatService(BaseChatService):
             permission_service: Optional[PermissionService] = None,
             user_service: Optional[UserServiceAPI] = None,
             profile_service: Optional[ProfileCustomService] = None,
+            friend_service: Optional[FriendService] = None,
             notify_service: Optional[NotificatorChatEvents] = None,
             max_limit: Optional[int] = None,
     ):
         self._user_service = user_service or get_user_service_api()
         self._profile_service = profile_service or get_profile_custom_service()
+        self._friend_service = friend_service or get_friend_service()
         self._notify_service = notify_service or get_notificator_chat_event()
         self._max_limit = max_limit or 50
         super().__init__(repository or get_chat_repository(), permission_service)
@@ -78,6 +81,9 @@ class PersonalChatService(BaseChatService):
         existing = await self._repository.get_chat_by_participants([user_uuid, other_user_uuid], self._get_chat_type())
         if existing:
             raise ChatIsExisting()
+
+        if not self._friend_service.check_friends(user_uuid, other_user_uuid):
+            raise NotFriends
 
         chat = await self.create_chat(user_uuid=user_uuid, uuids=[user_uuid, other_user_uuid])
         await self._notify_service.notify_about_chat_event(chat.uuid, ChatEventType.CREATE)

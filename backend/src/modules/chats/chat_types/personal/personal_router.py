@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 
+from src.modules.friends import NotFriends
 from src.modules.user import get_current_user_depends
 
 from .personal_chat_service import PersonalChatService, get_personal_chat_service
@@ -54,6 +55,11 @@ async def create_personal_chat(
             detail=str(e)
         )
     except ChatIsExisting as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e)
+        )
+    except NotFriends as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=str(e)

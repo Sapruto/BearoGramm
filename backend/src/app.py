@@ -26,6 +26,7 @@ def include_all_routers(app: FastAPI) -> FastAPI:
     from src.modules.profiles_custom import profile_custom_router
     from src.modules.media import media_router
     from src.modules.event_notification import event_notification_router
+    from src.modules.friends import friend_router
 
     app.include_router(auth_router)
     app.include_router(personal_chats_router)
@@ -34,6 +35,7 @@ def include_all_routers(app: FastAPI) -> FastAPI:
     app.include_router(profile_custom_router)
     app.include_router(media_router)
     app.include_router(event_notification_router)
+    app.include_router(friend_router)
 
     return app
 

@@ -10,6 +10,9 @@ from datetime import datetime, timezone
 class UserFields(str, Enum):
     UUID = "uuid"
 
+    USERNAME = "username"
+    EMAIL = "email"
+
     PHONE_NUMBER = "phone_number"
     PHONE_NUMBER_HASH = "phone_number_hash"
     PHONE_NUMBER_MASK = "phone_number_mask"
@@ -23,6 +26,9 @@ class UserFields(str, Enum):
 
 class UserEntity(BaseModel):
     uuid: str = Field(default_factory=lambda: str(uuid4()))
+
+    username: Optional[str] = Field(default=None)
+    email: Optional[str] = Field(default=None)
 
     phone_number: str = Field()
 

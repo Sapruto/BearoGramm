@@ -1,0 +1,38 @@
+from pydantic import BaseModel
+from typing import List, Optional
+from datetime import datetime
+
+from ..enums import FriendStatus
+
+
+class FriendItemResponse(BaseModel):
+    user_uuid: str
+    status: FriendStatus
+    is_initiator: bool
+    created_at: datetime
+
+
+class FriendRequestResponse(BaseModel):
+    from_user_uuid: str
+    to_user_uuid: str
+    status: FriendStatus
+    created_at: datetime
+
+
+class GetFriendsResponse(BaseModel):
+    items: List[FriendItemResponse]
+    total: int
+    limit: int
+    offset: int
+
+
+class GetFriendRequestsResponse(BaseModel):
+    incoming: List[FriendRequestResponse]
+    outgoing: List[FriendRequestResponse]
+    total_incoming: int
+    total_outgoing: int
+
+
+class FriendActionResponse(BaseModel):
+    success: bool
+    message: Optional[str] = None

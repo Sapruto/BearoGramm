@@ -32,6 +32,8 @@ class UserServiceAPI:
             return UserAPIModel(
                 uuid=user.uuid,
                 phone_number=user.phone_number,
+                email=user.emial,
+                username=user.username,
                 created_at=user.created_at,
                 updated_at=user.updated_at,
             )
@@ -52,6 +54,8 @@ class UserServiceAPI:
             return UserAPIModel(
                 uuid=user.uuid,
                 phone_number=user.phone_number,
+                email=user.emial,
+                username=user.username,
                 created_at=user.created_at,
                 updated_at=user.updated_at,
             )
@@ -80,6 +84,50 @@ class UserServiceAPI:
             return UserSessionResponseAPIModel(
                 user_uuid=user_uuid, sessions=[], total=0
             )
+
+    async def get_user_by_username(self, username: str):
+        try:
+            user = await self.user_repository.get(
+                SqlQuery[UserFields]().add_filter(value=username, field=UserFields.USERNAME)
+            )
+
+            if not user:
+                return None
+
+            return UserAPIModel(
+                uuid=user.uuid,
+                phone_number=user.phone_number,
+                email=user.emial,
+                username=user.username,
+                created_at=user.created_at,
+                updated_at=user.updated_at,
+            )
+
+        except Exception as e:
+            logger.error(f"Error getting user by phone: {e}")
+            return None
+
+    async def get_user_by_email(self, email: str):
+        try:
+            user = await self.user_repository.get(
+                SqlQuery[UserFields]().add_filter(value=email, field=UserFields.EMAIL)
+            )
+
+            if not user:
+                return None
+
+            return UserAPIModel(
+                uuid=user.uuid,
+                phone_number=user.phone_number,
+                email=user.emial,
+                username=user.username,
+                created_at=user.created_at,
+                updated_at=user.updated_at,
+            )
+
+        except Exception as e:
+            logger.error(f"Error getting user by phone: {e}")
+            return None
 
     async def delete_user_session(self, token: str) -> bool:
         try:
