@@ -1,9 +1,8 @@
-from typing import Optional, Dict, Any, List, Tuple
+from typing import Optional, Dict, List
 from uuid import uuid4
 from datetime import datetime, timezone
 
 from src.core.logger import get_logger
-from src.general.processors.data_processor import DataProcessor
 from src.general.repository.sql.sql_query import SqlQuery
 
 from ..exceptions import (
@@ -24,17 +23,10 @@ logger = get_logger(__name__)
 class ProfileCustomService:
     def __init__(self):
         self.repository = get_profile_custom_repository()
-        self.data_processor = DataProcessor()
-
-    async def _prepare_data_to_use(self, data: List[Any]) -> List[Any]:
-        if not data:
-            return []
-        return await self.repository.mapper.prepare_data_to_use(data)
 
     async def create(
         self,
-        typing_to_data: List[Tuple[str, Any]],
-        user_uuid: Optional[str] = None,
+        user_uuid: str,
         name: Optional[str] = None,
         avatar_url: Optional[str] = None,
     ) -> ProfileCustomEntity:
@@ -45,22 +37,15 @@ class ProfileCustomService:
                     f"Profile already exists for user {user_uuid}"
                 )
 
-        result = await self.data_processor.save_data(typing_to_data)
-        if not result.success:
-            raise ProfileCustomDataError(result.error or "Failed to process data")
+        entity = ProfileCustomEntity(user_uuid=user_uuid)
 
-        entity = ProfileCustomEntity(
-            uuid=str(uuid4()),
-            name=name,
-            avatar_url=avatar_url,
-            data=result.processed_data,
-            user_uuid=user_uuid,
-            updated_at=datetime.now(timezone.utc),
-        )
+        if name:
+            entity.name = name
+        if avatar_url:
+            entity.avatar_url = avatar_url
 
         created = await self.repository.save(entity)
         if not created:
-            await self.data_processor.delete_data(result.processed_data)
             raise ProfileCustomDataError("Failed to save profile")
 
         return created
@@ -68,7 +53,6 @@ class ProfileCustomService:
     async def update_by_user(
         self,
         user_uuid: str,
-        typing_to_data: List[Tuple[str, Any]],
         name: Optional[str] = None,
         avatar_url: Optional[str] = None,
     ) -> ProfileCustomEntity:
@@ -76,14 +60,6 @@ class ProfileCustomService:
         if not entity:
             raise ProfileCustomNotFoundError(f"Profile for user {user_uuid} not found")
 
-        result = await self.data_processor.update_data(
-            old_data=entity.data,
-            new_typing_to_data=typing_to_data,
-        )
-        if not result.success:
-            raise ProfileCustomDataError(result.error or "Failed to update data")
-
-        entity.data = result.processed_data
         if name is not None:
             entity.name = name
         if avatar_url is not None:
@@ -100,8 +76,6 @@ class ProfileCustomService:
         entity = await self.get(user_uuid=user_uuid)
         if not entity:
             raise ProfileCustomNotFoundError(f"Profile for user {user_uuid} not found")
-
-        await self.data_processor.delete_data(entity.data)
 
         query = SqlQuery[ProfileCustomFields]()
         query.add_filter(ProfileCustomFields.UUID, entity.uuid)

@@ -23,8 +23,8 @@ class ParticipantEntity(BaseModel):
     user_uuid: str
     resource_uuid: str
     resource_type: ResourceType
-    permissions: Dict[str, bool] = Field(default_factory=dict)
-    created_at: datetime = Field(default=datetime.now(timezone.utc))
+    permissions: Dict[str, bool] = Field(default={})
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     updated_at: Optional[datetime] = None
 
     model_config = {"use_enum_values": True, "frozen": False, "extra": "forbid"}

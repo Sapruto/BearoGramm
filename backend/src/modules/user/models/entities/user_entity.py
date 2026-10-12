@@ -32,5 +32,5 @@ class UserEntity(BaseModel):
 
     phone_number: str = Field()
 
-    created_at: datetime = Field(default=datetime.now(timezone.utc))
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     updated_at: Optional[datetime] = Field(default=None)

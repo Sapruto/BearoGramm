@@ -102,7 +102,7 @@ class UserService:
             profile = await self.profile_service.get_by_user_uuid(user.uuid)
             if not profile:
                 just_created_profile = True
-                profile = await self.profile_service.create([], user.uuid)
+                profile = await self.profile_service.create(user.uuid)
 
             await self.verify_service.delete_code(code)
 

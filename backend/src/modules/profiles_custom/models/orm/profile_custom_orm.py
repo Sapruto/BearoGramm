@@ -9,7 +9,7 @@ from datetime import datetime
 from src.core.database import Base
 
 from .default_avatar_randomizer import AvatarRandomizer
-from ..enums import BannerColor, Gender
+from ..enums import Gender
 
 
 randomizer = AvatarRandomizer()
@@ -27,7 +27,7 @@ class ProfileCustomORM(Base):
     name: Mapped[str] = mapped_column(String(67), nullable=False, default="Unnamed")
     avatar_url: Mapped[str] = mapped_column(String(555), nullable=False, default=lambda: str(randomizer.get_random_avatar()))
 
-    banner_color: Mapped[BannerColor] = mapped_column(
+    '''banner_color: Mapped[BannerColor] = mapped_column(
         Enum(
             BannerColor,
             name="banner_color",
@@ -35,19 +35,17 @@ class ProfileCustomORM(Base):
         ),
         nullable=False,
         default=BannerColor.DEFAULT
-    )
+    )'''
     gender: Mapped[Gender] = mapped_column(
         Enum(
             Gender,
-            name="pol",
+            name="gender",
             values_callable=lambda e: [m.value for m in e],
         ),
         nullable=False,
         default=Gender.BEAR,
     )
     bio: Mapped[Dict[str, Any]] = mapped_column(JSON().with_variant(JSONB(), "postgresql"))
-
-    data: Mapped[Dict[str, Any]] = mapped_column(JSON().with_variant(JSONB(), "postgresql"))
 
     updated_at: Mapped[Optional[datetime]] = mapped_column(
         DateTime(timezone=True), nullable=True

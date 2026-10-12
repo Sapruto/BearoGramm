@@ -28,7 +28,7 @@ class MessageEntity(BaseModel):
     uuid: str = Field(default_factory=lambda: str(uuid4()))
     message_text: str = Field(default="")
 
-    created_at: datetime = Field(default=datetime.now(timezone.utc))
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     updated_at: Optional[datetime] = Field(default=None)
 
     has_extra_data: bool = Field(default=False)

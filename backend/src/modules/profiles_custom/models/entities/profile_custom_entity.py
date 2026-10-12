@@ -1,10 +1,16 @@
+from uuid import uuid4
+
 from pydantic import BaseModel, Field, field_serializer
 from enum import Enum
 from datetime import datetime
-from typing import Optional, List
+from typing import Any, Optional, Dict
 
 from src.core.settings import Settings
-from src.general.processors.base.base_data import base_data_type
+from ..enums import Gender
+from ..orm.default_avatar_randomizer import AvatarRandomizer
+
+
+randomizer = AvatarRandomizer()
 
 
 class ProfileCustomFields(str, Enum):
@@ -13,7 +19,9 @@ class ProfileCustomFields(str, Enum):
     NAME = "name"
     AVATAR_URL = "avatar_url"
 
-    DATA = "data"
+    GENDER = "gender"
+    BIO = "bio"
+
     UPDATED_AT = "updated_at"
     USER_UUID = "user_uuid"
 
@@ -22,12 +30,14 @@ class ProfileCustomFields(str, Enum):
 
 
 class ProfileCustomEntity(BaseModel):
-    uuid: Optional[str] = Field(default=None)
+    uuid: str = Field(default_factory=lambda: str(uuid4()))
 
-    name: Optional[str] = Field(default=None)
-    avatar_url: Optional[str] = Field(default=None)
+    name: str = Field(default="Unnamed")
+    avatar_url: str = Field(default_factory=lambda: str(randomizer.get_random_avatar()))
 
-    data: List[base_data_type] = Field(default_factory=list)
+    gender: Gender = Field(default=Gender.BEAR)
+    bio: Dict[str, Any] = Field(default={})
+
     updated_at: Optional[datetime] = Field(default=None)
     user_uuid: Optional[str] = Field(default=None)
 

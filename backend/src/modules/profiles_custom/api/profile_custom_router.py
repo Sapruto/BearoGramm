@@ -53,7 +53,6 @@ async def me(
     try:
         profile = await service.update_by_user(
             user_uuid=current_user.uuid,
-            typing_to_data=request.typing_to_data,
             name=request.name,
             avatar_url=request.avatar_url,
         )

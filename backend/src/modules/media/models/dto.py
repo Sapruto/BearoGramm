@@ -49,4 +49,4 @@ class MediaMeta(BaseModel):
     url: str
     content_type: Optional[str] = None
     size: int = 0
-    uploaded_at: datetime = Field(default=datetime.now(timezone.utc))
+    uploaded_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))

@@ -1,6 +1,10 @@
 import asyncio
 import json
+from asyncio import Task
 from typing import Any, Awaitable, Callable, Dict, Optional
+
+from fastapi import WebSocketException
+from starlette.websockets import WebSocketClose
 
 from src.core.logger import get_logger
 
@@ -12,6 +16,7 @@ from ..repositories.subscriber_repository import (
 
 logger = get_logger(__name__)
 
+ReceiveMessage = Callable[[], Awaitable[str]]
 SendMessage = Callable[[str], Awaitable[None]]
 
 
@@ -84,10 +89,18 @@ class SubscriberService:
                 pass
             await pubsub.close()
 
+    async def _final_listen(self, user_uuid: str, redis_task: Task):
+        redis_task.cancel()
+        try:
+            await redis_task
+        except (asyncio.CancelledError, Exception):
+            pass
+        await self.unsubscribe(user_uuid)
+
     async def listen_events(
         self,
         user_uuid: str,
-        receive_message: Callable[[], Awaitable[str]],
+        receive_message: ReceiveMessage,
         send_message: SendMessage,
     ) -> None:
         await self.subscribe(user_uuid)
@@ -97,23 +110,19 @@ class SubscriberService:
             name=f"redis->send:{user_uuid}",
         )
 
-        try:
-            while True:
+        while True:
+            try:
                 raw = await receive_message()
                 reply = await self.handle_incoming(user_uuid, raw)
                 if reply is not None:
                     await send_message(reply)
-        except asyncio.CancelledError:
-            raise
-        except Exception as e:
-            logger.error("listen_events loop error for %s: %s", user_uuid, e, exc_info=True)
-        finally:
-            redis_task.cancel()
-            try:
-                await redis_task
-            except (asyncio.CancelledError, Exception):
+            except WebSocketException:
                 pass
-            await self.unsubscribe(user_uuid)
+            except Exception as e:
+                logger.error(e)
+                return
+            finally:
+                await self._final_listen(user_uuid, redis_task)
 
 
 _subscriber_service: Optional[SubscriberService] = None

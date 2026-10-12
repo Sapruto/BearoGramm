@@ -32,7 +32,7 @@ class UserServiceAPI:
             return UserAPIModel(
                 uuid=user.uuid,
                 phone_number=user.phone_number,
-                email=user.emial,
+                email=user.email,
                 username=user.username,
                 created_at=user.created_at,
                 updated_at=user.updated_at,
@@ -54,7 +54,7 @@ class UserServiceAPI:
             return UserAPIModel(
                 uuid=user.uuid,
                 phone_number=user.phone_number,
-                email=user.emial,
+                email=user.email,
                 username=user.username,
                 created_at=user.created_at,
                 updated_at=user.updated_at,
@@ -97,7 +97,7 @@ class UserServiceAPI:
             return UserAPIModel(
                 uuid=user.uuid,
                 phone_number=user.phone_number,
-                email=user.emial,
+                email=user.email,
                 username=user.username,
                 created_at=user.created_at,
                 updated_at=user.updated_at,
@@ -119,7 +119,7 @@ class UserServiceAPI:
             return UserAPIModel(
                 uuid=user.uuid,
                 phone_number=user.phone_number,
-                email=user.emial,
+                email=user.email,
                 username=user.username,
                 created_at=user.created_at,
                 updated_at=user.updated_at,
