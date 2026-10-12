@@ -1,7 +1,6 @@
-from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy import JSON, DateTime, String, ForeignKey, Index, Enum
-from typing import Optional, Dict, Any
+from sqlalchemy import Text, DateTime, String, ForeignKey, Index, Enum
+from typing import Optional
 
 from uuid import uuid4
 from datetime import datetime
@@ -27,15 +26,7 @@ class ProfileCustomORM(Base):
     name: Mapped[str] = mapped_column(String(67), nullable=False, default="Unnamed")
     avatar_url: Mapped[str] = mapped_column(String(555), nullable=False, default=lambda: str(randomizer.get_random_avatar()))
 
-    '''banner_color: Mapped[BannerColor] = mapped_column(
-        Enum(
-            BannerColor,
-            name="banner_color",
-            values_callable=lambda e: [m.value for m in e],
-        ),
-        nullable=False,
-        default=BannerColor.DEFAULT
-    )'''
+    banner_color: Mapped[str] = mapped_column(String(7), nullable=False, default="#000000")
     gender: Mapped[Gender] = mapped_column(
         Enum(
             Gender,
@@ -45,7 +36,7 @@ class ProfileCustomORM(Base):
         nullable=False,
         default=Gender.BEAR,
     )
-    bio: Mapped[Dict[str, Any]] = mapped_column(JSON().with_variant(JSONB(), "postgresql"))
+    bio: Mapped[str] = mapped_column(Text, nullable=False, default="I am ameba")
 
     updated_at: Mapped[Optional[datetime]] = mapped_column(
         DateTime(timezone=True), nullable=True

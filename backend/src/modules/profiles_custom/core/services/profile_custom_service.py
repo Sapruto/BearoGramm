@@ -10,6 +10,7 @@ from ..exceptions import (
     ProfileCustomDataError,
     ProfileCustomAlreadyExistsError,
 )
+from ...models.dto.profile_custom_requests import UpdateProfileRequest
 from ...models.entities.profile_custom_entity import (
     ProfileCustomEntity,
     ProfileCustomFields,
@@ -53,17 +54,22 @@ class ProfileCustomService:
     async def update_by_user(
         self,
         user_uuid: str,
-        name: Optional[str] = None,
-        avatar_url: Optional[str] = None,
+        request: UpdateProfileRequest
     ) -> ProfileCustomEntity:
         entity = await self.get(user_uuid=user_uuid)
         if not entity:
             raise ProfileCustomNotFoundError(f"Profile for user {user_uuid} not found")
 
-        if name is not None:
-            entity.name = name
-        if avatar_url is not None:
-            entity.avatar_url = avatar_url
+        if request.name is not None:
+            entity.name = request.name
+        if request.avatar_url is not None:
+            entity.avatar_url = request.avatar_url
+        if request.banner_color is not None:
+            entity.banner_color = request.banner_color
+        if request.gender is not None:
+            entity.gender = request.gender
+        if request.bio is not None:
+            entity.bio = request.bio
         entity.updated_at = datetime.now(timezone.utc)
 
         updated = await self.repository.save(entity, to_update=True)

@@ -53,8 +53,7 @@ async def me(
     try:
         profile = await service.update_by_user(
             user_uuid=current_user.uuid,
-            name=request.name,
-            avatar_url=request.avatar_url,
+            request=request,
         )
         return UpdateProfileResponse(
             success=True,

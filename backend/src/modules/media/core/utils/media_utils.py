@@ -88,6 +88,8 @@ class MediaUtils:
             parts += [owner_type, owner_uuid]
         parts.append(name)
 
+        print(parts)
+
         return "/".join(parts)
 
     def get_content_type(self, filename: str) -> str:

@@ -29,10 +29,10 @@ class StorageLocalImpl(StorageInterface):
             with open(full_path, "wb") as f:
                 f.write(file_content)
 
-            url = f"/media/{file_path}"
+            url = full_path
             logger.info(f"File saved locally: {file_path}")
 
-            return True, url
+            return True, str(url)
 
         except Exception as e:
             logger.error(f"Local upload error: {e}")

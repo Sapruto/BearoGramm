@@ -146,7 +146,7 @@ export function ProfileCard({ profile: profileProp, userUUID, onMessage }: Profi
                                 const media = avatarDraft ? await uploadMedia.mutateAsync(avatarDraft.file) : null;
                                 await updateProfile.mutateAsync({
                                     ...(isNameDirty && { name: trimmedName }),
-                                    ...(media && { avatar_url: media.url }),
+                                    ...(media && { avatar_url: media.castrated_url }),
                                 });
                                 setNameDraft(null);
                                 setAvatarDraft(null);

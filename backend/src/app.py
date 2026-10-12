@@ -9,7 +9,7 @@ from slowapi.middleware import SlowAPIMiddleware
 from slowapi.errors import RateLimitExceeded
 
 from src.core.settings import Settings
-from src.core.paths import STATIC_ROOT, MEDIA_ROOT
+from src.core.paths import UPLOAD_ROOT, STATIC_ROOT, MEDIA_ROOT
 from src.core.database import close_db, init_db
 from src.core.logger import get_logger
 from src.core.limiter import limiter
@@ -77,6 +77,9 @@ def create_app() -> FastAPI:
 
     if STATIC_ROOT.exists():
         app.mount("/media", StaticFiles(directory=str(STATIC_ROOT)), name="media")
+
+    if UPLOAD_ROOT.exists():
+        app.mount("/uploads", StaticFiles(directory=str(UPLOAD_ROOT)), name="uploads")
 
     if MEDIA_ROOT.exists():
         app.mount("/media", StaticFiles(directory=str(STATIC_ROOT)), name="media")

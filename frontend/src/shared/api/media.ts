@@ -7,6 +7,7 @@ export type MediaDTO = {
     content_type: string | null;
     size: number;
     uploaded_at: string;
+    castrated_url: string;
 };
 
 export type MediaUploadResponse = {

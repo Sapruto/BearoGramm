@@ -2,7 +2,7 @@ from pydantic import BaseModel, Field
 from enum import Enum
 
 from typing import Optional
-from datetime import datetime
+from datetime import datetime, timezone
 
 
 class MediaFields(str, Enum):
@@ -31,4 +31,4 @@ class MediaEntity(BaseModel):
     size: int = Field()
     version: int = Field(default=1)
 
-    created_at: Optional[datetime] = Field(default=None)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))

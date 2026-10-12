@@ -4,6 +4,7 @@ from functools import lru_cache
 PROJECT_ROOT = Path(__file__).parent.parent.parent
 LOGS_ROOT = PROJECT_ROOT / "logs"
 STATIC_ROOT = PROJECT_ROOT / "static"
+UPLOAD_ROOT = PROJECT_ROOT / "uploads"
 MEDIA_ROOT = PROJECT_ROOT / "uploads" / "media"
 ENV_PATH = PROJECT_ROOT / ".env"
 CONFIG_ROOT = PROJECT_ROOT / "configs"

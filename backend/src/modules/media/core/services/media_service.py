@@ -1,10 +1,12 @@
 from datetime import datetime, timezone
 from typing import Optional
 from uuid import uuid4
+import hashlib
 
 from sqlalchemy.exc import IntegrityError
 
 from src.core.logger import get_logger
+from src.core.settings import Settings
 from src.general.repository.sql.sql_query import SqlQuery
 
 from ..validators.media_validator import MediaValidator, get_default_media_validator
@@ -47,8 +49,10 @@ class MediaService:
 
     @staticmethod
     def _compute_hash(content: bytes) -> str:
-        import hashlib
         return hashlib.sha256(content).hexdigest()
+
+    def _make_full_url(self, url: str):
+        return Settings.MEDIA_BASE_URL + "/" + url
 
     async def _get_or_raise(self, media_id: str) -> MediaEntity:
         entity = await self.repository.get(media_id)
@@ -84,23 +88,21 @@ class MediaService:
         if existing:
             return MediaUploadResponse(success=True, media=self._to_dto(existing))
 
-        ok, url_or_err = await self.storage.upload_file(
+        ok, url = await self.storage.upload_file(
             file_content=content,
             filename=filename,
             content_type=content_type,
         )
-        if not ok or not url_or_err:
-            logger.error(f"Media upload failed: {url_or_err}")
+        if not ok or not url:
+            logger.error(f"Media upload failed: {url}")
             return MediaUploadResponse(
-                success=False, error=url_or_err or "Upload failed"
+                success=False, error=url or "Upload failed"
             )
-
-        full_url = url_or_err
 
         entity = MediaEntity(
             uuid=self._make_media_uuid(),
-            full_url=full_url,
-            url=full_url,
+            full_url=self._make_full_url(url),
+            url=url,
             hash=media_hash,
             filename=filename,
             content_type=content_type or "application/octet-stream",
