@@ -1,4 +1,3 @@
-import { Settings } from "lucide-react";
 import ProfileTrigger from "../../../shared/components/ProfileCard/ProfileTrigger";
 import { useGetMyProfile } from "../../../shared/hooks/profile/useGetMyProfile";
 

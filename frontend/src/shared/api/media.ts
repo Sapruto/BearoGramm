@@ -16,9 +16,12 @@ export type MediaUploadResponse = {
     error: string | null;
 };
 
-export const uploadMedia = async (file: File): Promise<MediaDTO> => {
+export type MediaType = "image" | "attachment";
+
+export const uploadMedia = async (file: File, mediaType: MediaType): Promise<MediaDTO> => {
     const formData = new FormData();
     formData.append('file', file);
+    formData.append('media_type', mediaType);
 
     const res = await apiClient.post<MediaUploadResponse>('/api/medias/upload', formData);
 

@@ -5,6 +5,9 @@ class ProfileCustomError(Exception):
 class ProfileCustomNotFoundError(ProfileCustomError):
     pass
 
+class BadAvatarUrl(ProfileCustomError):
+    pass
+
 
 class ProfileCustomValidationError(ProfileCustomError):
     pass

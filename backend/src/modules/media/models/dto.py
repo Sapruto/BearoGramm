@@ -4,12 +4,6 @@ from typing import Optional
 from pydantic import BaseModel, Field, ConfigDict
 
 
-class MediaUploadRequest(BaseModel):
-    filename: str = Field(..., min_length=1, max_length=512)
-    content_type: Optional[str] = Field(default=None, max_length=255)
-    content: bytes
-
-
 class MediaDTO(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
@@ -23,13 +17,13 @@ class MediaDTO(BaseModel):
     castrated_url: str
 
 
-class MediaUploadResponse(BaseModel):
+class UploadMediaResponse(BaseModel):
     success: bool
     media: Optional[MediaDTO] = None
     error: Optional[str] = None
 
 
-class MediaDeleteResponse(BaseModel):
+class DeleteMediaResponse(BaseModel):
     success: bool
     filename: str
     error: Optional[str] = None

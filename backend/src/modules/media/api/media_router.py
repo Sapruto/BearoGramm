@@ -1,33 +1,33 @@
-from typing import Optional
-
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, status
 
 from ..models.dto import (
     MediaDTO,
-    MediaDeleteResponse,
     MediaExistsResponse,
-    MediaUploadResponse,
+    UploadMediaResponse,
 )
-from ..core.exceptions import NotFoundError, StorageError
+from ..core.exceptions import NotFoundError
 from ..core.services.media_service import MediaService, get_media_service
+from ..models.enums import MediaType
 
 media_router = APIRouter(prefix="/api/medias", tags=["medias"])
 
 
 @media_router.post(
     "/upload",
-    response_model=MediaUploadResponse,
+    response_model=UploadMediaResponse,
     status_code=status.HTTP_201_CREATED,
 )
 async def upload_media(
+    media_type: MediaType = Form(..., max_length=255),
     file: UploadFile = File(...),
     service: MediaService = Depends(get_media_service),
-) -> MediaUploadResponse:
+) -> UploadMediaResponse:
     content = await file.read()
     result = await service.upload_media(
         content=content,
         filename=file.filename or "file",
         content_type=file.content_type,
+        media_type=media_type
     )
     if not result.success:
         raise HTTPException(

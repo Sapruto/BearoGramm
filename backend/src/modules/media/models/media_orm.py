@@ -1,9 +1,11 @@
 from sqlalchemy.orm import mapped_column, Mapped
-from sqlalchemy import DateTime, String, Integer, func
+from sqlalchemy import DateTime, String, Integer, func, Enum
 from datetime import datetime
 from uuid import uuid4
 
 from src.core.database import Base
+
+from .enums import MediaType
 
 
 class MediaORM(Base):
@@ -20,6 +22,15 @@ class MediaORM(Base):
     hash: Mapped[str] = mapped_column(String, nullable=False, unique=True, index=True)
     filename: Mapped[str] = mapped_column(String, nullable=False)
     content_type: Mapped[str] = mapped_column(String, nullable=False)
+    media_type: Mapped[MediaType] = mapped_column(
+        Enum(
+            MediaType,
+            name="gender",
+            values_callable=lambda e: [m.value for m in e],
+        ),
+        nullable=False,
+        default=MediaType.ATTACHMENT,
+    )
     size: Mapped[int] = mapped_column(Integer, nullable=False)
     version: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
 

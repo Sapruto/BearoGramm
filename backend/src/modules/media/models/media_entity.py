@@ -4,6 +4,8 @@ from enum import Enum
 from typing import Optional
 from datetime import datetime, timezone
 
+from .enums import MediaType
+
 
 class MediaFields(str, Enum):
     UUID = "uuid"
@@ -12,6 +14,7 @@ class MediaFields(str, Enum):
     HASH = "hash"
     FILENAME = "filename"
     CONTENT_TYPE = "content_type"
+    MEDIA_TYPE = "media_type"
     SIZE = "size"
     VERSION = "version"
     CREATED_AT = "created_at"
@@ -28,6 +31,7 @@ class MediaEntity(BaseModel):
     hash: str = Field()
     filename: str = Field()
     content_type: str = Field()
+    media_type: MediaType = Field(default=MediaType.ATTACHMENT)
     size: int = Field()
     version: int = Field(default=1)
 

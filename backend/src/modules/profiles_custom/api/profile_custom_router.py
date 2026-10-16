@@ -5,7 +5,7 @@ from src.modules.user.api.routers.login_required import get_current_user_depends
 
 from ..core.exceptions import (
     ProfileCustomNotFoundError,
-    ProfileCustomDataError,
+    ProfileCustomDataError, BadAvatarUrl,
 )
 from ..core.services.profile_custom_service import (
     ProfileCustomService,
@@ -62,7 +62,7 @@ async def me(
         )
     except ProfileCustomNotFoundError as e:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
-    except ProfileCustomDataError as e:
+    except (ProfileCustomDataError, BadAvatarUrl) as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
     except Exception:
         logger.exception("Failed to update profile")

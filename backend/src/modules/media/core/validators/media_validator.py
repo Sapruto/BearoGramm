@@ -2,37 +2,29 @@ from pathlib import Path
 from typing import Optional, Set, Tuple
 from pydantic import BaseModel, Field
 
+from ...models.enums import MediaType
+
 
 class MediaValidatorConfig(BaseModel):
     max_file_size: int = Field(default=50 * 1024 * 1024, gt=0)
 
-    allowed_extensions: Set[str] = Field(
+    allowed_image_mime_types: Set[str] = Field(
         default={
-            ".jpg", ".jpeg", ".png", ".gif", ".webp", ".svg",
-            ".bmp", ".ico", ".heic", ".avif",
-
-            ".mp4", ".avi", ".mov", ".mkv", ".webm",
-            ".flv", ".m4v",
-
-            ".mp3", ".ogg", ".oga", ".opus", ".wav",
-            ".flac", ".aac", ".m4a", ".wma",
-
-            ".pdf", ".doc", ".docx", ".xls", ".xlsx",
-            ".ppt", ".pptx", ".txt", ".csv", ".json",
-            ".xml", ".md", ".rtf", ".odt",
-
-            ".zip", ".rar", ".7z", ".tar", ".gz",
+            "image/jpeg",
+            "image/png",
+            "image/gif",
+            "image/webp",
+            "image/svg+xml",
+            "image/avif"
         }
     )
-
-    allowed_mime_types: Optional[Set[str]] = Field(default=None)
 
 
 class MediaValidator:
     def __init__(self, config: Optional[MediaValidatorConfig] = None):
         self.config = config or MediaValidatorConfig()
 
-    def validate(self, content: bytes, filename: str) -> Tuple[bool, Optional[str]]:
+    def validate(self, content: bytes, content_type: str, media_type: MediaType) -> Tuple[bool, Optional[str]]:
         if len(content) == 0:
             return False, "File is empty"
 
@@ -40,10 +32,8 @@ class MediaValidator:
             size_mb = self.config.max_file_size // (1024 * 1024)
             return False, f"File too large. Maximum size: {size_mb}MB"
 
-        ext = Path(filename).suffix.lower()
-        if ext not in self.config.allowed_extensions:
-            allowed = ", ".join(sorted(self.config.allowed_extensions))
-            return False, f"Extension '{ext}' not allowed. Allowed: {allowed}"
+        if media_type == MediaType.IMAGE and content_type not in self.config.allowed_image_mime_types:
+            return False, f"MIME type '{content_type}' is not allowed for media type: {media_type}"
 
         return True, None
 

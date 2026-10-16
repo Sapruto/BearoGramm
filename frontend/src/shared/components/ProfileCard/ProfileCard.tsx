@@ -18,7 +18,7 @@ export function ProfileCard({ profile: profileProp, userUUID, onMessage }: Profi
     const myUUID = useAuthStore((state) => state.userUUID);
     const query = useGetProfileByUser(profileProp ? undefined : userUUID);
     const updateProfile = useUpdateProfile();
-    const uploadMedia = useUploadMedia();
+    const uploadMedia = useUploadMedia('image');
 
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [isEditingName, setIsEditingName] = useState(false);
@@ -150,9 +150,7 @@ export function ProfileCard({ profile: profileProp, userUUID, onMessage }: Profi
                                 });
                                 setNameDraft(null);
                                 setAvatarDraft(null);
-                            } catch {
-                                // ошибка отображается через isError мутаций
-                            }
+                            } catch {}
                         }}
                         disabled={!canSave}
                         className="h-7 rounded-md bg-indigo-600 px-3 text-xs font-medium text-white transition-colors hover:bg-indigo-500 disabled:opacity-50"

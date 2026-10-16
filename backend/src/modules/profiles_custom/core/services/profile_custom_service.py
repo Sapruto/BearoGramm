@@ -1,29 +1,29 @@
 from typing import Optional, Dict, List
-from uuid import uuid4
 from datetime import datetime, timezone
 
 from src.core.logger import get_logger
 from src.general.repository.sql.sql_query import SqlQuery
+from src.modules.media.core.services.media_service import get_media_service, MediaService
 
 from ..exceptions import (
     ProfileCustomNotFoundError,
     ProfileCustomDataError,
-    ProfileCustomAlreadyExistsError,
+    ProfileCustomAlreadyExistsError, BadAvatarUrl,
 )
 from ...models.dto.profile_custom_requests import UpdateProfileRequest
 from ...models.entities.profile_custom_entity import (
     ProfileCustomEntity,
     ProfileCustomFields,
 )
-from ..repositories.profile_custom_repository import get_profile_custom_repository
-
+from ..repositories.profile_custom_repository import get_profile_custom_repository, ProfileCustomRepository
 
 logger = get_logger(__name__)
 
 
 class ProfileCustomService:
-    def __init__(self):
-        self.repository = get_profile_custom_repository()
+    def __init__(self, repository: Optional[ProfileCustomRepository] = None, media_service: Optional[MediaService] = None):
+        self._repository = repository or get_profile_custom_repository()
+        self._media_service = media_service or get_media_service()
 
     async def create(
         self,
@@ -45,7 +45,7 @@ class ProfileCustomService:
         if avatar_url:
             entity.avatar_url = avatar_url
 
-        created = await self.repository.save(entity)
+        created = await self._repository.save(entity)
         if not created:
             raise ProfileCustomDataError("Failed to save profile")
 
@@ -56,6 +56,9 @@ class ProfileCustomService:
         user_uuid: str,
         request: UpdateProfileRequest
     ) -> ProfileCustomEntity:
+        if request.avatar_url is not None and not self._media_service.verify_avatar_url(request.avatar_url):
+            raise BadAvatarUrl()
+
         entity = await self.get(user_uuid=user_uuid)
         if not entity:
             raise ProfileCustomNotFoundError(f"Profile for user {user_uuid} not found")
@@ -72,7 +75,7 @@ class ProfileCustomService:
             entity.bio = request.bio
         entity.updated_at = datetime.now(timezone.utc)
 
-        updated = await self.repository.save(entity, to_update=True)
+        updated = await self._repository.save(entity, to_update=True)
         if not updated:
             raise ProfileCustomDataError("Failed to update profile")
 
@@ -85,7 +88,7 @@ class ProfileCustomService:
 
         query = SqlQuery[ProfileCustomFields]()
         query.add_filter(ProfileCustomFields.UUID, entity.uuid)
-        deleted = await self.repository.delete(query)
+        deleted = await self._repository.delete(query)
 
         if not deleted:
             raise ProfileCustomDataError("Failed to delete profile")
@@ -103,7 +106,7 @@ class ProfileCustomService:
         if user_uuid:
             query.add_filter(field=ProfileCustomFields.USER_UUID, value=user_uuid)
 
-        entity = await self.repository.get(query)
+        entity = await self._repository.get(query)
         return entity
 
     async def get_by_user_uuid(
@@ -117,7 +120,7 @@ class ProfileCustomService:
         if not user_uuids:
             return {}
     
-        profiles = await self.repository.get_by_user_uuids(user_uuids)
+        profiles = await self._repository.get_by_user_uuids(user_uuids)
     
         result: Dict[str, ProfileCustomEntity] = {}
         for profile in profiles:
