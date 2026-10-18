@@ -3,8 +3,8 @@ from enum import Enum
 
 class Gender(str, Enum):
     BEAR = "bear"
-    MAN = "man"
-    WOMAN = "woman"
+    MAN = "male"
+    WOMAN = "female"
 
     AMEBA = "ameba"
     TROLL_FACE = "troll_face"

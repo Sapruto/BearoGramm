@@ -17,7 +17,7 @@ const ProfileWidget = () => {
                                 />
                                 <div className="min-w-0 flex flex-col gap-0.5">
                                     <span className="text-sm text-[#f4f4f5] truncate">{data.profile.name}</span>
-                                    <span className="text-xs text-[#8b8b93] truncate">{new Date(Date.parse(data.profile.updated_at)).toLocaleString()}</span>
+                                    <span className="text-xs text-[#8b8b93] truncate">{data.profile.gender}</span>
                                 </div>
                             </>
                         ) : (

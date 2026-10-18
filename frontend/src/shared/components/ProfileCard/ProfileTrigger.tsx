@@ -43,7 +43,6 @@ export function ProfileTrigger({
                     collisionPadding={8}
                     className="z-50 w-80 overflow-hidden rounded-2xl border border-[#27272a] bg-[#141416] text-[#f4f4f5] shadow-2xl shadow-black/60 outline-none"
                 >
-                    <div className="h-16 bg-linear-to-r from-indigo-600/70 via-violet-600/60 to-fuchsia-600/50" />
                     <ProfileCard profile={profile} userUUID={userUUID} onMessage={onMessage} />
                 </Popover.Content>
             </Popover.Portal>

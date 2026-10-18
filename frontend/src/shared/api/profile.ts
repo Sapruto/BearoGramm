@@ -1,10 +1,14 @@
 import { apiClient } from "./client";
 
+export type Gender = 'bear' | 'male' | 'female' | 'ameba' | 'troll_face' | 'communist' | 'cock';
+
 export type Profile = {
     uuid: string;
     name: string;
     avatar_url: string;
-    data: any[];
+    banner_color: string;
+    gender: Gender;
+    bio: string;
     updated_at: string;
     user_uuid: string;
 };
@@ -20,9 +24,11 @@ export const getMyProfile = async (): Promise<GetProfileResponse> => {
 };
 
 export type UpdateProfileRequest = {
-    typing_to_data?: any[];
     name?: string;
     avatar_url?: string;
+    banner_color?: string;
+    gender?: string;
+    bio?: string;
 };
 
 export type UpdateProfileResponse = {
