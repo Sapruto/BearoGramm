@@ -1,12 +1,14 @@
+import { ColorPicker, ColorPickerArea, ColorPickerContent, ColorPickerEyeDropper, ColorPickerHueSlider, ColorPickerTrigger } from '@/vendor/ui/color-picker';
+import { Editable, EditableArea, EditableInput, EditablePreview } from '@/vendor/ui/editable';
 import * as Popover from '@radix-ui/react-popover';
 import { Camera, MessageSquare } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
-import { ProfileCardSkeleton } from './ProfileCardSkeleton';
 import { useAuthStore } from '../../../store/authStore';
 import type { Gender, Profile } from '../../api/profile';
 import { useUploadMedia } from '../../hooks/media/useUploadMedia';
 import { useGetProfileByUser } from '../../hooks/profile/useGetProfileByUser';
 import { useUpdateProfile } from '../../hooks/profile/useUpdateProfile';
+import { ProfileCardSkeleton } from './ProfileCardSkeleton';
 
 const GENDER_LABELS: Record<Gender, string> = {
     bear: 'Bear',
@@ -19,6 +21,9 @@ const GENDER_LABELS: Record<Gender, string> = {
 };
 
 const GENDERS = Object.keys(GENDER_LABELS) as Gender[];
+
+const fieldClass =
+    '-mx-1.5 w-[calc(100%+0.75rem)] rounded-md bg-transparent px-1.5 py-0.5 outline-none transition-colors hover:bg-[#1f1f23] focus:bg-[#27272a] focus:ring-1 focus:ring-indigo-500';
 
 type ProfileCardProps = {
     profile?: Profile;
@@ -33,11 +38,14 @@ export function ProfileCard({ profile: profileProp, userUUID, onMessage }: Profi
     const uploadMedia = useUploadMedia('image');
 
     const fileInputRef = useRef<HTMLInputElement>(null);
-    const [isEditingName, setIsEditingName] = useState(false);
     const [nameDraft, setNameDraft] = useState<string | null>(null);
     const [bioDraft, setBioDraft] = useState<string | null>(null);
     const [genderDraft, setGenderDraft] = useState<Gender | null>(null);
     const [avatarDraft, setAvatarDraft] = useState<{ file: File; previewUrl: string } | null>(null);
+    const [bannerDraft, setBannerDraft] = useState<string | null>(null);
+    const [hexText, setHexText] = useState<string | null>(null);
+    const [pickerKey, setPickerKey] = useState(0);
+    const [pickerOpen, setPickerOpen] = useState(false);
 
     useEffect(() => {
         return () => {
@@ -59,19 +67,73 @@ export function ProfileCard({ profile: profileProp, userUUID, onMessage }: Profi
     const bio = bioDraft ?? profile.bio;
     const trimmedBio = bio.trim();
     const gender = genderDraft ?? profile.gender;
+    const bannerColor = bannerDraft ?? profile.banner_color;
 
     const isNameDirty = nameDraft !== null && trimmedName !== profile.name;
     const isBioDirty = bioDraft !== null && trimmedBio !== profile.bio;
     const isGenderDirty = genderDraft !== null && genderDraft !== profile.gender;
-    const isDirty = isNameDirty || isBioDirty || isGenderDirty || avatarDraft !== null;
+    const isBannerDirty = bannerDraft !== null && bannerDraft.toLowerCase() !== profile.banner_color.toLowerCase();
+    const isDirty = isNameDirty || isBioDirty || isGenderDirty || isBannerDirty || avatarDraft !== null;
     const isSaving = uploadMedia.isPending || updateProfile.isPending;
     const canSave = isDirty && trimmedName.length > 0 && !isSaving;
     const hasError = uploadMedia.isError || updateProfile.isError;
 
     return (
         <>
-            <div className="h-16" style={{ backgroundColor: profile.banner_color }} />
-            <div className="px-4 pb-4">
+            {isMe ? (
+                <ColorPicker
+                    key={pickerKey}
+                    defaultValue={bannerColor}
+                    defaultFormat="hex"
+                    open={pickerOpen}
+                    onOpenChange={setPickerOpen}
+                    onValueChange={(value) => {
+                        setBannerDraft(value);
+                        setHexText(null);
+                    }}
+                    disabled={isSaving}
+                >
+                    <ColorPickerTrigger asChild>
+                        <button
+                            type="button"
+                            title="Change banner color"
+                            className="block h-16 w-full cursor-pointer transition-[filter] hover:brightness-110"
+                            style={{ backgroundColor: bannerColor }}
+                        />
+                    </ColorPickerTrigger>
+                    <ColorPickerContent>
+                        <ColorPickerArea />
+                        <div className="flex items-center gap-2">
+                            <ColorPickerEyeDropper />
+                            <ColorPickerHueSlider className="flex-1" />
+                        </div>
+                        <div className="flex h-8 items-center rounded-md border border-input px-2 text-sm focus-within:ring-1 focus-within:ring-ring">
+                            <span className="text-muted-foreground">#</span>
+                            <input
+                                value={hexText ?? bannerColor.slice(1).toUpperCase()}
+                                onChange={(e) => setHexText(e.target.value.replace(/[^0-9a-f]/gi, '').slice(0, 6))}
+                                onBlur={() => {
+                                    if (hexText === null) return;
+                                    if (/^[0-9a-f]{6}$/i.test(hexText)) {
+                                        setBannerDraft(`#${hexText.toLowerCase()}`);
+                                        setPickerKey((k) => k + 1);
+                                    }
+                                    setHexText(null);
+                                }}
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter') e.currentTarget.blur();
+                                }}
+                                spellCheck={false}
+                                className="w-full bg-transparent pl-1 font-mono uppercase outline-none"
+                            />
+                        </div>
+                    </ColorPickerContent>
+                </ColorPicker>
+            ) : (
+                <div className="h-16" style={{ backgroundColor: profile.banner_color }} />
+            )}
+
+            <div className="flow-root px-4 pb-4">
                 {isMe ? (
                     <button
                         type="button"
@@ -109,40 +171,37 @@ export function ProfileCard({ profile: profileProp, userUUID, onMessage }: Profi
                     />
                 )}
 
-                <div className="mt-2.5">
-                    {isMe && isEditingName ? (
-                        <input
-                            autoFocus
-                            value={name}
-                            onChange={(e) => setNameDraft(e.target.value)}
-                            onFocus={(e) => e.currentTarget.select()}
-                            onBlur={() => setIsEditingName(false)}
-                            onKeyDown={(e) => {
-                                if (e.key === 'Enter') e.currentTarget.blur();
-                            }}
-                            maxLength={64}
-                            className="-mx-1.5 w-[calc(100%+0.75rem)] rounded-md bg-[#27272a] px-1.5 text-base font-semibold leading-tight text-[#f4f4f5] outline-none ring-1 ring-indigo-500"
-                        />
-                    ) : isMe ? (
-                        <button
-                            type="button"
-                            onClick={() => setIsEditingName(true)}
-                            title="Click to edit"
-                            className="-mx-1.5 w-[calc(100%+0.75rem)] cursor-text rounded-md px-1.5 text-left text-base font-semibold leading-tight transition-colors hover:bg-[#1f1f23]"
-                        >
-                            {name}
-                        </button>
-                    ) : (
-                        <div className="text-base font-semibold leading-tight">{profile.name}</div>
-                    )}
-                </div>
+                {isMe ? (
+                    <Editable
+                        value={name}
+                        onValueChange={setNameDraft}
+                        disabled={isSaving}
+                        maxLength={64}
+                        required
+                        triggerMode="click"
+                        className="mt-2.5"
+                    >
+                        <EditableArea>
+                            <EditablePreview
+                                className={`${fieldClass} cursor-text border-transparent text-base font-semibold leading-tight text-[#f4f4f5]`}
+                            />
+                            <EditableInput
+                                className={`${fieldClass} border-transparent bg-[#27272a] text-base font-semibold leading-tight text-[#f4f4f5] ring-1 ring-indigo-500`}
+                            />
+                        </EditableArea>
+                    </Editable>
+                ) : (
+                    <div className="mt-2.5 text-base font-semibold leading-tight">{profile.name}</div>
+                )}
+
+                <div className="mt-0.5 px-0 text-sm text-[#71717a]">@username</div>
 
                 {isMe ? (
                     <select
                         value={gender}
                         onChange={(e) => setGenderDraft(e.target.value as Gender)}
                         disabled={isSaving}
-                        className="-mx-1.5 mt-1 w-[calc(100%+0.75rem)] cursor-pointer rounded-md bg-transparent px-1 text-sm text-[#a1a1aa] outline-none transition-colors hover:bg-[#1f1f23] focus:ring-1 focus:ring-indigo-500"
+                        className={`${fieldClass} mt-1 cursor-pointer text-sm text-[#a1a1aa]`}
                     >
                         {GENDERS.map((value) => (
                             <option key={value} value={value} className="bg-[#18181b]">
@@ -162,66 +221,63 @@ export function ProfileCard({ profile: profileProp, userUUID, onMessage }: Profi
                         placeholder="About me"
                         maxLength={256}
                         rows={3}
-                        className="-mx-1.5 mt-2.5 w-[calc(100%+0.75rem)] resize-none rounded-md bg-transparent px-1.5 py-1 text-sm text-[#d4d4d8] outline-none transition-colors placeholder:text-[#52525b] hover:bg-[#1f1f23] focus:bg-[#27272a] focus:ring-1 focus:ring-indigo-500"
+                        className={`${fieldClass} mt-2 resize-none text-sm text-[#d4d4d8] placeholder:text-[#52525b]`}
                     />
                 ) : (
                     profile.bio && (
-                        <div className="mt-2.5 whitespace-pre-wrap break-words text-sm text-[#d4d4d8]">{profile.bio}</div>
+                        <div className="mt-2.5 whitespace-pre-wrap wrap-break-word text-sm text-[#d4d4d8]">
+                            {profile.bio}
+                        </div>
                     )
                 )}
 
-                <div className="mt-3 space-y-1">
-                    <div className="text-sm text-[#71717a]">
-                        Updated {new Date(profile.updated_at).toLocaleDateString()}
-                    </div>
-                    <div className="break-all font-mono text-xs text-[#52525b]">{profile.user_uuid}</div>
-                </div>
-
-                {hasError && <div className="mt-3 text-xs text-red-400">Couldn't save changes</div>}
-
-                {isMe && isDirty && (
-                    <div className="mt-4 flex justify-end gap-1.5">
-                        <button
-                            type="button"
-                            onClick={() => {
-                                setNameDraft(null);
-                                setBioDraft(null);
-                                setGenderDraft(null);
-                                setAvatarDraft(null);
-                                uploadMedia.reset();
-                                updateProfile.reset();
-                            }}
-                            disabled={isSaving}
-                            className="h-7 rounded-md bg-[#27272a] px-3 text-xs font-medium transition-colors hover:bg-[#3f3f46] disabled:opacity-50"
-                        >
-                            Reset
-                        </button>
-                        <button
-                            type="button"
-                            onClick={async () => {
-                                try {
-                                    const media = avatarDraft ? await uploadMedia.mutateAsync(avatarDraft.file) : null;
-                                    await updateProfile.mutateAsync({
-                                        ...(isNameDirty && { name: trimmedName }),
-                                        ...(isBioDirty && { bio: trimmedBio }),
-                                        ...(isGenderDirty && { gender }),
-                                        ...(media && { avatar_url: media.castrated_url }),
-                                    });
+                {isMe ? (
+                    <div className="mt-3 flex h-7 items-center justify-between gap-2">
+                        <span className="text-xs text-red-400">{hasError && "Couldn't save changes"}</span>
+                        <div className={`flex items-center gap-1 ${isDirty ? '' : 'invisible'}`}>
+                            <button
+                                type="button"
+                                onClick={() => {
                                     setNameDraft(null);
                                     setBioDraft(null);
                                     setGenderDraft(null);
+                                    setBannerDraft(null);
                                     setAvatarDraft(null);
-                                } catch { }
-                            }}
-                            disabled={!canSave}
-                            className="h-7 rounded-md bg-indigo-600 px-3 text-xs font-medium text-white transition-colors hover:bg-indigo-500 disabled:opacity-50"
-                        >
-                            {isSaving ? 'Saving…' : 'Save'}
-                        </button>
+                                    uploadMedia.reset();
+                                    updateProfile.reset();
+                                }}
+                                disabled={isSaving}
+                                className="h-7 rounded-md px-2.5 text-xs font-medium text-[#a1a1aa] transition-colors hover:bg-[#27272a] hover:text-[#f4f4f5] disabled:opacity-50"
+                            >
+                                Reset
+                            </button>
+                            <button
+                                type="button"
+                                onClick={async () => {
+                                    try {
+                                        const media = avatarDraft ? await uploadMedia.mutateAsync(avatarDraft.file) : null;
+                                        await updateProfile.mutateAsync({
+                                            ...(isNameDirty && { name: trimmedName }),
+                                            ...(isBioDirty && { bio: trimmedBio }),
+                                            ...(isGenderDirty && { gender }),
+                                            ...(isBannerDirty && { banner_color: bannerColor }),
+                                            ...(media && { avatar_url: media.castrated_url }),
+                                        });
+                                        setNameDraft(null);
+                                        setBioDraft(null);
+                                        setGenderDraft(null);
+                                        setBannerDraft(null);
+                                        setAvatarDraft(null);
+                                    } catch { }
+                                }}
+                                disabled={!canSave}
+                                className="h-7 rounded-md bg-indigo-600 px-3 text-xs font-medium text-white transition-colors hover:bg-indigo-500 disabled:opacity-40"
+                            >
+                                {isSaving ? 'Saving…' : 'Save'}
+                            </button>
+                        </div>
                     </div>
-                )}
-
-                {!isMe && (
+                ) : (
                     <div className="mt-4">
                         <Popover.Close asChild>
                             <button

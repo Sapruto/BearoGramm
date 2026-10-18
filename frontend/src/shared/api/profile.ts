@@ -9,7 +9,7 @@ export type Profile = {
     banner_color: string;
     gender: Gender;
     bio: string;
-    updated_at: string;
+    updated_at?: string;
     user_uuid: string;
 };
 
@@ -29,6 +29,9 @@ export type UpdateProfileRequest = {
     banner_color?: string;
     gender?: string;
     bio?: string;
+
+    email?: string;
+    username?: string;
 };
 
 export type UpdateProfileResponse = {
