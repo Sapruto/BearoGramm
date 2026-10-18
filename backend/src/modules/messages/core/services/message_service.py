@@ -79,6 +79,7 @@ class MessageService:
             message_text=request.message_text,
             extra_data=request.extra_data,
             references=request.references,
+            is_stated=request.is_stated or False,
             user_uuid=user_uuid,
             created_at=datetime.now(timezone.utc),
         )

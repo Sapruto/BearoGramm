@@ -8,6 +8,7 @@ from ..entities.message_reference_entity import MessageReferenceEntity
 class SendMessageRequest(BaseModel):
     chat_uuid: str
     message_text: Optional[str] = None
+    is_stated: Optional[bool] = None
     extra_data: Optional[MessageDataEntity] = None
     references: List[MessageReferenceEntity] = Field(default_factory=list)
 

@@ -11,7 +11,7 @@ from src.general.repository.sql.sql_query import SqlQuery
 
 from ..validators.media_validator import MediaValidator, get_default_media_validator
 from ..storages.storage_api import StorageAPI, get_storage_api
-from ..exceptions import NotFoundError, StorageError
+from ..exceptions import NotFoundError
 
 from ..repositories.media_repository import (
     MediaRepository,
@@ -20,7 +20,6 @@ from ..repositories.media_repository import (
 from ...models.dto import (
     MediaDTO,
     UploadMediaResponse,
-    DeleteMediaResponse,
     MediaExistsResponse,
 )
 from ...models.enums import MediaType
@@ -123,8 +122,8 @@ class MediaService:
             except Exception as rollback_err:
                 logger.error(f"Rollback storage unload failed: {rollback_err}")
             existing = await self._repository.get_by_hash(media_hash)
-            # if existing:
-            #     return UploadMediaResponse(success=True, media=self._to_dto(existing))
+            if existing:
+                return UploadMediaResponse(success=True, media=self._to_dto(existing))
             return UploadMediaResponse(success=False, error="Persistence race failed")
         except Exception as e:
             logger.error(f"Failed to persist media: {e}")
@@ -136,24 +135,19 @@ class MediaService:
 
         return UploadMediaResponse(success=True, media=self._to_dto(saved))
 
-    async def unload_media(self, media_uuid: str) -> DeleteMediaResponse:
+    async def add_ptr(self, media_uuid: str) -> bool:
         entity = await self._get_or_raise(media_uuid)
+        if entity:
+            entity.ptrs += 1
+            await self._repository.save(entity, to_update=True)
+        return True
 
-        storage_key = self._storage_key_from_url(entity.url)
-
-        try:
-            ok = await self._storage.unload_file(storage_key)
-        except Exception as e:
-            logger.error(f"Storage unload error: {e}")
-            raise StorageError(str(e))
-
-        if not ok:
-            return DeleteMediaResponse(
-                success=False, filename=entity.url, error="Storage delete failed"
-            )
-
-        await self._repository.delete(media_uuid)
-        return DeleteMediaResponse(success=True, filename=entity.url)
+    async def remove_ptr(self, media_uuid: str) -> bool:
+        entity = await self._get_or_raise(media_uuid)
+        if entity:
+            entity.ptrs -= 1
+            await self._repository.save(entity, to_update=True)
+        return True
 
     async def media_exists(self, media_id: str) -> MediaExistsResponse:
         entity = await self._repository.get(media_id)
@@ -169,7 +163,7 @@ class MediaService:
         return self._to_dto(entity)
 
     async def verify_avatar_url(self, avatar_url: str) -> bool:
-        media = self._repository.get(SqlQuery[MediaFields](value=avatar_url, field=MediaFields.URL))
+        media = await self._repository.get(SqlQuery[MediaFields](value=avatar_url, field=MediaFields.URL))
         if not media:
             return False
         return media.media_type == MediaType.IMAGE
@@ -177,4 +171,3 @@ class MediaService:
 
 def get_media_service() -> MediaService:
     return MediaService()
-[]

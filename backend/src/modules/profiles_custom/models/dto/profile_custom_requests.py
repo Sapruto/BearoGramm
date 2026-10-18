@@ -9,3 +9,6 @@ class UpdateProfileRequest(BaseModel):
     banner_color: Optional[str] = Field(default=None)
     gender: Optional[Gender] = Field(default=None)
     bio: Optional[str] = Field(default=None)
+
+    email: Optional[str] = Field(default=None)
+    username: Optional[str] = Field(default=None)

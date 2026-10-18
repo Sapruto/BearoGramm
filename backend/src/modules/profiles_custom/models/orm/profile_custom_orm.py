@@ -38,8 +38,8 @@ class ProfileCustomORM(Base):
     )
     bio: Mapped[str] = mapped_column(Text, nullable=False, default="I am ameba")
 
-    updated_at: Mapped[Optional[datetime]] = mapped_column(
-        DateTime(timezone=True), nullable=True
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False
     )
 
     user_uuid: Mapped[Optional[str]] = mapped_column(

@@ -201,6 +201,10 @@ class FriendService:
                 entity.user_status2 = FriendStatus.ACCEPT
 
         await self._friend_repo.save(entity, to_update=True)
+
+        if entity.user_status1 == FriendStatus.ACCEPT and entity.user_status2 == FriendStatus.ACCEPT:
+            return FriendActionResponse(success=True, just_created_chat=True, uuid=entity.user_uuid1,
+                                        other_uuid=entity.user_uuid2, message="Status changed")
         return FriendActionResponse(success=True, message="Status changed")
 
     async def get_friends(

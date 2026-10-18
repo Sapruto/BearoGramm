@@ -1,7 +1,7 @@
 from typing import Optional, List, Tuple, Dict, Any
 
 from src.general.repository.sql.sql_query import SqlQuery
-from src.modules.friends import get_friend_service, FriendService, NotFriends
+from src.modules.friends.core.services.friend_service import get_friend_service, FriendService, NotFriends
 from src.modules.participants.models.enums import ResourceType
 from src.modules.profiles_custom import ProfileCustomService, get_profile_custom_service
 from src.modules.user import UserServiceAPI, get_user_service_api
@@ -82,8 +82,8 @@ class PersonalChatService(BaseChatService):
         if existing:
             raise ChatIsExisting()
 
-        if not await self._friend_service.check_friends(user_uuid, other_user_uuid):
-            raise NotFriends(user_uuid, other_user_uuid)
+        # if not await self._friend_service.check_friends(user_uuid, other_user_uuid):
+        #     raise NotFriends(user_uuid, other_user_uuid)
 
         chat = await self.create_chat(user_uuid=user_uuid, uuids=[user_uuid, other_user_uuid])
         await self._notify_service.notify_about_chat_event(chat.uuid, ChatEventType.CREATE)

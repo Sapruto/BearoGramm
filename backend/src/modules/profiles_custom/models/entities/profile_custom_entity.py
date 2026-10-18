@@ -2,7 +2,7 @@ from uuid import uuid4
 
 from pydantic import BaseModel, Field, field_serializer, model_validator
 from enum import Enum
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, Optional, Dict
 
 from src.core.settings import Settings
@@ -41,7 +41,7 @@ class ProfileCustomEntity(BaseModel):
     gender: Gender = Field(default=Gender.BEAR)
     bio: str = Field(default="I am ameba")
 
-    updated_at: Optional[datetime] = Field(default=None)
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     user_uuid: Optional[str] = Field(default=None)
 
     # @model_validator(mode='before')

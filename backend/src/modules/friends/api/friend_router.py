@@ -24,7 +24,7 @@ from ..core.exceptions import (
 )
 from ..core.services.friend_service import FriendService, get_friend_service
 from src.modules.user import UserNotFound, get_current_user_depends
-
+from ...chats.chat_types.personal.personal_chat_service import PersonalChatService, get_personal_chat_service
 
 friend_router = APIRouter(prefix="/api/friends", tags=["friends"])
 
@@ -67,12 +67,16 @@ async def change_friend_status(
         request: FriendStatusRequest,
         current_user = Depends(get_current_user_depends()),
         service: FriendService = Depends(get_friend_service),
+        personal_service: PersonalChatService = Depends(get_personal_chat_service),
 ) -> FriendActionResponse:
     try:
-        return await service.change_status(
+        response = await service.change_status(
             current_user_uuid=current_user.uuid,
             request=request,
         )
+        if response.just_created_chat:
+            await personal_service.create_by_uuid(response.uuid, response.other_uuid)
+        return response
     except CannotAcceptOwnRequest as e:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e))
     except CannotRejectOwnRequest as e:

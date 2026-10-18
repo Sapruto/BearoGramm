@@ -23,6 +23,7 @@ class MediaMapper(BaseMapper[MediaEntity, MediaORM, MediaFields]):
         MediaFields.MEDIA_TYPE: MediaORM.media_type,
         MediaFields.SIZE: MediaORM.size,
         MediaFields.VERSION: MediaORM.version,
+        MediaFields.PTRS: MediaORM.ptrs,
         MediaFields.CREATED_AT: MediaORM.created_at,
     }
 
@@ -36,6 +37,7 @@ class MediaMapper(BaseMapper[MediaEntity, MediaORM, MediaFields]):
         MediaORM.media_type: MediaFields.MEDIA_TYPE,
         MediaORM.size: MediaFields.SIZE,
         MediaORM.version: MediaFields.VERSION,
+        MediaORM.ptrs: MediaFields.PTRS,
         MediaORM.created_at: MediaFields.CREATED_AT,
     }
 
@@ -50,6 +52,7 @@ class MediaMapper(BaseMapper[MediaEntity, MediaORM, MediaFields]):
             media_type=entity.media_type,
             size=entity.size,
             version=entity.version,
+            ptrs=entity.ptrs,
             created_at=entity.created_at,
         )
 
@@ -64,6 +67,7 @@ class MediaMapper(BaseMapper[MediaEntity, MediaORM, MediaFields]):
             media_type=orm.media_type,
             size=orm.size,
             version=orm.version,
+            ptrs=orm.ptrs,
             created_at=orm.created_at,
         )
 

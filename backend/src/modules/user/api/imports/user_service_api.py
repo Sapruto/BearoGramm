@@ -20,6 +20,19 @@ class UserServiceAPI:
         self.user_repository = user_repository or get_user_repository()
         self.session_service = session_service or get_session_service_api()
 
+    async def update(self, user_uuid: str, email: Optional[str] = None, username: Optional[str] = None) -> bool:
+        user = await self.user_repository.get_by_field(
+            value=user_uuid, field=UserFields.UUID
+        )
+        if not user:
+            return False
+        if email:
+            user.email = email
+        if username:
+            user.username = username
+        result = await self.user_repository.save(user, to_update=True)
+        return result
+
     async def get_user_by_uuid(self, user_uuid: str) -> Optional[UserAPIModel]:
         try:
             user = await self.user_repository.get_by_field(

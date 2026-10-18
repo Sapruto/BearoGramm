@@ -35,4 +35,7 @@ class GetFriendRequestsResponse(BaseModel):
 
 class FriendActionResponse(BaseModel):
     success: bool
+    just_created_chat: bool = False
+    uuid: Optional[str] = None
+    other_uuid: Optional[str] = None
     message: Optional[str] = None

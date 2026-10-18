@@ -14,6 +14,7 @@ class MessageFields(str, Enum):
     MESSAGE_TEXT = "message_text"
     CREATED_AT = "created_at"
     UPDATED_AT = "updated_at"
+    IS_STATED = "is_stated"
     HAS_EXTRA_DATA = "has_extra_data"
     CHAT_UUID = "chat_uuid"
     USER_UUID = "user_uuid"
@@ -30,6 +31,8 @@ class MessageEntity(BaseModel):
 
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     updated_at: Optional[datetime] = Field(default=None)
+
+    is_stated: bool = Field(default=False)
 
     has_extra_data: bool = Field(default=False)
 

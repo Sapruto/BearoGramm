@@ -17,6 +17,7 @@ class MediaFields(str, Enum):
     MEDIA_TYPE = "media_type"
     SIZE = "size"
     VERSION = "version"
+    PTRS = "ptrs"
     CREATED_AT = "created_at"
 
     def __str__(self):
@@ -34,5 +35,7 @@ class MediaEntity(BaseModel):
     media_type: MediaType = Field(default=MediaType.ATTACHMENT)
     size: int = Field()
     version: int = Field(default=1)
+
+    ptrs: int = Field(default=1)
 
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))

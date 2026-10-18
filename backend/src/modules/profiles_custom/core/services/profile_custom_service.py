@@ -4,6 +4,7 @@ from datetime import datetime, timezone
 from src.core.logger import get_logger
 from src.general.repository.sql.sql_query import SqlQuery
 from src.modules.media.core.services.media_service import get_media_service, MediaService
+from src.modules.user import get_user_service_api, UserServiceAPI
 
 from ..exceptions import (
     ProfileCustomNotFoundError,
@@ -21,9 +22,10 @@ logger = get_logger(__name__)
 
 
 class ProfileCustomService:
-    def __init__(self, repository: Optional[ProfileCustomRepository] = None, media_service: Optional[MediaService] = None):
+    def __init__(self, repository: Optional[ProfileCustomRepository] = None, media_service: Optional[MediaService] = None, user_service: Optional[UserServiceAPI] = None):
         self._repository = repository or get_profile_custom_repository()
         self._media_service = media_service or get_media_service()
+        self._user_service = user_service or get_user_service_api()
 
     async def create(
         self,
@@ -56,7 +58,7 @@ class ProfileCustomService:
         user_uuid: str,
         request: UpdateProfileRequest
     ) -> ProfileCustomEntity:
-        if request.avatar_url is not None and not self._media_service.verify_avatar_url(request.avatar_url):
+        if request.avatar_url is not None and not await self._media_service.verify_avatar_url(request.avatar_url):
             raise BadAvatarUrl()
 
         entity = await self.get(user_uuid=user_uuid)
@@ -75,8 +77,12 @@ class ProfileCustomService:
             entity.bio = request.bio
         entity.updated_at = datetime.now(timezone.utc)
 
+        result = True
+        if request.email or request.username:
+            result = await self._user_service.update(user_uuid=user_uuid, email=request.email, username=request.username)
+
         updated = await self._repository.save(entity, to_update=True)
-        if not updated:
+        if not updated or not result:
             raise ProfileCustomDataError("Failed to update profile")
 
         return updated

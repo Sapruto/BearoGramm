@@ -24,6 +24,8 @@ class MessageORM(Base):
         DateTime(timezone=True), nullable=True, onupdate=func.now()
     )
 
+    is_stated: Mapped[bool] = mapped_column(Boolean(), nullable=False, default=False)
+
     has_extra_data: Mapped[bool] = mapped_column(Boolean(), nullable=False, default=False)
     extra_data: Mapped[Optional["MessageDataORM"]] = relationship(
         "MessageDataORM",

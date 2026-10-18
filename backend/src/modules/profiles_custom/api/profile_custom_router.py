@@ -47,7 +47,7 @@ async def me(
 @profile_custom_router.patch("/me", response_model=UpdateProfileResponse)
 async def me(
     request: UpdateProfileRequest,
-    current_user=Depends(get_current_user_depends()),
+    current_user = Depends(get_current_user_depends()),
     service: ProfileCustomService = Depends(get_profile_custom_service),
 ) -> UpdateProfileResponse:
     try:
