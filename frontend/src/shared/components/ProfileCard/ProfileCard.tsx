@@ -1,6 +1,7 @@
 import { ColorPicker, ColorPickerArea, ColorPickerContent, ColorPickerEyeDropper, ColorPickerHueSlider, ColorPickerTrigger } from '@/vendor/ui/color-picker';
 import { Editable, EditableArea, EditableInput, EditablePreview } from '@/vendor/ui/editable';
 import * as Popover from '@radix-ui/react-popover';
+import { getColor } from 'colorthief';
 import { Camera, MessageSquare } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { useAuthStore } from '../../../store/authStore';
@@ -155,11 +156,26 @@ export function ProfileCard({ profile: profileProp, userUUID, onMessage }: Profi
                             type="file"
                             accept="image/*"
                             hidden
-                            onChange={(e) => {
+                            onChange={async (e) => {
                                 const file = e.target.files?.[0];
                                 e.target.value = '';
                                 if (!file) return;
-                                setAvatarDraft({ file, previewUrl: URL.createObjectURL(file) });
+
+                                const previewUrl = URL.createObjectURL(file);
+                                setAvatarDraft({ file, previewUrl });
+
+                                try {
+                                    const bitmap = await createImageBitmap(file);
+                                    const color = await getColor(bitmap);
+                                    bitmap.close();
+
+                                    if (color) {
+                                        setBannerDraft(color.hex());
+                                        setPickerKey((k) => k + 1); 
+                                    }
+                                } catch (err) {
+                                    console.warn('Failed to extract color', err);
+                                }
                             }}
                         />
                     </button>
