@@ -75,6 +75,9 @@ class PersonalChatService(BaseChatService):
             raise NotFoundUser()
         other_user_uuid = user.uuid
 
+        return await self.create_by_uuid(user_uuid, other_user_uuid)
+
+    async def create_by_uuid(self, user_uuid: str, other_user_uuid: str) -> PersonalChatResponse:
         if user_uuid == other_user_uuid:
             raise CannotChatWithSelfError()
 
