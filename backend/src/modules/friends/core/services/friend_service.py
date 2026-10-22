@@ -253,7 +253,6 @@ class FriendService:
         return GetFriendsResponse(
             items=paginated,
             total=total,
-            profiles=profiles_by_uuid,
         )
 
     async def get_request_to_friends(
