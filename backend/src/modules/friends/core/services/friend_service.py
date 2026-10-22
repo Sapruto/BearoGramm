@@ -219,31 +219,29 @@ class FriendService:
 
         pairs = await self._list_pairs_for_user(user_uuid)
 
-        raw_items: List[Tuple[str, bool, datetime]] = []
+        raw_items: List[Tuple[str, bool, datetime, FriendStatus]] = []
         uuids: List[str] = []
 
         for entity in pairs:
             my_status, other_uuid, other_status = self._my_side(entity, user_uuid)
 
-            if other_status == FriendStatus.BLOCKED:
-                continue
-            if my_status == FriendStatus.ACCEPT and other_status == FriendStatus.ACCEPT:
-                raw_items.append(
-                    (other_uuid, entity.initiator_uuid == user_uuid, entity.created_at)
-                )
-                uuids.append(other_uuid)
+            raw_items.append(
+                (other_uuid, entity.initiator_uuid == user_uuid, entity.created_at,
+                 entity.user_status1 if user_uuid == entity.user_uuuid1 else entity.user_status2)
+            )
+            uuids.append(other_uuid)
 
         profiles_by_uuid = await self._profile_service.get_by_user_uuids(list(uuids))
 
         items: List[FriendItemResponse] = [
             FriendItemResponse(
                 user_uuid=other_uuid,
-                status=FriendStatus.ACCEPT,
+                status=other_status,
                 is_initiator=is_initiator,
                 created_at=created_at,
                 profile=profiles_by_uuid.get(other_uuid),
             )
-            for other_uuid, is_initiator, created_at in raw_items
+            for other_uuid, is_initiator, created_at, other_status in raw_items
         ]
 
         total = len(items)
