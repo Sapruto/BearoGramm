@@ -2,6 +2,8 @@ from typing import List, Optional, Tuple, Callable
 
 from src.general.repository.sql.sql_query import SqlQuery
 from src.core.logger import get_logger
+from src.modules.profiles_custom.core.services.profile_custom_service import get_profile_custom_service, \
+    ProfileCustomService
 
 from src.modules.user import (
     UserServiceAPI,
@@ -19,7 +21,6 @@ from ..exceptions import (
     CannotRejectOwnRequest,
     CannotBlockYourself,
     UserAlreadyBlocked,
-    UserNotBlocked,
     NotFriends,
 )
 from ..repositories.friend_repository import FriendRepository, get_friend_repository
@@ -46,10 +47,12 @@ class FriendService:
         self,
         friend_repository: Optional[FriendRepository] = None,
         user_service: Optional[UserServiceAPI] = None,
+        profile_service: Optional[ProfileCustomService] = None,
         max_limit: Optional[int] = None,
     ):
         self._friend_repo = friend_repository or get_friend_repository()
         self._user_service = user_service or get_user_service_api()
+        self._profile_service = profile_service or get_profile_custom_service()
         self._max_limit = max_limit or 100
 
     async def _get_pair(self, uuid_a: str, uuid_b: str) -> Optional[FriendEntity]:
@@ -216,6 +219,7 @@ class FriendService:
         pairs = await self._list_pairs_for_user(user_uuid)
 
         items: List[FriendItemResponse] = []
+        uuids = []
         for entity in pairs:
             my_status, other_uuid, other_status = self._my_side(entity, user_uuid)
 
@@ -230,6 +234,11 @@ class FriendService:
                         created_at=entity.created_at,
                     )
                 )
+                uuids.append(other_uuid)
+
+        profiles_by_uuid = await self._profile_service.get_by_user_uuids(
+            list(uuids),
+        )
 
         total = len(items)
         items.sort(key=lambda i: i.created_at, reverse=True)
@@ -237,9 +246,7 @@ class FriendService:
 
         return GetFriendsResponse(
             items=paginated,
-            total=total,
-            limit=limit,
-            offset=offset,
+            profiles=profiles_by_uuid,
         )
 
     async def get_request_to_friends(

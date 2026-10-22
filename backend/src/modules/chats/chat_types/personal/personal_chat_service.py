@@ -82,8 +82,8 @@ class PersonalChatService(BaseChatService):
         if existing:
             raise ChatIsExisting()
 
-        # if not await self._friend_service.check_friends(user_uuid, other_user_uuid):
-        #     raise NotFriends(user_uuid, other_user_uuid)
+        if not await self._friend_service.check_friends(user_uuid, other_user_uuid):
+            raise NotFriends(user_uuid, other_user_uuid)
 
         chat = await self.create_chat(user_uuid=user_uuid, uuids=[user_uuid, other_user_uuid])
         await self._notify_service.notify_about_chat_event(chat.uuid, ChatEventType.CREATE)

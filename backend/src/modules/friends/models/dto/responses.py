@@ -2,6 +2,7 @@ from pydantic import BaseModel
 from typing import List, Optional
 from datetime import datetime
 
+from src.modules.profiles_custom import ProfileCustomEntity
 from ..enums import FriendStatus
 
 
@@ -21,9 +22,7 @@ class FriendRequestResponse(BaseModel):
 
 class GetFriendsResponse(BaseModel):
     items: List[FriendItemResponse]
-    total: int
-    limit: int
-    offset: int
+    profiles: List[ProfileCustomEntity]
 
 
 class GetFriendRequestsResponse(BaseModel):
