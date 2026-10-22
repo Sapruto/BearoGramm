@@ -22,6 +22,7 @@ class FriendRequestResponse(BaseModel):
 
 class GetFriendsResponse(BaseModel):
     items: List[FriendItemResponse]
+    total: int
     profiles: List[ProfileCustomEntity]
 
 
