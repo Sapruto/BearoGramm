@@ -246,7 +246,7 @@ class FriendService:
 
         return GetFriendsResponse(
             items=paginated,
-            total=total
+            total=total,
             profiles=profiles_by_uuid,
         )
 
