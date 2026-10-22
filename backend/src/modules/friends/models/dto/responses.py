@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from typing import List, Optional
+from typing import Dict, List, Optional
 from datetime import datetime
 
 from src.modules.profiles_custom import ProfileCustomEntity
@@ -23,7 +23,7 @@ class FriendRequestResponse(BaseModel):
 class GetFriendsResponse(BaseModel):
     items: List[FriendItemResponse]
     total: int
-    profiles: List[ProfileCustomEntity]
+    profiles: Dict[str, ProfileCustomEntity]
 
 
 class GetFriendRequestsResponse(BaseModel):
