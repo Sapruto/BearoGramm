@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import List, Optional, Tuple, Callable
 
 from src.general.repository.sql.sql_query import SqlQuery
@@ -211,34 +212,39 @@ class FriendService:
         return FriendActionResponse(success=True, message="Status changed")
 
     async def get_friends(
-        self, user_uuid: str, limit: int, offset: int
+            self, user_uuid: str, limit: int, offset: int
     ) -> GetFriendsResponse:
         limit = max(1, min(limit, self._max_limit))
         offset = max(0, offset)
 
         pairs = await self._list_pairs_for_user(user_uuid)
 
-        items: List[FriendItemResponse] = []
-        uuids = []
+        raw_items: List[Tuple[str, bool, datetime]] = []
+        uuids: List[str] = []
+
         for entity in pairs:
             my_status, other_uuid, other_status = self._my_side(entity, user_uuid)
 
             if other_status == FriendStatus.BLOCKED:
                 continue
             if my_status == FriendStatus.ACCEPT and other_status == FriendStatus.ACCEPT:
-                items.append(
-                    FriendItemResponse(
-                        user_uuid=other_uuid,
-                        status=FriendStatus.ACCEPT,
-                        is_initiator=entity.initiator_uuid == user_uuid,
-                        created_at=entity.created_at,
-                    )
+                raw_items.append(
+                    (other_uuid, entity.initiator_uuid == user_uuid, entity.created_at)
                 )
                 uuids.append(other_uuid)
 
-        profiles_by_uuid = await self._profile_service.get_by_user_uuids(
-            list(uuids),
-        )
+        profiles_by_uuid = await self._profile_service.get_by_user_uuids(list(uuids))
+
+        items: List[FriendItemResponse] = [
+            FriendItemResponse(
+                user_uuid=other_uuid,
+                status=FriendStatus.ACCEPT,
+                is_initiator=is_initiator,
+                created_at=created_at,
+                profile=profiles_by_uuid.get(other_uuid),
+            )
+            for other_uuid, is_initiator, created_at in raw_items
+        ]
 
         total = len(items)
         items.sort(key=lambda i: i.created_at, reverse=True)

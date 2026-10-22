@@ -11,6 +11,7 @@ class FriendItemResponse(BaseModel):
     status: FriendStatus
     is_initiator: bool
     created_at: datetime
+    profile: ProfileCustomEntity = ProfileCustomEntity()
 
 
 class FriendRequestResponse(BaseModel):
@@ -23,7 +24,6 @@ class FriendRequestResponse(BaseModel):
 class GetFriendsResponse(BaseModel):
     items: List[FriendItemResponse]
     total: int
-    profiles: Dict[str, ProfileCustomEntity]
 
 
 class GetFriendRequestsResponse(BaseModel):
