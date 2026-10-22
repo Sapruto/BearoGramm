@@ -227,7 +227,7 @@ class FriendService:
 
             raw_items.append(
                 (other_uuid, entity.initiator_uuid == user_uuid, entity.created_at,
-                 entity.user_status1 if user_uuid == entity.user_uuuid1 else entity.user_status2)
+                 entity.user_status1 if user_uuid == entity.user_uuid1 else entity.user_status2)
             )
             uuids.append(other_uuid)
 

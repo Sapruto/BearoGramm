@@ -174,8 +174,8 @@ const ChatRoom = ({ chatUUID }: { chatUUID: string }) => {
             <div className="flex-1 h-screen flex flex-col bg-[#0a0a0b]">
                 <ChatHeaderSkeleton />
                 <div className='flex-1 px-5 overflow-y-hidden'>
-                    {new Array(10).fill(0).map(() => (
-                        <ChatSkeleton />
+                    {new Array(10).fill(0).map((_, i) => (
+                        <ChatSkeleton key={i}/>
                     ))}
                 </div>
                 <MessageInput onSend={handleSend} />

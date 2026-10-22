@@ -7,4 +7,6 @@ export const queryKeys = {
     profileByUser: (userUUID: string) => [...queryKeys.profileAll, 'user', userUUID] as const,
     chatPartnerAll: ['chat-partner'] as const,
     chatPartner: (chatUUID: string) => [...queryKeys.chatPartnerAll, chatUUID] as const,
+    friendsAll: ['friends'] as const,
+    friendsInfinite: (limit: number) => [...queryKeys.friendsAll, 'infinite', limit] as const,
 };

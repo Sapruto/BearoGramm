@@ -2,9 +2,16 @@ import { MutationCache, QueryClient } from '@tanstack/react-query';
 import axios from 'axios';
 import toast from 'react-hot-toast';
 
-function getErrorMessage(error: unknown) {
+export function getErrorMessage(error: unknown) {
     if (axios.isAxiosError<{ error?: { message?: string } }>(error)) {
         const message = error.response?.data?.error?.message;
+        if (message) {
+            return message;
+        }
+    }
+
+    if (axios.isAxiosError<{ error?: string }>(error)) {
+        const message = error.response?.data?.error;
         if (message) {
             return message;
         }

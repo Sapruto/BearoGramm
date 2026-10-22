@@ -1,12 +1,12 @@
-import { ThemeProvider } from "@mui/material/styles"
+import FriendsPage from "@/pages/Chats/FriendsPage/FriendsPage"
 import CssBaseline from "@mui/material/CssBaseline"
+import { ThemeProvider } from "@mui/material/styles"
 import { QueryClientProvider } from '@tanstack/react-query'
 import { Toaster } from "react-hot-toast"
 import { Navigate, Route, Routes } from "react-router-dom"
 import AuthPhonePage from "../pages/Auth/AuthPhonePage"
 import AuthVerifyPage from "../pages/Auth/AuthVerifyPage"
 import ProfileCustomizationPage from "../pages/Auth/ProfileSettingsPage"
-import AddFriendPage from "../pages/Chats/AddFriendPage"
 import ChatsLayout from "../pages/Chats/ChatLayout"
 import ChatPage from "../pages/Chats/ChatPage/ChatPage"
 import HomePage from "../pages/HomePage/HomePage"
@@ -41,7 +41,7 @@ function App() {
 
             <Route element={<ProfileRequiredRoute />}>
               <Route path="/chats" element={<ChatsLayout />}>
-                <Route index element={<AddFriendPage />} />
+                <Route index element={<FriendsPage />} />
                 <Route path=":uuid" element={<ChatPage />} />
               </Route>
             </Route>

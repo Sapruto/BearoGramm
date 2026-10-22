@@ -1,9 +1,9 @@
-import { UserPlus } from 'lucide-react';
+import { User } from 'lucide-react';
 import { useEffect, useRef } from 'react';
 import type { PersonalChat } from '../../../shared/api/personal';
 import { useGetPersonalChats } from '../../../shared/hooks/personal/useGetPersonalChats';
-import ProfileWidget from './ProfileWidget';
 import { ChatListItem } from './ChatListItem';
+import ProfileWidget from './ProfileWidget';
 
 type Props = {
     activeChatId: string | null;
@@ -44,8 +44,8 @@ const ChatSidebar = ({ activeChatId, onSelectAddFriend, onSelectChat }: Props) =
                         onClick={onSelectAddFriend}
                         className="w-full h-9 flex items-center justify-center gap-1.5 rounded-lg border border-[#27272c] text-[#f4f4f5] text-sm font-medium hover:bg-[#1a1a1d] transition-colors cursor-pointer mb-4"
                     >
-                        <UserPlus size={16} />
-                        Add friend
+                        <User size={16} />
+                        Friends
                     </button>
                 </div>
 
