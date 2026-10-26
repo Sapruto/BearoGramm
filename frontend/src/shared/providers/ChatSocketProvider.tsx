@@ -1,3 +1,4 @@
+import { useTypingStore } from '@/store/typingStore';
 import { useQueryClient } from '@tanstack/react-query';
 import { useEffect, useRef } from 'react';
 import { useParams } from 'react-router-dom';
@@ -29,11 +30,14 @@ export function ChatSocketProvider({ children }: { children: React.ReactNode }) 
 
         chatSocket.connect();
 
+        const { add, remove, clear } = useTypingStore.getState();
+
         const unsubscribe = chatSocket.subscribe((msg) => {
             switch (msg.type) {
                 case 'message_created':
                     messageNotify(chatUUIDRef.current, msg.data);
                     addMessageToCache(queryClient, msg.data.chat_uuid, msg.data);
+                    remove(msg.data.chat_uuid, msg.data.user_uuid);
                     break;
                 case 'chat_created':
                     queryClient.invalidateQueries({ queryKey: queryKeys.personalChats });
@@ -41,12 +45,16 @@ export function ChatSocketProvider({ children }: { children: React.ReactNode }) 
                 case 'chat_deleted':
                     removePersonalChat(msg.data.chat_uuid);
                     break;
+                case 'typing':
+                    add(msg.data.chat_uuid, msg.data.user_uuid);
+                    break;
             }
         });
 
         return () => {
             unsubscribe();
             chatSocket.disconnect();
+            clear();
         };
     }, [token, queryClient, removePersonalChat]);
 

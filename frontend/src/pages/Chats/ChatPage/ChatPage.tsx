@@ -7,11 +7,12 @@ import { useSendMessage } from '../../../shared/hooks/messages/useSendMessage';
 import { useGetChatPartner } from '../../../shared/hooks/personal/useGetChatPartner';
 import { useGetMyProfile } from '../../../shared/hooks/profile/useGetMyProfile';
 import { useAuthStore } from '../../../store/authStore';
+import ChatHeader from './ChatHeader';
+import { ChatHeaderSkeleton } from './ChatHeaderSkeleton';
 import ChatMessage from './ChatMessage';
 import { ChatSkeleton } from './ChatSkeleton';
 import MessageInput from './MessageInput';
-import ChatHeader from './ChatHeader';
-import { ChatHeaderSkeleton } from './ChatHeaderSkeleton';
+import TypingIndicator from './TypingIndicator/TypingIndicator';
 
 const INITIAL_COUNT = 30;
 const HISTORY_COUNT = 20;
@@ -175,10 +176,10 @@ const ChatRoom = ({ chatUUID }: { chatUUID: string }) => {
                 <ChatHeaderSkeleton />
                 <div className='flex-1 px-5 overflow-y-hidden'>
                     {new Array(10).fill(0).map((_, i) => (
-                        <ChatSkeleton key={i}/>
+                        <ChatSkeleton key={i} />
                     ))}
                 </div>
-                <MessageInput onSend={handleSend} />
+                <MessageInput onSend={handleSend} chatUUID={chatUUID} />
             </div>
         );
     }
@@ -190,7 +191,7 @@ const ChatRoom = ({ chatUUID }: { chatUUID: string }) => {
                 <div className="flex-1 min-h-0">
                     <HistoryBeginLabel name={partnerName} />
                 </div>
-                <MessageInput onSend={handleSend} />
+                <MessageInput onSend={handleSend} chatUUID={chatUUID} />
             </div>
         );
     }
@@ -199,41 +200,51 @@ const ChatRoom = ({ chatUUID }: { chatUUID: string }) => {
         <div className="flex-1 h-screen flex flex-col bg-[#0a0a0b]">
             <ChatHeader avatarUrl={partnerAvatar} name={partnerName} />
 
-            <Virtuoso
-                ref={virtuosoRef}
-                className="flex-1"
-                data={flatItems}
-                computeItemKey={(_, { msg }) => msg.uuid}
-                firstItemIndex={firstItemIndex}
-                initialTopMostItemIndex={{ index: 'LAST' }}
-                startReached={loadMore}
-                increaseViewportBy={{ top: 600, bottom: 0 }}
-                alignToBottom
-                followOutput
-                skipAnimationFrameInResizeObserver
-                scrollerRef={scrollerCbRef}
-                itemContent={(_, { msg, isFirst, isLast }) => {
-                    const isOwn = msg.user_uuid == userUUID;
-                    return (
-                        <div className={`px-5 ${!isFirst ? 'pt-0.5' : 'pt-3.5'}`}>
-                            <ChatMessage
-                                text={msg.message_text}
-                                timestamp={Date.parse(msg.created_at)}
-                                isOwn={isOwn}
-                                avatarUrl={isOwn ? myProfile?.profile.avatar_url : partnerAvatar}
-                                isFirst={isFirst}
-                                isLast={isLast}
-                                userUUID={msg.user_uuid}
-                            />
-                        </div>
-                    );
-                }}
-                context={{ hasPreviousPage, partnerName, scrollerRef }}
-                components={{ Header }}
-                defaultItemHeight={60}
-            />
+            <div className="flex-1 px-5 flex flex-col">
+                <Virtuoso
+                    ref={virtuosoRef}
+                    data={flatItems}
+                    computeItemKey={(_, { msg }) => msg.uuid}
+                    firstItemIndex={firstItemIndex}
+                    initialTopMostItemIndex={{ index: 'LAST' }}
+                    startReached={loadMore}
+                    increaseViewportBy={{ top: 600, bottom: 0 }}
+                    alignToBottom
+                    followOutput
+                    skipAnimationFrameInResizeObserver
+                    scrollerRef={scrollerCbRef}
+                    itemContent={(_, { msg, isFirst, isLast }) => {
+                        const isOwn = msg.user_uuid == userUUID;
+                        return (
+                            <div className={`${!isFirst ? 'pt-0.5' : 'pt-3.5'}`}>
+                                <ChatMessage
+                                    text={msg.message_text}
+                                    timestamp={Date.parse(msg.created_at)}
+                                    isOwn={isOwn}
+                                    avatarUrl={isOwn ? myProfile?.profile.avatar_url : partnerAvatar}
+                                    isFirst={isFirst}
+                                    isLast={isLast}
+                                    userUUID={msg.user_uuid}
+                                />
+                            </div>
+                        );
+                    }}
+                    context={{ hasPreviousPage, partnerName, scrollerRef }}
+                    components={{ Header }}
+                    defaultItemHeight={60}
+                />
 
-            <MessageInput onSend={handleSend} />
+                {partnerProfile && (
+                    <TypingIndicator
+                        chatUUID={chatUUID}
+                        membersByUUID={{
+                            [partnerProfile.partner_uuid]: partnerProfile.partner_profile
+                        }}
+                    />
+                )}
+            </div>
+
+            <MessageInput onSend={handleSend} chatUUID={chatUUID} />
         </div>
     );
 };

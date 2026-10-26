@@ -1,13 +1,26 @@
+import { chatSocket } from '@/shared/api/wsClient';
+import { useTypingEmitter } from '@/shared/lib/useTypingEmitter';
+import { useAuthStore } from '@/store/authStore';
 import { Send } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 
 type Props = {
     onSend: (text: string) => void;
+    chatUUID: string;
 };
 
-const MessageInput = ({ onSend }: Props) => {
+const MessageInput = ({ onSend, chatUUID }: Props) => {
     const [value, setValue] = useState('');
     const inputRef = useRef<HTMLInputElement>(null);
+    const { userUUID } = useAuthStore();
+    const { handleChange, reset } = useTypingEmitter({
+        onTyping: () => chatSocket.send({
+            type: "typing", data: {
+                user_uuid: userUUID,
+                chat_uuid: chatUUID
+            }
+        })
+    });
 
     useEffect(() => {
         const handleGlobalKeyDown = (e: KeyboardEvent) => {
@@ -49,6 +62,7 @@ const MessageInput = ({ onSend }: Props) => {
 
         onSend(trimmed);
         setValue('');
+        reset();
     };
 
     const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -64,7 +78,10 @@ const MessageInput = ({ onSend }: Props) => {
                 ref={inputRef}
                 type="text"
                 value={value}
-                onChange={(e) => setValue(e.target.value)}
+                onChange={(e) => {
+                    setValue(e.target.value);
+                    handleChange(e.target.value);
+                }}
                 onKeyDown={handleKeyDown}
                 placeholder="Message"
                 className="flex-1 h-10 rounded-[10px] bg-[#131316] border border-[#27272c] text-[#f4f4f5] px-3.5 text-sm outline-none focus:border-[#3a3a40]"
