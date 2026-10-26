@@ -9,6 +9,7 @@ class Gender(str, Enum):
     AMEBA = "ameba"
     TROLL_FACE = "troll_face"
     COMMUNIST = "communist"
+    IMPERIALIST = "imperialist"
     COCK = "cock"
 
     def __str__(self):

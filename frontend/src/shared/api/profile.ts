@@ -1,6 +1,6 @@
 import { apiClient } from "./client";
 
-export type Gender = 'bear' | 'male' | 'female' | 'ameba' | 'troll_face' | 'communist' | 'cock';
+export type Gender = 'bear' | 'male' | 'female' | 'ameba' | 'troll_face' | 'communist' | 'cock' | 'imperialist';
 
 export type Profile = {
     uuid: string;

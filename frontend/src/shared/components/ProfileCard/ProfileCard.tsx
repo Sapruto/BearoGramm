@@ -17,6 +17,7 @@ const GENDER_LABELS: Record<Gender, string> = {
     ameba: 'Ameba',
     troll_face: 'Troll face',
     communist: 'Communist',
+    imperialist: 'Imperialist',
     cock: 'Cock',
 };
 
