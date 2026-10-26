@@ -1,7 +1,9 @@
 from datetime import datetime, timezone
-from typing import Optional
+from typing import Optional, Tuple
 from uuid import uuid4
 import hashlib
+import magic
+from py_svg_hush import filter_svg
 
 from sqlalchemy.exc import IntegrityError
 
@@ -71,6 +73,47 @@ class MediaService:
             castrated_url=entity.url
         )
 
+    def _validate_file_with_xss(
+        self,
+        content: bytes,
+        declared_content_type: str,
+    ) -> Tuple[bool, bytes, str, str]:
+        try:
+            detected_mime = magic.from_buffer(content[:2048], mime=True)
+        except Exception as e:
+            logger.error(f"magic detection failed: {e}")
+            return False, content, "", "File type detection failed"
+
+        is_svg = (
+            detected_mime == "image/svg+xml"
+            or declared_content_type == "image/svg+xml"
+        )
+        if is_svg:
+            if detected_mime != "image/svg+xml":
+                logger.warning(
+                    f"MIME mismatch: declared={declared_content_type}, "
+                    f"detected={detected_mime}"
+                )
+                return False, content, detected_mime, "File type mismatch"
+
+            try:
+                sanitized = filter_svg(content)
+            except Exception as e:
+                logger.warning(f"SVG sanitization failed: {e}")
+                return False, content, detected_mime, "Invalid SVG"
+
+            return True, sanitized, "image/svg+xml", ""
+
+        if declared_content_type and declared_content_type != "application/octet-stream":
+            if detected_mime != declared_content_type:
+                logger.warning(
+                    f"MIME mismatch: declared={declared_content_type}, "
+                    f"detected={detected_mime}"
+                )
+                return False, content, detected_mime, "File type mismatch"
+
+        return True, content, detected_mime, ""
+
     async def upload_media(
             self,
             content: bytes,
@@ -78,6 +121,13 @@ class MediaService:
             media_type: MediaType,
             content_type: str,
     ) -> UploadMediaResponse:
+        is_valid, content, real_content_type, err = self._validate_file_with_xss(
+            content, content_type
+        )
+        if not is_valid:
+            logger.warning(f"Media validation failed: {err}")
+            return UploadMediaResponse(success=False, error=err)
+
         is_valid, err = self._validator.validate(content, content_type, media_type)
         if not is_valid:
             logger.warning(f"Media validation failed: {err}")

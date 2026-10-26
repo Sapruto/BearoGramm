@@ -12,6 +12,7 @@ from src.modules.user import (
     UserNotFound,
 )
 
+from .notify_friend_event import get_notificator_friend_event, NotificatorFriendEvents, FriendEventType
 from ..exceptions import (
     InvalidTargetIdentifier,
     CannotBeFriendWithSelf,
@@ -49,11 +50,13 @@ class FriendService:
         friend_repository: Optional[FriendRepository] = None,
         user_service: Optional[UserServiceAPI] = None,
         profile_service: Optional[ProfileCustomService] = None,
+        notificator: Optional[NotificatorFriendEvents] = None,
         max_limit: Optional[int] = None,
     ):
         self._friend_repo = friend_repository or get_friend_repository()
         self._user_service = user_service or get_user_service_api()
         self._profile_service = profile_service or get_profile_custom_service()
+        self._notificator = notificator or get_notificator_friend_event()
         self._max_limit = max_limit or 100
 
     async def _get_pair(self, uuid_a: str, uuid_b: str) -> Optional[FriendEntity]:
@@ -168,6 +171,8 @@ class FriendService:
         saved = await self._friend_repo.save(entity)
         if not saved:
             raise FriendshipAlreadyExists(from_user_uuid, to_user_uuid)
+        
+        await self._notificator.notify_about_friend_event(from_user_uuid, saved, FriendEventType.NEW_REQUEST)
 
         return FriendActionResponse(success=True, message="Friend request sent")
 
@@ -209,6 +214,9 @@ class FriendService:
         if entity.user_status1 == FriendStatus.ACCEPT and entity.user_status2 == FriendStatus.ACCEPT:
             return FriendActionResponse(success=True, just_created_chat=True, uuid=entity.user_uuid1,
                                         other_uuid=entity.user_uuid2, message="Status changed")
+
+        await self._notificator.notify_about_friend_event(current_user_uuid, entity, FriendEventType.CHANGED_STATUS)
+
         return FriendActionResponse(success=True, message="Status changed")
 
     async def get_friends(

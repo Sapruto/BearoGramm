@@ -32,3 +32,6 @@ boto3==1.43.85
 python-multipart==0.0.9
 
 slowapi==0.1.10
+
+py-svg-hush==0.3.0
+python-magic==0.4.27
