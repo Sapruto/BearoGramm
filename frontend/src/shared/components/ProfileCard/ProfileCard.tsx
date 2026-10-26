@@ -1,8 +1,7 @@
 import { ColorPicker, ColorPickerArea, ColorPickerContent, ColorPickerEyeDropper, ColorPickerHueSlider, ColorPickerTrigger } from '@/vendor/ui/color-picker';
 import { Editable, EditableArea, EditableInput, EditablePreview } from '@/vendor/ui/editable';
-import * as Popover from '@radix-ui/react-popover';
 import { getColor } from 'colorthief';
-import { Camera, MessageSquare } from 'lucide-react';
+import { Camera } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { useAuthStore } from '../../../store/authStore';
 import type { Gender, Profile } from '../../api/profile';
@@ -29,10 +28,9 @@ const fieldClass =
 type ProfileCardProps = {
     profile?: Profile;
     userUUID?: string;
-    onMessage?: (profile: Profile) => void;
 };
 
-export function ProfileCard({ profile: profileProp, userUUID, onMessage }: ProfileCardProps) {
+export function ProfileCard({ profile: profileProp, userUUID }: ProfileCardProps) {
     const myUUID = useAuthStore((state) => state.userUUID);
     const query = useGetProfileByUser(profileProp ? undefined : userUUID);
     const updateProfile = useUpdateProfile();
@@ -171,7 +169,7 @@ export function ProfileCard({ profile: profileProp, userUUID, onMessage }: Profi
 
                                     if (color) {
                                         setBannerDraft(color.hex());
-                                        setPickerKey((k) => k + 1); 
+                                        setPickerKey((k) => k + 1);
                                     }
                                 } catch (err) {
                                     console.warn('Failed to extract color', err);
@@ -247,7 +245,7 @@ export function ProfileCard({ profile: profileProp, userUUID, onMessage }: Profi
                     )
                 )}
 
-                {isMe ? (
+                {isMe && (
                     <div className="mt-3 flex h-7 items-center justify-between gap-2">
                         <span className="text-xs text-red-400">{hasError && "Couldn't save changes"}</span>
                         <div className={`flex items-center gap-1 ${isDirty ? '' : 'invisible'}`}>
@@ -292,19 +290,6 @@ export function ProfileCard({ profile: profileProp, userUUID, onMessage }: Profi
                                 {isSaving ? 'Saving…' : 'Save'}
                             </button>
                         </div>
-                    </div>
-                ) : (
-                    <div className="mt-4">
-                        <Popover.Close asChild>
-                            <button
-                                type="button"
-                                onClick={() => onMessage?.(profile)}
-                                className="flex h-8 w-full items-center justify-center gap-1.5 rounded-md bg-[#27272a] text-xs font-medium transition-colors hover:bg-[#3f3f46]"
-                            >
-                                <MessageSquare size={14} />
-                                Message
-                            </button>
-                        </Popover.Close>
                     </div>
                 )}
             </div>

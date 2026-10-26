@@ -10,7 +10,6 @@ type ProfileTriggerProps = {
     side?: 'top' | 'right' | 'bottom' | 'left';
     align?: 'start' | 'center' | 'end';
     sideOffset?: number;
-    onMessage?: (profile: Profile) => void;
 } & (
         | { profile: Profile; userUUID?: never }
         | { userUUID: string; profile?: never }
@@ -25,7 +24,6 @@ export function ProfileTrigger({
     sideOffset = 6,
     profile,
     userUUID,
-    onMessage,
 }: ProfileTriggerProps) {
     return (
         <Popover.Root open={open} onOpenChange={onOpenChange}>
@@ -43,7 +41,7 @@ export function ProfileTrigger({
                     collisionPadding={8}
                     className="z-50 w-80 overflow-hidden rounded-2xl border border-[#27272a] bg-[#141416] text-[#f4f4f5] shadow-2xl shadow-black/60 outline-none"
                 >
-                    <ProfileCard profile={profile} userUUID={userUUID} onMessage={onMessage} />
+                    <ProfileCard profile={profile} userUUID={userUUID} />
                 </Popover.Content>
             </Popover.Portal>
         </Popover.Root>
