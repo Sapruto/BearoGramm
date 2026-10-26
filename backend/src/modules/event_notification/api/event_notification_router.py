@@ -13,7 +13,7 @@ event_notification_router = APIRouter(tags=["event_notification"])
 
 
 @event_notification_router.websocket("/ws/listen_events/")
-async def listen_messages_websocket(websocket: WebSocket):
+async def listen_events_websocket(websocket: WebSocket):
     closed = False
     try:
         await websocket.accept()

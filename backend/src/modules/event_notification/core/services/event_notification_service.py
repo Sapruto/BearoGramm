@@ -1,5 +1,5 @@
 import json
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, List
 
 from src.core.logger import get_logger
 
@@ -27,7 +27,7 @@ class EventNotificationService:
         )
 
     async def notify_users(
-        self, user_uuids: list[str], notification: Dict[str, Any]
+        self, user_uuids: List[str], notification: Dict[str, Any]
     ) -> None:
         for uuid in user_uuids:
             await self.notify_user(uuid, notification)

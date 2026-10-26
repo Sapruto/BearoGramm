@@ -43,7 +43,16 @@ class MessageHandler:
             return None
 
         recipients = await self._get_chat_participants(chat_uuid)
-        recipients = [r for r in recipients if r != user_uuid]
+
+        ok = False
+        for r in recipients:
+            if r == user_uuid:
+                ok = True
+                break
+        if not ok:
+            return None
+
+        recipients = [r for r in recipients]
 
         await self._notification_service.notify_users(
             recipients,
@@ -63,7 +72,7 @@ class MessageHandler:
         recipients: List[str] = []
         for chat_uuid in chat_uuids:
             participants = await self._get_chat_participants(chat_uuid)
-            recipients.extend(p for p in participants if p != user_uuid)
+            recipients.extend(p for p in participants)
 
         recipients = list(set(recipients))
 

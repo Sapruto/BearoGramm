@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, status
+from fastapi import APIRouter, Request, Depends, File, Form, HTTPException, UploadFile, status
 
 from ..models.dto import (
     MediaDTO,
@@ -9,6 +9,8 @@ from ..core.exceptions import NotFoundError
 from ..core.services.media_service import MediaService, get_media_service
 from ..models.enums import MediaType
 
+from src.core.limiter import limiter
+
 media_router = APIRouter(prefix="/api/medias", tags=["medias"])
 
 
@@ -17,7 +19,9 @@ media_router = APIRouter(prefix="/api/medias", tags=["medias"])
     response_model=UploadMediaResponse,
     status_code=status.HTTP_201_CREATED,
 )
+@limiter.limit("10/1minutes")
 async def upload_media(
+    request: Request,
     media_type: MediaType = Form(..., max_length=255),
     file: UploadFile = File(...),
     service: MediaService = Depends(get_media_service),

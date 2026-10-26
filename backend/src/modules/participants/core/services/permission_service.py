@@ -6,7 +6,7 @@ from src.general.repository.sql.sql_query import SqlQuery
 from ..exceptions import ParticipantNotFoundError, PermissionAlreadyExistsError, NotParticipant
 from ..repositories.participant_repository import ParticipantRepository
 from ...models.enums import ResourceType, ActionTypification
-from ...models.entities.participant_entity import ParticipantEntity
+from ...models.entities.participant_entity import ParticipantEntity, ParticipantFields
 from ...models.entities.permission import Permission
 
 logger = get_logger(__name__)
@@ -110,7 +110,7 @@ class PermissionService:
     ) -> bool:
         await self.get(uuid)
         return await self.participant_repository.delete(
-            SqlQuery().add_filter("uuid", uuid)
+            SqlQuery().add_filter(ParticipantFields.UUID, uuid)
         ) > 0
 
 

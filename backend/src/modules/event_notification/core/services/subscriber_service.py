@@ -4,7 +4,6 @@ from asyncio import Task
 from typing import Any, Awaitable, Callable, Dict, Optional
 
 from fastapi import WebSocketException
-from starlette.websockets import WebSocketClose
 
 from src.core.logger import get_logger
 
@@ -98,10 +97,10 @@ class SubscriberService:
         await self.unsubscribe(user_uuid)
 
     async def listen_events(
-        self,
-        user_uuid: str,
-        receive_message: ReceiveMessage,
-        send_message: SendMessage,
+            self,
+            user_uuid: str,
+            receive_message: ReceiveMessage,
+            send_message: SendMessage,
     ) -> None:
         await self.subscribe(user_uuid)
 
@@ -110,19 +109,20 @@ class SubscriberService:
             name=f"redis->send:{user_uuid}",
         )
 
-        while True:
-            try:
-                raw = await receive_message()
-                reply = await self.handle_incoming(user_uuid, raw)
-                if reply is not None:
-                    await send_message(reply)
-            except WebSocketException:
-                pass
-            except Exception as e:
-                logger.error(e)
-                return
-            finally:
-                await self._final_listen(user_uuid, redis_task)
+        try:
+            while True:
+                try:
+                    raw = await receive_message()
+                    reply = await self.handle_incoming(user_uuid, raw)
+                    if reply is not None:
+                        await send_message(reply)
+                except WebSocketException:
+                    break
+                except Exception as e:
+                    logger.error(e, exc_info=True)
+                    break
+        finally:
+            await self._final_listen(user_uuid, redis_task)
 
 
 _subscriber_service: Optional[SubscriberService] = None
