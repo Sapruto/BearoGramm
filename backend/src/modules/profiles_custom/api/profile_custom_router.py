@@ -33,7 +33,7 @@ async def me(
     service: ProfileCustomService = Depends(get_profile_custom_service),
 ) -> GetProfileResponse:
     try:
-        return await service.get(user_uuid=current_user.uuid)
+        return await service.get_me_profile_response(user_uuid=current_user.uuid)
     except NotFoundProfile:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Not found profile")
     except Exception:
