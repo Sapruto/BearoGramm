@@ -19,6 +19,7 @@ from .models.enums import (
 )
 from .models.entities.permission import Permission
 from .models.entities.participant_entity import ParticipantEntity
+from .models.orm.participant_orm import ParticipantORM
 
 __all__ = [
     "PermissionService",
@@ -39,4 +40,5 @@ __all__ = [
     "ActionType",
     "PermissionType",
     "ParticipantEntity",
+    "ParticipantORM",
 ]
