@@ -28,7 +28,7 @@ from src.modules.sessions import (
 logger = get_logger(__name__)
 
 
-class UserService:
+class AuthService:
     def __init__(
         self,
         user_repository: Optional[UserRepository] = None,
@@ -126,5 +126,5 @@ class UserService:
             raise VerificationFailed(request.phone_number, str(e))
 
 
-def get_user_service() -> UserService:
-    return UserService()
+def get_auth_service() -> AuthService:
+    return AuthService()

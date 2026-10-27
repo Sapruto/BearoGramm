@@ -11,7 +11,7 @@ from src.modules.user.core.repositories.verification_code_repository import (
     VerificationCodeRepository,
     VerificationCodeEntity,
 )
-from src.modules.user.core.services.user_service import UserService
+from src.modules.user.core.services.auth_service import UserService
 from src.modules.user.core.services.verify_service import VerifyService
 from src.modules.user.core.client.client_sms_api import ClientSMS
 from src.modules.sessions.api.session_service_api import SessionAPIService

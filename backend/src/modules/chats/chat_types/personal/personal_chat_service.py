@@ -181,6 +181,7 @@ class PersonalChatService(BaseChatService):
                     uuid=chat.uuid,
                     partner_uuid=partner_uuid,
                     partner_profile=partner_profile,
+                    created_at=chat.created_at,
                     updated_at=chat.updated_at,
                     last_message_at=chat.last_message_at,
                 )

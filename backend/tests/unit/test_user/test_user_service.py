@@ -2,7 +2,7 @@ from unittest.mock import AsyncMock
 import pytest
 from uuid import uuid4
 
-from src.modules.user.core.services.user_service import UserService
+from src.modules.user.core.services.auth_service import UserService
 from src.modules.user.models.entities.user_entity import UserEntity
 from src.modules.user.models.dto.requests import SendCodeRequest, VerifyCodeRequest
 

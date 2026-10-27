@@ -3,7 +3,7 @@ from starlette.requests import Request
 
 from src.core.limiter import limiter
 from .auth_route_names import AuthRoutes
-from ...core.services.user_service import UserService, get_user_service
+from ...core.services.auth_service import AuthService, get_auth_service
 from ...core.exceptions import (
     FailedToCreateUser,
     FailedToSendCode,
@@ -30,7 +30,7 @@ auth_router = APIRouter(prefix=AuthRoutes.base, tags=["auth"])
 async def send_code(
     request: Request,
     data: SendCodeRequest,
-    service: UserService = Depends(get_user_service)
+    service: AuthService = Depends(get_auth_service)
 ) -> SendCodeResponse:
     try:
         return await service.send_code_and_register_if_not(data)
@@ -89,7 +89,7 @@ async def send_code(
 async def verify_code(
     request: Request,
     data: VerifyCodeRequest,
-    service: UserService = Depends(get_user_service)
+    service: AuthService = Depends(get_auth_service)
 ) -> VerifyCodeResponse:
     try:
         return await service.verify_phone(data)
