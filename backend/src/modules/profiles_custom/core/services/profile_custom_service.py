@@ -10,8 +10,10 @@ from ..exceptions import (
     ProfileCustomNotFoundError,
     ProfileCustomDataError,
     ProfileCustomAlreadyExistsError, BadAvatarUrl,
+    NotFoundProfile,
 )
 from ...models.dto.profile_custom_requests import UpdateProfileRequest
+from ...models.dto.profile_custom_responses import GetProfileResponse
 from ...models.entities.profile_custom_entity import (
     ProfileCustomEntity,
     ProfileCustomFields,
@@ -105,7 +107,7 @@ class ProfileCustomService:
             self,
             profile_uuid: Optional[str] = None,
             user_uuid: Optional[str] = None,
-    ) -> Optional[ProfileCustomEntity]:
+    ) -> GetProfileResponse:
         query = SqlQuery[ProfileCustomFields]()
         if profile_uuid:
             query.add_filter(ProfileCustomFields.UUID, profile_uuid)
@@ -113,7 +115,12 @@ class ProfileCustomService:
             query.add_filter(field=ProfileCustomFields.USER_UUID, value=user_uuid)
 
         entity = await self._repository.get(query)
-        return entity
+        user = await self._user_service.get_user_by_uuid(entity.user_uuid)
+
+        if not entity or not user:
+            raise NotFoundProfile()
+
+        return GetProfileResponse(entity=entity, username=user.username, email=user.email)
 
     async def get_by_user_uuid(
         self, user_uuid: str

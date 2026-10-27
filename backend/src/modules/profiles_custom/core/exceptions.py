@@ -19,3 +19,7 @@ class ProfileCustomDataError(ProfileCustomError):
 
 class ProfileCustomAlreadyExistsError(ProfileCustomError):
     pass
+
+
+class NotFoundProfile(ProfileCustomError):
+    pass

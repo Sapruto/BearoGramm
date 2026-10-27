@@ -6,6 +6,7 @@ from src.modules.user.api.routers.login_required import get_current_user_depends
 from ..core.exceptions import (
     ProfileCustomNotFoundError,
     ProfileCustomDataError, BadAvatarUrl,
+    NotFoundProfile,
 )
 from ..core.services.profile_custom_service import (
     ProfileCustomService,
@@ -32,10 +33,9 @@ async def me(
     service: ProfileCustomService = Depends(get_profile_custom_service),
 ) -> GetProfileResponse:
     try:
-        profile = await service.get(user_uuid=current_user.uuid)
-        if not profile:
-            return GetProfileResponse(success=False)
-        return GetProfileResponse(success=True, profile=profile)
+        return await service.get(user_uuid=current_user.uuid)
+    except NotFoundProfile:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Not found profile")
     except Exception:
         logger.exception("Failed to get my profile")
         raise HTTPException(
