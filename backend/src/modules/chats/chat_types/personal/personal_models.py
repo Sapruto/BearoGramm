@@ -22,6 +22,7 @@ class PersonalChatPreview(BaseModel):
     partner_uuid: str
     partner_profile: Optional[ProfileCustomEntity] = None
     updated_at: datetime
+    last_message_at: datetime
 
 
 class CreatePersonalChatRequest(BaseModel):
