@@ -15,6 +15,7 @@ class ChatFields(str, Enum):
 
     CREATED_AT = "created_at"
     UPDATED_AT = "updated_at"
+    LAST_MESSAGE_AT = "last_message_at"
 
     def __str__(self):
         return self.value
@@ -27,3 +28,4 @@ class ChatEntity(BaseModel):
 
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     updated_at: Optional[datetime] = Field(default=None)
+    last_message_at: Optional[datetime] = Field(default=None)

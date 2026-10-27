@@ -118,7 +118,7 @@ class PersonalChatService(BaseChatService):
                 partner_uuid = p.user_uuid
                 break
 
-        partner_profile = self._profile_service.get_by_user_uuid(partner_uuid)
+        partner_profile = await self._profile_service.get_by_user_uuid(partner_uuid)
 
         return PersonalChatResponse(
             uuid=chat.uuid,
@@ -182,6 +182,7 @@ class PersonalChatService(BaseChatService):
                     partner_uuid=partner_uuid,
                     partner_profile=partner_profile,
                     updated_at=chat.updated_at,
+                    last_message_at=chat.last_message_at,
                 )
             )
 

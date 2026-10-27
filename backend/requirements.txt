@@ -35,3 +35,4 @@ slowapi==0.1.10
 
 py-svg-hush==0.3.0
 python-magic==0.4.27
+python-magic-bin==0.4.14

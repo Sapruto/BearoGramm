@@ -18,6 +18,7 @@ class ChatMapper(BaseMapper[ChatEntity, ChatORM, ChatFields]):
         ChatFields.CHAT_TYPE: ChatORM.chat_type,
         ChatFields.CREATED_AT: ChatORM.created_at,
         ChatFields.UPDATED_AT: ChatORM.updated_at,
+        ChatFields.LAST_MESSAGE_AT: ChatORM.last_message_at,
     }
 
     reverse_field_mapping = {
@@ -25,6 +26,7 @@ class ChatMapper(BaseMapper[ChatEntity, ChatORM, ChatFields]):
         ChatORM.chat_type: ChatFields.CHAT_TYPE,
         ChatORM.created_at: ChatFields.CREATED_AT,
         ChatORM.updated_at: ChatFields.UPDATED_AT,
+        ChatORM.last_message_at: ChatFields.LAST_MESSAGE_AT,
     }
 
     async def to_orm(self, entity: ChatEntity) -> ChatORM:
@@ -33,13 +35,16 @@ class ChatMapper(BaseMapper[ChatEntity, ChatORM, ChatFields]):
             chat_type=entity.chat_type,
             created_at=entity.created_at,
             updated_at=entity.updated_at,
+            last_message_at=entity.last_message_at,
         )
 
     async def to_entity(self, orm: ChatORM) -> ChatEntity:
         return ChatEntity(
             uuid=orm.uuid,
+            chat_type=orm.chat_type,
             created_at=orm.created_at,
             updated_at=orm.updated_at,
+            last_message_at=orm.last_message_at
         )
 
     async def to_orm_value(

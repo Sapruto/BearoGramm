@@ -26,6 +26,7 @@ class ChatORM(Base):
         DateTime(timezone=True), nullable=False, default=func.now()
     )
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=True)
+    last_message_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=True)
 
     messages: Mapped[List["MessageORM"]] = relationship(
         "MessageORM",

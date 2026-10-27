@@ -14,6 +14,8 @@ from src.core.database import close_db, init_db
 from src.core.logger import get_logger
 from src.core.limiter import limiter
 
+from src.general.db.events import *
+
 
 logger = get_logger(__name__)
 

@@ -50,12 +50,12 @@ class ChatRepository(BaseRepository[ChatManager, ChatFields, ChatEntity]):
         return await self._to_entity(chat_orm)
 
     async def get_user_chats(
-        self,
-        user_uuid: str,
-        limit: int = 50,
-        offset: int = 0,
-        show_new: bool = True,
-        chat_type: ChatType = ChatType.DEFAULT
+            self,
+            user_uuid: str,
+            limit: int = 50,
+            offset: int = 0,
+            show_new: bool = True,
+            chat_type: ChatType = ChatType.DEFAULT,
     ) -> Tuple[List[ChatEntity], int]:
         async with AsyncSessionLocal() as session:
             user_chat_uuids = (
@@ -82,9 +82,9 @@ class ChatRepository(BaseRepository[ChatManager, ChatFields, ChatEntity]):
                 return [], 0
 
             order_by_clause = (
-                ChatORM.updated_at.desc().nullslast()
+                ChatORM.last_message_at.desc().nullslast()
                 if show_new
-                else ChatORM.updated_at.asc().nullsfirst()
+                else ChatORM.last_message_at.asc().nullsfirst()
             )
 
             stmt = (
@@ -96,7 +96,8 @@ class ChatRepository(BaseRepository[ChatManager, ChatFields, ChatEntity]):
             )
             chats_orm = (await session.execute(stmt)).scalars().all()
 
-        chats: List[ChatEntity] = [await self._to_entity(c) for c in chats_orm]
+            chats: List[ChatEntity] = [await self._to_entity(c) for c in chats_orm]
+
         return chats, total
 
 
