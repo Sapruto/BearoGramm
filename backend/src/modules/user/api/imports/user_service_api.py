@@ -20,6 +20,17 @@ class UserServiceAPI:
         self.user_repository = user_repository or get_user_repository()
         self.session_service = session_service or get_session_service_api()
 
+    @staticmethod
+    def _to_user_api(user) -> UserAPIModel:
+        return UserAPIModel(
+            uuid=user.uuid,
+            phone_number=user.phone_number,
+            email=user.email,
+            username=user.username,
+            created_at=user.created_at,
+            updated_at=user.updated_at,
+        )
+
     async def update(self, user_uuid: str, email: Optional[str] = None, username: Optional[str] = None) -> bool:
         query = SqlQuery[UserFields]().add_filter(field=UserFields.UUID, value=user_uuid)
         user = await self.user_repository.get(query)
@@ -41,14 +52,7 @@ class UserServiceAPI:
             if not user:
                 return None
 
-            return UserAPIModel(
-                uuid=user.uuid,
-                phone_number=user.phone_number,
-                email=user.email,
-                username=user.username,
-                created_at=user.created_at,
-                updated_at=user.updated_at,
-            )
+            return UserServiceAPI._to_user_api(user)
 
         except Exception as e:
             logger.error(f"Error getting user by UUID: {e}")
@@ -62,14 +66,7 @@ class UserServiceAPI:
             if not user:
                 return None
 
-            return UserAPIModel(
-                uuid=user.uuid,
-                phone_number=user.phone_number,
-                email=user.email,
-                username=user.username,
-                created_at=user.created_at,
-                updated_at=user.updated_at,
-            )
+            return UserServiceAPI._to_user_api(user)
 
         except Exception as e:
             logger.error(f"Error getting user by phone: {e}")
@@ -104,14 +101,7 @@ class UserServiceAPI:
             if not user:
                 return None
 
-            return UserAPIModel(
-                uuid=user.uuid,
-                phone_number=user.phone_number,
-                email=user.email,
-                username=user.username,
-                created_at=user.created_at,
-                updated_at=user.updated_at,
-            )
+            return UserServiceAPI._to_user_api(user)
 
         except Exception as e:
             logger.error(f"Error getting user by phone: {e}")
@@ -125,14 +115,7 @@ class UserServiceAPI:
             if not user:
                 return None
 
-            return UserAPIModel(
-                uuid=user.uuid,
-                phone_number=user.phone_number,
-                email=user.email,
-                username=user.username,
-                created_at=user.created_at,
-                updated_at=user.updated_at,
-            )
+            return UserServiceAPI._to_user_api(user)
 
         except Exception as e:
             logger.error(f"Error getting user by phone: {e}")

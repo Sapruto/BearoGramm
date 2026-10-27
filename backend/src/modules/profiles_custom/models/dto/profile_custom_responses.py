@@ -6,8 +6,8 @@ from ..entities.profile_custom_entity import ProfileCustomEntity
 
 class GetProfileResponse(BaseModel):
     profile: Optional[ProfileCustomEntity] = Field(default=None)
-    username: str = Field(default="")
-    email: str = Field(default="")
+    username: Optional[str] = Field(default=None)
+    email: Optional[str] = Field(default=None)
 
 
 class UpdateProfileResponse(BaseModel):
