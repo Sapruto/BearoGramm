@@ -81,15 +81,16 @@ class ChatRepository(BaseRepository[ChatManager, ChatFields, ChatEntity]):
             if total == 0:
                 return [], 0
 
-            empty_last = ChatORM.last_message_at.is_(None)
+            activity = func.coalesce(ChatORM.last_message_at, ChatORM.created_at)
 
-            sort_key = func.coalesce(ChatORM.last_message_at, ChatORM.created_at)
-            sort_dir = sort_key.desc() if show_new else sort_key.asc()
+            order_by_clause = (
+                activity.desc() if show_new else activity.asc()
+            )
 
             stmt = (
                 select(ChatORM)
                 .where(base_where)
-                .order_by(empty_last.asc(), sort_dir, ChatORM.created_at.desc())
+                .order_by(order_by_clause, ChatORM.created_at.desc())
                 .limit(limit)
                 .offset(offset)
             )
