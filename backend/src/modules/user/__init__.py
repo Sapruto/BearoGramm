@@ -1,4 +1,4 @@
-from .api.exports.user_service_api import UserService, get_user_service
+from .api.exports.user_service import UserService, get_user_service
 from .api.exports.models import (
     UserSessionsAPIModel,
     UserSessionResponseAPIModel,

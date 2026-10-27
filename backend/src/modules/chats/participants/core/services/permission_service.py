@@ -113,7 +113,6 @@ class PermissionService:
             SqlQuery().add_filter(ParticipantFields.UUID, uuid)
         ) > 0
 
-
     async def validate(
         self,
         user_uuid: str,

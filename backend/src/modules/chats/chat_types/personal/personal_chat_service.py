@@ -1,25 +1,17 @@
 from typing import Optional, List, Tuple, Dict, Any
 
 from src.general.repository.sql.sql_query import SqlQuery
-from src.modules.friends.core.services.friend_service import get_friend_service, FriendService, NotFriends
+from src.modules.friends.core.services.friend_service import NotFriends
 from src.modules.chats.participants.models.enums import ResourceType
-from src.modules.profiles_custom import ProfileCustomService, get_profile_custom_service
-from src.modules.user import UserService, get_user_service
 from src.modules.chats.participants import Permission, PermissionService, ChatAction, MessageAction
 
-from .personal_models import PersonalChatResponse, PersonalChatPreview, GetChatPartnerResponse
-from .personal_exceptions import CannotChatWithSelfError, NotFoundUser, ChatIsExisting
+from .personal_exceptions import CannotChatWithSelfError, ChatIsExisting
 from src.modules.chats.core.repositories.chat_repository import get_chat_repository, ChatRepository
 from ..base.base_chat_service import BaseChatService
-from ..base.exceptions import (
-    UserNotParticipantError,
-    PermissionDeniedError,
-    InvalidParticipantsError,
-    ChatNotFoundError,
-)
+from ..base.exceptions import InvalidParticipantsError
 from ..chat_types import ChatType
 from ...core.services.notify_chat_event import get_notificator_chat_event, NotificatorChatEvents, ChatEventType
-from ...models.entities.chat_entity import ChatFields
+from ...models.entities.chat_entity import ChatFields, ChatEntity
 
 
 class PersonalChatService(BaseChatService):
@@ -27,15 +19,9 @@ class PersonalChatService(BaseChatService):
             self,
             repository: Optional[ChatRepository] = None,
             permission_service: Optional[PermissionService] = None,
-            user_service: Optional[UserService] = None,
-            profile_service: Optional[ProfileCustomService] = None,
-            friend_service: Optional[FriendService] = None,
             notify_service: Optional[NotificatorChatEvents] = None,
             max_limit: Optional[int] = None,
     ):
-        self._user_service = user_service or get_user_service()
-        self._profile_service = profile_service or get_profile_custom_service()
-        self._friend_service = friend_service or get_friend_service()
         self._notify_service = notify_service or get_notificator_chat_event()
         self._max_limit = max_limit or 50
         super().__init__(repository or get_chat_repository(), permission_service)
@@ -65,183 +51,56 @@ class PersonalChatService(BaseChatService):
             Permission(action=MessageAction.DELETE, enabled=True),
         ]
 
-    async def create(
+    async def create_by_uuid_with_bool(self, user_uuid: str, other_user_uuid: str) -> bool:
+        try:
+            if user_uuid == other_user_uuid:
+                raise CannotChatWithSelfError()
+
+            existing = await self._repository.get_chat_by_participants([user_uuid, other_user_uuid], self._get_chat_type())
+            if existing:
+                raise ChatIsExisting()
+
+            chat = await self.create_chat(user_uuid=user_uuid, uuids=[user_uuid, other_user_uuid])
+            await self._notify_service.notify_about_chat_event(chat.uuid, ChatEventType.CREATE)
+
+            return True
+
+        except (CannotChatWithSelfError, ChatIsExisting, NotFriends):
+            return False
+
+    async def get_chat_by_uuid(self, chat_uuid: str) -> Optional[ChatEntity]:
+        query = SqlQuery[ChatFields]().add_filter(ChatFields.UUID, chat_uuid)
+        return await self._repository.get(query)
+
+    async def get_user_chats(
             self,
             user_uuid: str,
-            other_user_phone: str
-    ) -> PersonalChatResponse:
-        user = await self._user_service.get_user_by_phone(other_user_phone)
-        if not user:
-            raise NotFoundUser()
-        other_user_uuid = user.uuid
-
-        return await self.create_by_uuid(user_uuid, other_user_uuid)
-
-    async def create_by_uuid(self, user_uuid: str, other_user_uuid: str) -> PersonalChatResponse:
-        if user_uuid == other_user_uuid:
-            raise CannotChatWithSelfError()
-
-        existing = await self._repository.get_chat_by_participants([user_uuid, other_user_uuid], self._get_chat_type())
-        if existing:
-            raise ChatIsExisting()
-
-        if not await self._friend_service.check_friends(user_uuid, other_user_uuid):
-            raise NotFriends(user_uuid, other_user_uuid)
-
-        chat = await self.create_chat(user_uuid=user_uuid, uuids=[user_uuid, other_user_uuid])
-        await self._notify_service.notify_about_chat_event(chat.uuid, ChatEventType.CREATE)
-
-        return PersonalChatResponse(
-            uuid=chat.uuid,
-            partner_uuid=other_user_uuid,
-            created_at=chat.created_at,
-            updated_at=chat.updated_at
-        )
-
-    async def get_chat(
-            self,
-            chat_uuid: str,
-            user_uuid: str
-    ) -> PersonalChatResponse:
-        query = SqlQuery[ChatFields]().add_filter(ChatFields.UUID, chat_uuid)
-        chat = await self._repository.get(query)
-
-        if not chat:
-            raise ChatNotFoundError(chat_uuid)
-
-        await self._ensure_participant(user_uuid, chat_uuid)
-
-        participants = await self._permission_service.get_by_resource(chat_uuid)
-        partner_uuid: str = ""
-        for p in participants:
-            if p.user_uuid != user_uuid:
-                partner_uuid = p.user_uuid
-                break
-
-        partner_profile = await self._profile_service.get_by_user_uuid(partner_uuid)
-
-        return PersonalChatResponse(
-            uuid=chat.uuid,
-            partner_uuid=partner_uuid,
-            created_at=chat.created_at,
-            updated_at=chat.updated_at,
-            partner_profile=partner_profile
-        )
-
-    async def get_user_personal_chats(
-        self,
-        user_uuid: str,
-        limit: int = 50,
-        offset: int = 0,
-    ) -> Tuple[List[PersonalChatPreview], int]:
-
-        chats, total = await self._repository.get_user_chats(
+            limit: int,
+            offset: int,
+    ) -> Tuple[List[ChatEntity], int]:
+        return await self._repository.get_user_chats(
             user_uuid=user_uuid,
             limit=min(self._max_limit, limit),
             offset=offset,
             show_new=True,
-            chat_type=self._get_chat_type()
+            chat_type=self._get_chat_type(),
         )
 
-        if not chats:
-            return [], total
+    async def delete_chat_by_uuid(self, chat_uuid: str) -> int:
+        query = SqlQuery[ChatFields]().add_filter(ChatFields.UUID, chat_uuid)
+        return await self._repository.delete(query)
 
-        chat_uuids = [c.uuid for c in chats]
+    async def get_participants(self, chat_uuid: str) -> List:
+        return await self._permission_service.get_by_resource(chat_uuid)
 
-        participants_by_chat = await self._permission_service.get_by_resources(
+    async def get_participants_bulk(self, chat_uuids: List[str]) -> dict:
+        return await self._permission_service.get_by_resources(
             resource_uuids=chat_uuids,
             resource_type=ResourceType.CHAT,
         )
 
-        partner_by_chat: dict[str, str] = {}
-        partner_uuids: set[str] = set()
-        for chat in chats:
-            for p in participants_by_chat.get(chat.uuid, []):
-                if p.user_uuid != user_uuid:
-                    partner_by_chat[chat.uuid] = p.user_uuid
-                    partner_uuids.add(p.user_uuid)
-                    break
-
-        profiles_by_uuid = await self._profile_service.get_by_user_uuids(
-            list(partner_uuids),
-        )
-
-        previews: List[PersonalChatPreview] = []
-        for chat in chats:
-            partner_uuid = partner_by_chat.get(chat.uuid)
-            if partner_uuid is None:
-                continue
-
-            partner_profile = profiles_by_uuid.get(partner_uuid)
-            if partner_profile is None:
-                continue
-
-            previews.append(
-                PersonalChatPreview(
-                    uuid=chat.uuid,
-                    partner_uuid=partner_uuid,
-                    partner_profile=partner_profile,
-                    created_at=chat.created_at,
-                    updated_at=chat.updated_at,
-                    last_message_at=chat.last_message_at,
-                )
-            )
-
-        return previews, total
-
-    async def delete_chat(
-            self,
-            chat_uuid: str,
-            user_uuid: str
-    ) -> bool:
-        await self._ensure_participant(user_uuid, chat_uuid)
-
-        if not await self._can_delete(user_uuid, chat_uuid):
-            raise PermissionDeniedError(user_uuid, "DELETE", chat_uuid)
-
-        query = SqlQuery[ChatFields]().add_filter(value=chat_uuid, field=ChatFields.UUID)
-        exist = await self._repository.get(query)
-        if not exist:
-            raise NotFoundUser()
-
-        query = SqlQuery[ChatFields]().add_filter(ChatFields.UUID, chat_uuid)
-        deleted_count: int = await self._repository.delete(query)
-
-        await self._notify_service.notify_about_chat_event(chat_uuid, ChatEventType.DELETE)
-
-        return deleted_count > 0
-
-    async def get_chat_partner(
-            self,
-            chat_uuid: str,
-            user_uuid: str
-    ) -> GetChatPartnerResponse:
-        query = SqlQuery[ChatFields]().add_filter(ChatFields.UUID, chat_uuid)
-        chat = await self._repository.get(query)
-
-        if not chat:
-            raise ChatNotFoundError(chat_uuid)
-
-        await self._ensure_participant(user_uuid, chat_uuid)
-
-        participants = await self._permission_service.get_by_resource(chat_uuid)
-        for p in participants:
-            if p.user_uuid != user_uuid:
-                profile = await self._profile_service.get_by_user_uuid(p.user_uuid)
-                return GetChatPartnerResponse(partner_uuid=p.user_uuid, partner_profile=profile)
-
-        raise UserNotParticipantError(user_uuid, chat_uuid)
-
-    async def is_participant(
-            self,
-            chat_uuid: str,
-            user_uuid: str
-    ) -> bool:
-        try:
-            await self._ensure_participant(user_uuid, chat_uuid)
-            return True
-        except UserNotParticipantError:
-            return False
+    async def notify(self, chat_uuid: str, event_type: ChatEventType) -> None:
+        await self._notify_service.notify_about_chat_event(chat_uuid, event_type)
 
 
 def get_personal_chat_service() -> PersonalChatService:

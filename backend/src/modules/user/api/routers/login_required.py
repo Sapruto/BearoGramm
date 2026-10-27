@@ -5,7 +5,7 @@ from fastapi import Request, HTTPException, status
 from src.modules.user.sessions import SessionAPIService, get_session_service_api
 from src.core.logger import get_logger
 
-from ..exports.user_service_api import get_user_service
+from ..exports.user_service import get_user_service
 from ...models.entities.user_entity import UserEntity
 
 logger = get_logger(__name__)

@@ -1,5 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 
+from src.modules.user import UserNotFound, get_current_user_depends
+
 from ..models.dto.requests import (
     SendFriendRequest,
     FriendStatusRequest,
@@ -22,11 +24,15 @@ from ..core.exceptions import (
     InvalidTargetIdentifier,
     NotFriends,
 )
-from ..core.services.friend_service import FriendService, get_friend_service
-from src.modules.user import UserNotFound, get_current_user_depends
-from ...chats.chat_types.personal.personal_chat_service import PersonalChatService, get_personal_chat_service
+from ..core.use_cases import FriendUseCases
+from ..core.services.friend_service import get_friend_service
+from ...chats.chat_types.personal.personal_chat_service import get_personal_chat_service
 
 friend_router = APIRouter(prefix="/api/friends", tags=["friends"])
+
+
+def get_use_case() -> FriendUseCases:
+    return FriendUseCases(friend_protocol=get_friend_service(), personal_protocol=get_personal_chat_service())
 
 
 @friend_router.post(
@@ -36,17 +42,15 @@ friend_router = APIRouter(prefix="/api/friends", tags=["friends"])
 )
 async def send_friend_request(
         request: SendFriendRequest,
-        current_user = Depends(get_current_user_depends()),
-        service: FriendService = Depends(get_friend_service),
+        current_user=Depends(get_current_user_depends()),
+        use_cases: FriendUseCases = Depends(get_use_case),
 ) -> FriendActionResponse:
     try:
-        return await service.send_friend_request(
+        return await use_cases.send_friend_request(
             from_user_uuid=current_user.uuid,
             request=request,
         )
-    except CannotBeFriendWithSelf as e:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
-    except InvalidTargetIdentifier as e:
+    except (CannotBeFriendWithSelf, InvalidTargetIdentifier) as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
     except UserNotFound as e:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
@@ -65,34 +69,19 @@ async def send_friend_request(
 )
 async def change_friend_status(
         request: FriendStatusRequest,
-        current_user = Depends(get_current_user_depends()),
-        service: FriendService = Depends(get_friend_service),
-        personal_service: PersonalChatService = Depends(get_personal_chat_service),
+        current_user=Depends(get_current_user_depends()),
+        use_cases: FriendUseCases = Depends(get_use_case),
 ) -> FriendActionResponse:
     try:
-        response = await service.change_status(
-            current_user_uuid=current_user.uuid,
-            request=request,
-        )
-        if response.just_created_chat:
-            await personal_service.create_by_uuid(response.uuid, response.other_uuid)
-        return response
-    except CannotAcceptOwnRequest as e:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e))
-    except CannotRejectOwnRequest as e:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e))
+        return await use_cases.change_friend_status(current_user_uuid=current_user.uuid, request=request)
     except CannotBlockYourself as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
-    except UserAlreadyBlocked as e:
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(e))
-    except UserNotBlocked as e:
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(e))
-    except FriendRequestAlreadyHandled as e:
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(e))
+    except (CannotAcceptOwnRequest, CannotRejectOwnRequest, NotFriends) as e:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e))
     except FriendRequestNotFound as e:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
-    except NotFriends as e:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e))
+    except (UserAlreadyBlocked, UserNotBlocked, FriendRequestAlreadyHandled) as e:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(e))
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -107,11 +96,11 @@ async def change_friend_status(
 async def get_friends(
         limit: int = Query(50, ge=1, le=100),
         offset: int = Query(0, ge=0),
-        current_user = Depends(get_current_user_depends()),
-        service: FriendService = Depends(get_friend_service),
+        current_user=Depends(get_current_user_depends()),
+        use_cases: FriendUseCases = Depends(get_use_case),
 ) -> GetFriendsResponse:
     try:
-        return await service.get_friends(
+        return await use_cases.get_friends(
             user_uuid=current_user.uuid,
             limit=limit,
             offset=offset,
@@ -128,11 +117,11 @@ async def get_friends(
     response_model=GetFriendRequestsResponse,
 )
 async def get_friend_requests(
-        current_user = Depends(get_current_user_depends()),
-        service: FriendService = Depends(get_friend_service),
+        current_user=Depends(get_current_user_depends()),
+        use_cases: FriendUseCases = Depends(get_use_case),
 ) -> GetFriendRequestsResponse:
     try:
-        return await service.get_request_to_friends(current_user.uuid)
+        return await use_cases.get_request_to_friends(current_user.uuid)
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,

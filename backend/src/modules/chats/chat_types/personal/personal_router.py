@@ -1,74 +1,35 @@
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 
-from src.modules.friends import NotFriends
+from src.modules.friends.core.services.friend_service import get_friend_service
+from src.modules.profiles_custom.core.services.profile_custom_service import get_profile_custom_service
 from src.modules.user import get_current_user_depends
 
-from .personal_chat_service import PersonalChatService, get_personal_chat_service
+from .personal_chat_service import get_personal_chat_service
 from .personal_models import (
     PersonalChatResponse,
-    CreatePersonalChatRequest,
     GetChatPartnerResponse,
-    CheckParticipantResponse,
     DeletePersonalChatResponse,
     GetPersonalChatsResponse,
 )
-from .personal_exceptions import CannotChatWithSelfError, NotFoundUser, ChatIsExisting
+from .personal_exceptions import NotFoundUser
+from .use_cases import PersonalUseCases
 from ..base.exceptions import (
     UserNotParticipantError,
     PermissionDeniedError,
-    ChatNotFoundError,
-    InvalidParticipantsError,
+    ChatNotFoundError
 )
-
+from ...participants import get_permission_service
 
 personal_chats_router = APIRouter(prefix="/api/personal", tags=["personal_chat"])
 
 
-@personal_chats_router.post(
-    path="/create",
-    response_model=PersonalChatResponse,
-    status_code=status.HTTP_201_CREATED
-)
-async def create_personal_chat(
-        request: CreatePersonalChatRequest,
-        current_user = Depends(get_current_user_depends()),
-        service: PersonalChatService = Depends(get_personal_chat_service)
-) -> PersonalChatResponse:
-    try:
-        return await service.create(
-            user_uuid=current_user.uuid,
-            other_user_phone=request.other_user_phone
-        )
-    except CannotChatWithSelfError as e:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(e)
-        )
-    except NotFoundUser as e:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(e)
-        )
-    except InvalidParticipantsError as e:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(e)
-        )
-    except ChatIsExisting as e:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(e)
-        )
-    except NotFriends as e:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(e)
-        )
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to create personal chat: {str(e)}"
-        )
+def get_use_cases() -> PersonalUseCases:
+    return PersonalUseCases(
+        personal_protocol=get_personal_chat_service(),
+        friend_protocol=get_friend_service(),
+        permission_protocol=get_permission_service(),
+        profile_protocol=get_profile_custom_service(),
+    )
 
 
 @personal_chats_router.get(
@@ -77,11 +38,11 @@ async def create_personal_chat(
 )
 async def get_personal_chat(
         chat_uuid: str,
-        current_user = Depends(get_current_user_depends()),
-        service: PersonalChatService = Depends(get_personal_chat_service)
+        current_user=Depends(get_current_user_depends()),
+        use_cases: PersonalUseCases = Depends(get_use_cases)
 ) -> PersonalChatResponse:
     try:
-        return await service.get_chat(chat_uuid, current_user.uuid)
+        return await use_cases.get_chat(chat_uuid, current_user.uuid)
     except ChatNotFoundError as e:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -106,11 +67,11 @@ async def get_personal_chat(
 async def get_personal_chats(
         limit: int = Query(50, ge=1, le=100),
         offset: int = Query(0, ge=0),
-        current_user = Depends(get_current_user_depends()),
-        service: PersonalChatService = Depends(get_personal_chat_service)
+        current_user=Depends(get_current_user_depends()),
+        use_cases: PersonalUseCases = Depends(get_use_cases)
 ) -> GetPersonalChatsResponse:
     try:
-        chats, total = await service.get_user_personal_chats(
+        chats, total = await use_cases.get_user_personal_chats(
             user_uuid=current_user.uuid,
             limit=limit,
             offset=offset
@@ -135,11 +96,11 @@ async def get_personal_chats(
 )
 async def delete_personal_chat(
         chat_uuid: str,
-        current_user = Depends(get_current_user_depends()),
-        service: PersonalChatService = Depends(get_personal_chat_service)
+        current_user=Depends(get_current_user_depends()),
+        use_cases: PersonalUseCases = Depends(get_use_cases)
 ) -> DeletePersonalChatResponse:
     try:
-        result = await service.delete_chat(chat_uuid, current_user.uuid)
+        result = await use_cases.delete_chat(chat_uuid, current_user.uuid)
 
         if not result:
             raise HTTPException(
@@ -150,25 +111,20 @@ async def delete_personal_chat(
         return DeletePersonalChatResponse(
             message="Chat deleted successfully",
         )
-    except ChatNotFoundError as e:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=str(e)
-        )
-    except UserNotParticipantError as e:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail=str(e)
-        )
-    except PermissionDeniedError as e:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail=str(e)
-        )
     except NotFoundUser as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"Failed to found user: {e}"
+        )
+    except (UserNotParticipantError, PermissionDeniedError) as e:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=str(e)
+        )
+    except ChatNotFoundError as e:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=str(e)
         )
     except Exception as e:
         raise HTTPException(
@@ -183,11 +139,11 @@ async def delete_personal_chat(
 )
 async def get_chat_partner(
         chat_uuid: str,
-        current_user = Depends(get_current_user_depends()),
-        service: PersonalChatService = Depends(get_personal_chat_service)
+        current_user=Depends(get_current_user_depends()),
+        use_cases: PersonalUseCases = Depends(get_use_cases)
 ) -> GetChatPartnerResponse:
     try:
-        return await service.get_chat_partner(chat_uuid, current_user.uuid)
+        return await use_cases.get_chat_partner(chat_uuid, current_user.uuid)
     except ChatNotFoundError as e:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -202,26 +158,4 @@ async def get_chat_partner(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to get partner: {str(e)}"
-        )
-
-
-@personal_chats_router.get(
-    "/{chat_uuid}/exists",
-    response_model=CheckParticipantResponse
-)
-async def check_participant(
-        chat_uuid: str,
-        current_user= Depends(get_current_user_depends()),
-        service: PersonalChatService = Depends(get_personal_chat_service)
-) -> CheckParticipantResponse:
-    try:
-        is_participant = await service.is_participant(chat_uuid, current_user.uuid)
-        return CheckParticipantResponse(
-            chat_uuid=chat_uuid,
-            is_participant=is_participant
-        )
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to check participant: {str(e)}"
         )

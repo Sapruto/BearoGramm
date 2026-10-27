@@ -30,7 +30,7 @@ personal_chats_router = APIRouter(prefix="/api/personal", tags=["personal_chat"]
 )
 async def create_personal_chat(
         request: PersonalChatCreateRequest,
-        current_user = Depends(get_current_user_depends()),
+        current_user=Depends(get_current_user_depends()),
         service: PersonalChatService = Depends(get_personal_chat_service)
 ) -> PersonalChatResponse:
     try:
@@ -71,7 +71,7 @@ async def create_personal_chat(
 )
 async def get_personal_chat(
         chat_uuid: str,
-        current_user = Depends(get_current_user_depends()),
+        current_user=Depends(get_current_user_depends()),
         service: PersonalChatService = Depends(get_personal_chat_service)
 ) -> PersonalChatResponse:
     try:
@@ -100,7 +100,7 @@ async def get_personal_chat(
 async def get_personal_chats(
         limit: int = Query(50, ge=1, le=100),
         offset: int = Query(0, ge=0),
-        current_user = Depends(get_current_user_depends()),
+        current_user=Depends(get_current_user_depends()),
         service: PersonalChatService = Depends(get_personal_chat_service)
 ) -> PersonalChatListResponse:
     try:
@@ -129,7 +129,7 @@ async def get_personal_chats(
 )
 async def delete_personal_chat(
         chat_uuid: str,
-        current_user = Depends(get_current_user_depends()),
+        current_user=Depends(get_current_user_depends()),
         service: PersonalChatService = Depends(get_personal_chat_service)
 ) -> DeleteChatResponse:
     try:
@@ -178,7 +178,7 @@ async def delete_personal_chat(
 )
 async def get_chat_partner(
         chat_uuid: str,
-        current_user = Depends(get_current_user_depends()),
+        current_user=Depends(get_current_user_depends()),
         service: PersonalChatService = Depends(get_personal_chat_service)
 ) -> PartnerResponse:
     try:
