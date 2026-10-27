@@ -119,7 +119,7 @@ class ProfileCustomService:
         if not entity or not user:
             raise NotFoundProfile()
 
-        return GetProfileResponse(entity=entity, username=user.username, email=user.email)
+        return GetProfileResponse(profile=entity, username=user.username, email=user.email)
 
     async def get(
             self,
