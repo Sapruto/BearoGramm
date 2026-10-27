@@ -1,5 +1,6 @@
 import PhoneNumberInput, { type PhoneNumberInputRef } from '@/pages/Auth/PhoneNumberInput';
 import { useSendFriendRequest } from '@/shared/hooks/friends/useSendFriendRequest';
+import { parsePhoneNumberWithError } from 'libphonenumber-js';
 import { AlertCircle, AtSign, Check, Phone, UserPlus } from 'lucide-react';
 import { useRef, useState } from 'react';
 
@@ -35,12 +36,15 @@ const AddFriendForm = ({ className = '' }: Props) => {
             { target_type: value_type, target_value: value },
             {
                 onSuccess: () => {
-                    setSentTo(`@${value}`);
-
-                    if (value_type == 'phone')
+                    if (value_type == 'phone') {
+                        const phoneNumber = parsePhoneNumberWithError(phone)
+                        setSentTo(phoneNumber.formatInternational());
                         setPhone('');
-                    else
+                    }
+                    else {
+                        setSentTo(`@${value}`);
                         setUsername('');
+                    }
 
                     setTimeout(() => setSentTo(null), 3500);
                 }
