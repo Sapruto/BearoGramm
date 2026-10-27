@@ -14,8 +14,9 @@ export type Profile = {
 };
 
 export type GetProfileResponse = {
-    success: boolean;
     profile: Profile;
+    username?: string;
+    email?: string;
 };
 
 export const getMyProfile = async (): Promise<GetProfileResponse> => {

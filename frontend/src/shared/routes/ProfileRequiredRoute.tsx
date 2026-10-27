@@ -9,7 +9,7 @@ export function ProfileRequiredRoute() {
 
     if (isLoading) return null;
 
-    const hasNoProfile = data && (!data.success || !data.profile);
+    const hasNoProfile = data && !data.profile;
 
     if (hasNoProfile) {
         if (!toastShownRef.current) {
