@@ -21,9 +21,9 @@ class UserServiceAPI:
         self.session_service = session_service or get_session_service_api()
 
     async def update(self, user_uuid: str, email: Optional[str] = None, username: Optional[str] = None) -> bool:
-        user = await self.user_repository.get_by_field(
-            value=user_uuid, field=UserFields.UUID
-        )
+        query = SqlQuery[UserFields]().add_filter(field=UserFields.UUID, value=user_uuid)
+        user = await self.user_repository.get(query)
+
         if not user:
             return False
         if email:
@@ -35,9 +35,8 @@ class UserServiceAPI:
 
     async def get_user_by_uuid(self, user_uuid: str) -> Optional[UserAPIModel]:
         try:
-            user = await self.user_repository.get_by_field(
-                value=user_uuid, field=UserFields.UUID
-            )
+            query = SqlQuery[UserFields]().add_filter(field=UserFields.UUID, value=user_uuid)
+            user = await self.user_repository.get(query)
 
             if not user:
                 return None
@@ -57,9 +56,8 @@ class UserServiceAPI:
 
     async def get_user_by_phone(self, phone_number: str) -> Optional[UserAPIModel]:
         try:
-            user = await self.user_repository.get(
-                SqlQuery[UserFields]().add_filter(value=phone_number, field=UserFields.PHONE_NUMBER)
-            )
+            query = SqlQuery[UserFields]().add_filter(field=UserFields.PHONE_NUMBER, value=phone_number)
+            user = await self.user_repository.get(query)
 
             if not user:
                 return None
@@ -100,9 +98,8 @@ class UserServiceAPI:
 
     async def get_user_by_username(self, username: str):
         try:
-            user = await self.user_repository.get(
-                SqlQuery[UserFields]().add_filter(value=username, field=UserFields.USERNAME)
-            )
+            query = SqlQuery[UserFields]().add_filter(field=UserFields.USERNAME, value=username)
+            user = await self.user_repository.get(query)
 
             if not user:
                 return None
@@ -122,9 +119,8 @@ class UserServiceAPI:
 
     async def get_user_by_email(self, email: str):
         try:
-            user = await self.user_repository.get(
-                SqlQuery[UserFields]().add_filter(value=email, field=UserFields.EMAIL)
-            )
+            query = SqlQuery[UserFields]().add_filter(field=UserFields.EMAIL, value=email)
+            user = await self.user_repository.get(query)
 
             if not user:
                 return None
