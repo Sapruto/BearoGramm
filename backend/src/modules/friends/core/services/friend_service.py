@@ -197,6 +197,7 @@ class FriendService:
                     initiator_uuid=current_user_uuid,
                 )
                 await self._friend_repo.save(entity)
+                await self._notificator.notify_about_friend_event(current_user_uuid, entity, FriendEventType.CHANGED_STATUS)
                 return FriendActionResponse(success=True, message="Status changed")
             raise FriendRequestNotFound(current_user_uuid, request.target_uuid)
 
@@ -212,6 +213,7 @@ class FriendService:
         await self._friend_repo.save(entity, to_update=True)
 
         if entity.user_status1 == FriendStatus.ACCEPT and entity.user_status2 == FriendStatus.ACCEPT:
+            await self._notificator.notify_about_friend_event(current_user_uuid, entity, FriendEventType.CHANGED_STATUS)
             return FriendActionResponse(success=True, just_created_chat=True, uuid=entity.user_uuid1,
                                         other_uuid=entity.user_uuid2, message="Status changed")
 
