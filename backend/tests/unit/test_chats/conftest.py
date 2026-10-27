@@ -9,8 +9,7 @@ from src.modules.chats.core.repositories.mappers.chat_mapper import ChatMapper
 from src.modules.chats.core.repositories.chat_repository import ChatRepository
 from src.modules.chats.core.services.chat_service import ChatService
 from src.modules.chats.api.chat_service_api import ChatServiceAPI
-from src.modules.chats.chat_types.base.base_chat_service import BaseChatService
-from src.modules.participants import PermissionService
+from src.modules.chats.participants import PermissionService
 from src.modules.user import UserEntity
 
 

@@ -1,8 +1,8 @@
 import pytest
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
 from uuid import uuid4
 
-from src.modules.sessions.models.dto.session_dto import (
+from src.modules.user.sessions.models.dto.session_dto import (
     SessionDTO,
     CreateSessionDTO,
     SessionResultDTO,

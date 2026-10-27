@@ -3,15 +3,6 @@ from typing import Optional
 from datetime import datetime
 
 
-class UserAPIModel(BaseModel):
-    uuid: str
-    phone_number: str
-    username: Optional[str]
-    email: Optional[str]
-    created_at: datetime
-    updated_at: datetime
-
-
 class UserSessionsAPIModel(BaseModel):
     token: str
     user_uuid: str

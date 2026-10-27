@@ -9,14 +9,12 @@ from src.modules.user.core.repositories.mappers.user_mapper import UserMapper
 from src.modules.user.core.repositories.user_repository import UserRepository
 from src.modules.user.core.repositories.verification_code_repository import (
     VerificationCodeRepository,
-    VerificationCodeEntity,
 )
 from src.modules.user.core.services.auth_service import UserService
 from src.modules.user.core.services.verify_service import VerifyService
 from src.modules.user.core.client.client_sms_api import ClientSMS
-from src.modules.sessions.api.session_service_api import SessionAPIService
-from src.modules.sessions.api.models import (
-    CreateSessionRequest,
+from src.modules.user.sessions.api import SessionAPIService
+from src.modules.user.sessions.api import (
     CreateSessionResponse,
     ValidateSessionResponse,
     DeleteSessionResponse,

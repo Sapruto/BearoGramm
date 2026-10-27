@@ -2,7 +2,7 @@ import pytest
 from datetime import datetime, timedelta, timezone
 from uuid import uuid4
 
-from src.modules.sessions.models.entities.session_entity import (
+from src.modules.user.sessions.models.entities.session_entity import (
     SessionEntity,
     SessionFields,
 )

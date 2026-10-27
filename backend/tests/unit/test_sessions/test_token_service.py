@@ -1,9 +1,9 @@
 import pytest
-from datetime import datetime, timedelta, timezone
+from datetime import timedelta
 from unittest.mock import patch
 import jwt
 
-from src.modules.sessions.core.services.token_service import TokenService
+from src.modules.user.sessions.core.services import TokenService
 
 
 @pytest.mark.unit
@@ -73,7 +73,7 @@ class TestTokenService:
             assert payload is None
 
     def test_get_token_service(self):
-        from src.modules.sessions.core.services.token_service import get_token_service
+        from src.modules.user.sessions.core.services import get_token_service
 
         service = get_token_service()
         assert isinstance(service, TokenService)

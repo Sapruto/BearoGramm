@@ -3,7 +3,7 @@ from typing import Optional, List, Dict, Any
 from uuid import uuid4
 from datetime import datetime
 
-from src.modules.participants import (
+from src.modules.chats.participants import (
     Permission,
     PermissionService,
     get_permission_service,

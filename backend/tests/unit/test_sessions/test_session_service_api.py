@@ -1,10 +1,10 @@
 import pytest
-from unittest.mock import AsyncMock, MagicMock
+from unittest.mock import AsyncMock
 from datetime import datetime, timedelta, timezone
 from uuid import uuid4
 
-from src.modules.sessions.api.session_service_api import SessionAPIService
-from src.modules.sessions.api.models import (
+from src.modules.user.sessions.api import SessionAPIService
+from src.modules.user.sessions.api import (
     CreateSessionRequest,
     CreateSessionResponse,
     ValidateSessionResponse,
@@ -12,7 +12,7 @@ from src.modules.sessions.api.models import (
     DeleteSessionResponse,
     UserSessionsResponse,
 )
-from src.modules.sessions.models.dto.session_dto import SessionResultDTO, SessionDTO
+from src.modules.user.sessions.models.dto.session_dto import SessionResultDTO, SessionDTO
 
 
 @pytest.mark.unit
@@ -144,7 +144,7 @@ class TestSessionAPIService:
 
     @pytest.mark.asyncio
     async def test_get_session_service_api(self):
-        from src.modules.sessions.api.session_service_api import get_session_service_api
+        from src.modules.user.sessions.api import get_session_service_api
 
         service = get_session_service_api()
         assert isinstance(service, SessionAPIService)

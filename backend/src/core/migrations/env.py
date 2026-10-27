@@ -13,13 +13,6 @@ if str(ROOT_DIR) not in sys.path:
 
 from src.core.database import Base, get_database_url
 
-from src.modules.user.models.orm.user_orm import UserORM
-from src.modules.chats.models.orm.chat_orm import ChatORM
-from src.modules.messages.models.orm.message_orm import MessageORM
-from src.modules.participants.models.orm.participant_orm import ParticipantORM
-from src.modules.media.models.media_orm import MediaORM
-from src.modules.profiles_custom.models.orm.profile_custom_orm import ProfileCustomORM
-
 config = context.config
 
 if config.config_file_name is not None:

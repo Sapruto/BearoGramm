@@ -19,7 +19,7 @@ from ...models.dto.responses import SendCodeResponse, VerifyCodeResponse
 
 from src.general.repository.sql.sql_query import SqlQuery
 from src.core.logger import get_logger
-from src.modules.sessions import (
+from src.modules.user.sessions import (
     SessionAPIService,
     get_session_service_api,
     CreateSessionRequest,

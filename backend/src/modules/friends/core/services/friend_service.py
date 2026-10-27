@@ -7,8 +7,8 @@ from src.modules.profiles_custom.core.services.profile_custom_service import get
     ProfileCustomService
 
 from src.modules.user import (
-    UserServiceAPI,
-    get_user_service_api,
+    UserService,
+    get_user_service,
     UserNotFound,
 )
 
@@ -48,13 +48,13 @@ class FriendService:
     def __init__(
         self,
         friend_repository: Optional[FriendRepository] = None,
-        user_service: Optional[UserServiceAPI] = None,
+        user_service: Optional[UserService] = None,
         profile_service: Optional[ProfileCustomService] = None,
         notificator: Optional[NotificatorFriendEvents] = None,
         max_limit: Optional[int] = None,
     ):
         self._friend_repo = friend_repository or get_friend_repository()
-        self._user_service = user_service or get_user_service_api()
+        self._user_service = user_service or get_user_service()
         self._profile_service = profile_service or get_profile_custom_service()
         self._notificator = notificator or get_notificator_friend_event()
         self._max_limit = max_limit or 100

@@ -3,20 +3,17 @@ from unittest.mock import AsyncMock, MagicMock, patch
 from datetime import datetime, timedelta, timezone
 from uuid import uuid4
 
-from src.modules.sessions.models.entities.session_entity import (
+from src.modules.user.sessions.models.entities.session_entity import (
     SessionEntity,
-    SessionFields,
 )
-from src.modules.sessions.models.dto.session_dto import (
+from src.modules.user.sessions.models.dto.session_dto import (
     SessionDTO,
-    CreateSessionDTO,
-    SessionResultDTO,
 )
-from src.modules.sessions.core.repositories.mappers.sessions_mapper import SessionMapper
-from src.modules.sessions.core.repositories.sessions_repository import SessionRepository
-from src.modules.sessions.core.services.session_service import SessionService
-from src.modules.sessions.core.services.token_service import TokenService
-from src.modules.sessions.api.session_service_api import SessionAPIService
+from src.modules.user.sessions.core.repositories.mappers.sessions_mapper import SessionMapper
+from src.modules.user.sessions.core import SessionRepository
+from src.modules.user.sessions.core.services import SessionService
+from src.modules.user.sessions.core.services import TokenService
+from src.modules.user.sessions.api import SessionAPIService
 
 
 @pytest.fixture

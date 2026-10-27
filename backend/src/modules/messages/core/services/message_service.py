@@ -2,7 +2,7 @@ from datetime import datetime, timezone
 from typing import Optional
 
 from src.general.repository.sql.sql_query import SqlQuery
-from src.modules.participants.core.exceptions import NotParticipant
+from src.modules.chats.participants import NotParticipant
 from src.modules.chats import ChatService, get_chat_service
 
 from .notify_message_event import NotificatorMessageEvents, get_notificator_message_event, MessageEventType
@@ -29,7 +29,7 @@ from ...models.dto.responses import (
 from ...models.entities.message_entity import MessageEntity, MessageFields
 from ...models.message_load_options import MessageLoadOptions
 
-from src.modules.participants import (
+from src.modules.chats.participants import (
     PermissionService,
     get_permission_service,
     MessageAction,

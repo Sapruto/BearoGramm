@@ -1,12 +1,10 @@
 import pytest
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock
 from datetime import datetime, timedelta, timezone
 from uuid import uuid4
 
-from src.modules.sessions.core.services.session_service import SessionService
-from src.modules.sessions.models.entities.session_entity import SessionEntity
-from src.modules.sessions.models.dto.session_dto import CreateSessionDTO
-from src.general.repository.redis.redis_query import RedisQuery
+from src.modules.user.sessions.models.entities.session_entity import SessionEntity
+from src.modules.user.sessions.models.dto.session_dto import CreateSessionDTO
 
 
 @pytest.mark.unit

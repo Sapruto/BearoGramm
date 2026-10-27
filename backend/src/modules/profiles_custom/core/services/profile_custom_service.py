@@ -4,7 +4,7 @@ from datetime import datetime, timezone
 from src.core.logger import get_logger
 from src.general.repository.sql.sql_query import SqlQuery
 from src.modules.media.core.services.media_service import get_media_service, MediaService
-from src.modules.user import get_user_service_api, UserServiceAPI
+from src.modules.user import get_user_service, UserService
 
 from ..exceptions import (
     ProfileCustomNotFoundError,
@@ -23,10 +23,10 @@ logger = get_logger(__name__)
 
 
 class ProfileCustomService:
-    def __init__(self, repository: Optional[ProfileCustomRepository] = None, media_service: Optional[MediaService] = None, user_service: Optional[UserServiceAPI] = None):
+    def __init__(self, repository: Optional[ProfileCustomRepository] = None, media_service: Optional[MediaService] = None, user_service: Optional[UserService] = None):
         self._repository = repository or get_profile_custom_repository()
         self._media_service = media_service or get_media_service()
-        self._user_service = user_service or get_user_service_api()
+        self._user_service = user_service or get_user_service()
 
     async def create(
         self,

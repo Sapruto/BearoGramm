@@ -5,8 +5,8 @@ from src.core.database import AsyncSessionLocal
 from src.modules.chats.chat_types.chat_types import ChatType
 from src.modules.chats.models.orm.chat_orm import ChatORM
 from src.modules.chats.models.entities.chat_entity import ChatEntity, ChatFields
-from src.modules.participants.models.enums import ResourceType
-from src.modules.participants.models.orm.participant_orm import ParticipantORM
+from src.modules.chats.participants.models.enums import ResourceType
+from src.modules.chats.participants import ParticipantORM
 from src.general.repository.sql.sql_base_repository import BaseRepository
 
 from .mappers.chat_mapper import ChatMapper

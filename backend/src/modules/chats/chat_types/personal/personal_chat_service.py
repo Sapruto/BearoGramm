@@ -2,10 +2,10 @@ from typing import Optional, List, Tuple, Dict, Any
 
 from src.general.repository.sql.sql_query import SqlQuery
 from src.modules.friends.core.services.friend_service import get_friend_service, FriendService, NotFriends
-from src.modules.participants.models.enums import ResourceType
+from src.modules.chats.participants.models.enums import ResourceType
 from src.modules.profiles_custom import ProfileCustomService, get_profile_custom_service
-from src.modules.user import UserServiceAPI, get_user_service_api
-from src.modules.participants import Permission, PermissionService, ChatAction, MessageAction
+from src.modules.user import UserService, get_user_service
+from src.modules.chats.participants import Permission, PermissionService, ChatAction, MessageAction
 
 from .personal_models import PersonalChatResponse, PersonalChatPreview, GetChatPartnerResponse
 from .personal_exceptions import CannotChatWithSelfError, NotFoundUser, ChatIsExisting
@@ -27,13 +27,13 @@ class PersonalChatService(BaseChatService):
             self,
             repository: Optional[ChatRepository] = None,
             permission_service: Optional[PermissionService] = None,
-            user_service: Optional[UserServiceAPI] = None,
+            user_service: Optional[UserService] = None,
             profile_service: Optional[ProfileCustomService] = None,
             friend_service: Optional[FriendService] = None,
             notify_service: Optional[NotificatorChatEvents] = None,
             max_limit: Optional[int] = None,
     ):
-        self._user_service = user_service or get_user_service_api()
+        self._user_service = user_service or get_user_service()
         self._profile_service = profile_service or get_profile_custom_service()
         self._friend_service = friend_service or get_friend_service()
         self._notify_service = notify_service or get_notificator_chat_event()

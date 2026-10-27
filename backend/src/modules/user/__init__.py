@@ -1,5 +1,5 @@
-from .api.imports.user_service_api import UserServiceAPI, get_user_service_api
-from .api.imports.models import (
+from .api.exports.user_service_api import UserService, get_user_service
+from .api.exports.models import (
     UserAPIModel,
     UserSessionsAPIModel,
     UserSessionResponseAPIModel,
@@ -12,13 +12,13 @@ from .api.routers.login_required import (
     get_current_user,
     authenticate_by_token,
 )
-from .api.imports.exceptions import UserHaveNotAccess, UserNotFound, InvalidTokenError
+from .api.exports.exceptions import UserHaveNotAccess, UserNotFound, InvalidTokenError
 
 from .models.entities.user_entity import UserEntity
 
 __all__ = [
-    "UserServiceAPI",
-    "get_user_service_api",
+    "UserService",
+    "get_user_service",
     "UserAPIModel",
     "UserSessionsAPIModel",
     "UserSessionResponseAPIModel",

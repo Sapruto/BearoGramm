@@ -2,10 +2,10 @@ from functools import wraps
 from typing import Optional, Callable, TypeVar
 from fastapi import Request, HTTPException, status
 
-from src.modules.sessions import SessionAPIService, get_session_service_api
+from src.modules.user.sessions import SessionAPIService, get_session_service_api
 from src.core.logger import get_logger
 
-from ..imports.user_service_api import get_user_service_api
+from ..exports.user_service_api import get_user_service
 from ...models.entities.user_entity import UserEntity
 
 logger = get_logger(__name__)
@@ -44,7 +44,7 @@ async def get_current_user(
             detail="Invalid or expired session token",
         )
 
-    user_svc = user_service or get_user_service_api()
+    user_svc = user_service or get_user_service()
     user = await user_svc.get_user_by_uuid(session.user_uuid)
 
     if not user:
@@ -85,7 +85,7 @@ def login_required(session_service: Optional[SessionAPIService] = None):
                     detail="Invalid or expired session token",
                 )
 
-            user_svc = get_user_service_api()
+            user_svc = get_user_service()
             user = await user_svc.get_user_by_uuid(session.user_uuid)
 
             if not user:
@@ -113,7 +113,7 @@ def get_current_user_depends(
 
 
 async def authenticate_by_token(token: str) -> Optional[UserEntity]:
-    user_svc = get_user_service_api()
+    user_svc = get_user_service()
     session_svc = get_session_service_api()
 
     try:

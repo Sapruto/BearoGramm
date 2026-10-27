@@ -1,7 +1,7 @@
 import pytest
 from fastapi import status
 
-from src.modules.user.api.imports.exceptions import (
+from src.modules.user.api.exports.exceptions import (
     UserHaveNotAccess,
     UserNotFound,
     InvalidTokenError,

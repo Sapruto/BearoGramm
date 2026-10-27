@@ -2,11 +2,11 @@ from typing import List, Optional
 
 from src.core.logger import get_logger
 from src.general.repository.sql.sql_query import SqlQuery
-from src.modules.participants import (
+from src.modules.chats.participants import (
     PermissionService,
     get_permission_service,
 )
-from src.modules.participants.models.entities.participant_entity import ParticipantEntity
+from src.modules.chats.participants import ParticipantEntity
 
 from ..repositories.chat_repository import (
     ChatRepository,
