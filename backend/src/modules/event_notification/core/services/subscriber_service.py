@@ -4,6 +4,7 @@ from asyncio import Task
 from typing import Any, Awaitable, Callable, Dict, Optional
 
 from fastapi import WebSocketException
+from starlette.websockets import WebSocketDisconnect
 
 from src.core.logger import get_logger
 
@@ -116,6 +117,9 @@ class SubscriberService:
                     reply = await self.handle_incoming(user_uuid, raw)
                     if reply is not None:
                         await send_message(reply)
+                except WebSocketDisconnect as e:
+                    logger.info("Client disconnected: user=%s code=%s", user_uuid, e.code)
+                    break
                 except WebSocketException:
                     break
                 except Exception as e:

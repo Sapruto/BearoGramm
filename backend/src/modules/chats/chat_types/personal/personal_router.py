@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 
+from src.modules.messages.core.services.message_service import get_message_service
 from src.modules.profiles_custom.core.services.profile_custom_service import get_profile_custom_service
 from src.modules.user import get_current_user_depends
 
@@ -17,6 +18,8 @@ from ..base.exceptions import (
     PermissionDeniedError,
     ChatNotFoundError
 )
+from ...core.services.chat_reading_service import get_chat_reading_service
+from ...core.services.chat_service import get_chat_service
 from ...participants import get_permission_service
 
 
@@ -28,6 +31,12 @@ def get_use_cases() -> PersonalUseCases:
         personal_protocol=get_personal_chat_service(),
         permission_protocol=get_permission_service(),
         profile_protocol=get_profile_custom_service(),
+        chat_reading_protocol=get_chat_reading_service(
+            message_service=get_message_service(
+                permission_protocol=get_permission_service(),
+                chat_protocol=get_chat_service(),
+            ),
+        ),
     )
 
 

@@ -1,3 +1,5 @@
+from typing import Self
+
 from pydantic import BaseModel, Field, model_validator
 from enum import Enum
 
@@ -38,6 +40,7 @@ class FriendEntity(BaseModel):
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
     @model_validator(mode="after")
-    def validate_initiator_uuid(self):
+    def validate_initiator_uuid(self) -> Self:
         if self.initiator_uuid != self.user_uuid1 and self.initiator_uuid != self.user_uuid2:
             raise ValueError("initiator_uuid must be first or second user_uuid")
+        return self
