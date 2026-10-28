@@ -22,8 +22,8 @@ export type WSMessage =
         type: 'chat_deleted';
         data: { chat_uuid: string };
     }
-    | { type: 'new_request'; data: any; }
-    | { type: 'changed_status'; data: any; }
+    | { type: 'friends:new_request'; data: any; }
+    | { type: 'friends:changed_status'; data: any; }
 
 type WSHandler = (msg: WSMessage) => void;
 

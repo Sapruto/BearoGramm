@@ -48,8 +48,8 @@ export function ChatSocketProvider({ children }: { children: React.ReactNode }) 
                 case 'typing':
                     add(msg.data.chat_uuid, msg.data.user_uuid);
                     break;
-                case 'new_request':
-                case 'changed_status':
+                case 'friends:new_request':
+                case 'friends:changed_status':
                     queryClient.invalidateQueries({ queryKey: queryKeys.friendsAll });
                     break;
             }

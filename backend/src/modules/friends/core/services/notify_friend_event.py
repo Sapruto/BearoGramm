@@ -23,7 +23,7 @@ class NotificatorFriendEvents:
                  ):
         self._friend_repository = friend_repository or get_friend_repository()
         self._notification_service = notification_service or get_notification_event_service()
-        self._prefix = "friend:"
+        self._prefix = "friends:"
 
     async def notify_about_friend_event_by_uuid(self, from_user_uuid: str, friend_uuid: str,
                                                 event_type: FriendEventType):
