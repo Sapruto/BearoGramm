@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from typing import Dict, List, Optional
+from typing import List, Optional
 from datetime import datetime
 
 from src.modules.profiles_custom import ProfileCustomEntity
