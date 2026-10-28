@@ -1,4 +1,5 @@
-from fastapi import APIRouter, WebSocket
+from fastapi import APIRouter, WebSocket, WebSocketDisconnect
+from starlette.websockets import WebSocketState
 import json
 
 from ..core.services.subscriber_service import get_subscriber_service
@@ -12,34 +13,42 @@ logger = get_logger(__name__)
 event_notification_router = APIRouter(tags=["event_notification"])
 
 
+async def safe_close(websocket: WebSocket, code: int, reason: str = "") -> None:
+    try:
+        if (
+                websocket.client_state != WebSocketState.DISCONNECTED
+                and websocket.application_state != WebSocketState.DISCONNECTED
+        ):
+            await websocket.close(code=code, reason=reason)
+    except Exception:
+        pass
+
+
 @event_notification_router.websocket("/ws/listen_events/")
 async def listen_events_websocket(websocket: WebSocket):
-    closed = False
-    try:
-        await websocket.accept()
+    await websocket.accept()
 
+    try:
         ws_service = get_subscriber_service()
 
         raw_data = await websocket.receive_text()
         try:
-            data = json.loads(raw_data)
-            token = data.get("auth")
+            token = json.loads(raw_data).get("auth")
         except Exception:
-            await websocket.close(code=1008, reason="Invalid request to auth")
-            closed = True
+            await safe_close(websocket, 1008, "Invalid request to auth")
             return
 
         if not token:
             await websocket.send_text(json.dumps({"error": "Missing auth token"}))
-            await websocket.close(code=1008, reason="Missing auth token")
-            closed = True
+            await safe_close(websocket, 1008, "Missing auth token")
             return
+
         user = await authenticate_by_token(token)
         if not user:
             await websocket.send_text(json.dumps({"error": "Invalid token"}))
-            await websocket.close(code=1008, reason="Invalid token")
-            closed = True
+            await safe_close(websocket, 1008, "Invalid token")
             return
+
         await websocket.send_text(
             json.dumps({"status": "authenticated", "user_uuid": user.uuid})
         )
@@ -57,16 +66,13 @@ async def listen_events_websocket(websocket: WebSocket):
         await ws_service.listen_events(
             user_uuid=user.uuid,
             send_message=send_message,
-            receive_message=receive_message
+            receive_message=receive_message,
         )
-    except Exception as e:
-        logger.error(e)
-        closed = True
-        await websocket.close(code=5000)
 
+    except WebSocketDisconnect:
+        logger.info("Client disconnected from events websocket")
+    except Exception:
+        logger.exception("Unexpected error in events websocket")
+        await safe_close(websocket, 1011, "Internal error")
     finally:
-        if not closed:
-            try:
-                await websocket.close(code=4000)
-            except Exception as e:
-                logger.error(f"Error closing websocket: {e}")
+        await safe_close(websocket, 1000)
