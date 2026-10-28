@@ -5,6 +5,7 @@ from uuid import uuid4
 from datetime import datetime
 from typing import List
 
+from .chat_reading_orm import ChatReadingORM
 from ...chat_types.chat_types import ChatType
 
 
@@ -17,7 +18,7 @@ class ChatORM(Base):
     chat_type: Mapped[ChatType] = mapped_column(
         Enum(
             ChatType,
-            name="reference_type",
+            name="chat_type",
             values_callable=lambda e: [m.value for m in e],
         ),
         nullable=False,
@@ -28,7 +29,7 @@ class ChatORM(Base):
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=True)
     last_message_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=True)
 
-    read_states: Mapped[List["ChatReadingORM"]] = relationship(
+    read_states: Mapped[List[ChatReadingORM]] = relationship(
         "ChatReadingORM",
         back_populates="chat",
         lazy="selectin",
