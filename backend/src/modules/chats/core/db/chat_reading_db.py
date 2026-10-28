@@ -7,7 +7,7 @@ from ...models.orm.chat_reading_orm import ChatReadingORM
 class ChatReadingManager(BaseManager[ChatReadingORM]):
     def __init__(self):
         super().__init__(
-            ChatReadingORM, [ChatReadingORM.uuid, ChatReadingORM.created_at]
+            ChatReadingORM, [ChatReadingORM.uuid]
         )
 
     @property
