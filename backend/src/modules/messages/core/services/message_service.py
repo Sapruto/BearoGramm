@@ -1,9 +1,8 @@
 from datetime import datetime, timezone
-from typing import Optional
+from typing import Optional, Protocol
 
 from src.general.repository.sql.sql_query import SqlQuery
 from src.modules.chats.participants import NotParticipant
-from src.modules.chats import ChatService, get_chat_service
 
 from .notify_message_event import NotificatorMessageEvents, get_notificator_message_event, MessageEventType
 from ..exceptions import (
@@ -30,38 +29,53 @@ from ...models.entities.message_entity import MessageEntity, MessageFields
 from ...models.message_load_options import MessageLoadOptions
 
 from src.modules.chats.participants import (
-    PermissionService,
-    get_permission_service,
     MessageAction,
     ResourceType,
 )
 from src.core.logger import get_logger
 
+
 logger = get_logger(__name__)
+
+
+class PermissionProtocol(Protocol):
+    async def validate(
+        self,
+        user_uuid: str,
+        resource_uuid: str,
+        resource_type: ResourceType,
+        action: Optional[MessageAction] = None,
+    ) -> bool:
+        pass
+
+
+class ChatProtocol(Protocol):
+    async def get_chat(self, chat_uuid: str):
+        pass
 
 
 class MessageService:
     def __init__(
         self,
+        permission_protocol: PermissionProtocol,
+        chat_protocol: ChatProtocol,
         message_repository: Optional[MessageRepository] = None,
         notify_service: Optional[NotificatorMessageEvents] = None,
-        permission_service: Optional[PermissionService] = None,
-        chat_service: Optional[ChatService] = None,
     ):
+        self._permission_protocol = permission_protocol
+        self._chat_protocol = chat_protocol
         self._message_repository = message_repository or get_message_repository()
         self._notify_service = notify_service or get_notificator_message_event()
-        self._permission_service = permission_service or get_permission_service()
-        self._chat_service = chat_service or get_chat_service()
         self._max_limit = 100
 
     async def _check_access(
         self, chat_uuid: str, user_uuid: str, action: MessageAction
     ) -> None:
-        has_chat = await self._chat_service.get_chat(chat_uuid)
+        has_chat = await self._chat_protocol.get_chat(chat_uuid)
         if not has_chat:
             raise HasNotChat()
         try:
-            ok = await self._permission_service.validate(
+            ok = await self._permission_protocol.validate(
                 user_uuid, chat_uuid, ResourceType.CHAT, action
             )
         except NotParticipant:
@@ -235,5 +249,5 @@ class MessageService:
         )
 
 
-def get_message_service() -> MessageService:
-    return MessageService()
+def get_message_service(permission_protocol: PermissionProtocol, chat_protocol: ChatProtocol) -> MessageService:
+    return MessageService(permission_protocol, chat_protocol)

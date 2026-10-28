@@ -34,12 +34,10 @@ class AuthService:
         user_repository: Optional[UserRepository] = None,
         verify_service: Optional[VerifyService] = None,
         session_service: Optional[SessionAPIService] = None,
-        profile_service: Optional[ProfileCustomService] = None,
     ):
-        self.user_repository = user_repository or get_user_repository()
-        self.verify_service = verify_service or get_verify_service()
-        self.session_service = session_service or get_session_service_api()
-        self.profile_service = profile_service or get_profile_custom_service()
+        self._user_repository = user_repository or get_user_repository()
+        self._verify_service = verify_service or get_verify_service()
+        self._session_service = session_service or get_session_service_api()
 
     async def send_code_and_register_if_not(
         self, request: SendCodeRequest
@@ -49,11 +47,11 @@ class AuthService:
             if not phone_number:
                 raise InvalidPhoneNumber(phone_number)
 
-            user = await self.user_repository.get(
+            user = await self._user_repository.get(
                 SqlQuery[UserFields]().add_filter(value=phone_number, field=UserFields.PHONE_NUMBER)
             )
 
-            code = await self.verify_service.send_login_code(
+            code = await self._verify_service.send_login_code(
                 phone_number=phone_number
             )
 
@@ -79,12 +77,12 @@ class AuthService:
             if not code:
                 raise InvalidOrExpiredCode(phone_number)
 
-            is_valid = await self.verify_service.verify_code(phone_number, code)
+            is_valid = await self._verify_service.verify_code(phone_number, code)
 
             if not is_valid:
                 raise InvalidOrExpiredCode(phone_number)
 
-            user = await self.user_repository.get(
+            user = await self._user_repository.get(
                 SqlQuery[UserFields]().add_filter(field=UserFields.PHONE_NUMBER, value=phone_number)
             )
 
@@ -93,32 +91,30 @@ class AuthService:
                 just_created = True
 
                 new_user = UserEntity(phone_number=phone_number)
-                user = await self.user_repository.save(new_user)
+                user = await self._user_repository.save(new_user)
 
                 if not user:
                     raise FailedToCreateUser(phone_number, "Repository returned None")
 
-            just_created_profile = False
-            profile = await self.profile_service.get_by_user_uuid(user.uuid)
-            if not profile:
-                just_created_profile = True
-                profile = await self.profile_service.create(user.uuid)
+            await self._verify_service.delete_code(code)
 
-            await self.verify_service.delete_code(code)
-
-            session = await self.session_service.create_session(
+            session = await self._session_service.create_session(
                 CreateSessionRequest(user_uuid=str(user.uuid))
             )
             if not session:
                 raise SessionCreationFailed(str(user.uuid), "Session service returned None")
 
-            return VerifyCodeResponse(token=session.token, user_uuid=str(user.uuid), user=user, just_created_profile=just_created_profile, just_created=just_created, profile=profile)
+            return VerifyCodeResponse(token=session.token,
+                                      user_uuid=str(user.uuid),
+                                      user=user,
+                                      just_created=just_created
+                                      )
 
         except (InvalidPhoneNumber,
-            InvalidOrExpiredCode,
-            UserNotFound,
-            SessionCreationFailed,
-        ):
+                InvalidOrExpiredCode,
+                UserNotFound,
+                SessionCreationFailed,
+                ):
             raise
 
         except Exception as e:

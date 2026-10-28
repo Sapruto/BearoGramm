@@ -27,7 +27,7 @@ httpx==0.28.1
 
 greenlet==3.5.5
 
-boto3==1.43.85
+boto3~=1.43.91
 
 python-multipart==0.0.9
 
@@ -36,3 +36,8 @@ slowapi==0.1.10
 py-svg-hush==0.3.0
 python-magic==0.4.27
 python-magic-bin==0.4.14
+pydantic-settings~=2.15.0
+starlette~=0.41.3
+smsru_api~=1.4
+py_svg_hush~=0.3.0
+botocore~=1.43.91

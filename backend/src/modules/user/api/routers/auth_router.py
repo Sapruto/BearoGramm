@@ -2,8 +2,9 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from starlette.requests import Request
 
 from src.core.limiter import limiter
+from src.modules.profiles_custom.core.services.profile_custom_service import get_profile_custom_service
 from .auth_route_names import AuthRoutes
-from ...core.services.auth_service import AuthService, get_auth_service
+from ...core.services.auth_service import get_auth_service
 from ...core.exceptions import (
     FailedToCreateUser,
     FailedToSendCode,
@@ -14,11 +15,16 @@ from ...core.exceptions import (
     SessionCreationFailed,
     InvalidPhoneNumber
 )
+from ...core.use_cases import AuthUseCases
 from ...models.dto.requests import SendCodeRequest, VerifyCodeRequest
 from ...models.dto.responses import SendCodeResponse, VerifyCodeResponse
 
 
 auth_router = APIRouter(prefix=AuthRoutes.base, tags=["auth"])
+
+
+def get_use_cases() -> AuthUseCases:
+    return AuthUseCases(get_auth_service(), get_profile_custom_service())
 
 
 @auth_router.post(
@@ -30,10 +36,10 @@ auth_router = APIRouter(prefix=AuthRoutes.base, tags=["auth"])
 async def send_code(
     request: Request,
     data: SendCodeRequest,
-    service: AuthService = Depends(get_auth_service)
+    use_cases: AuthUseCases = Depends(get_use_cases)
 ) -> SendCodeResponse:
     try:
-        return await service.send_code_and_register_if_not(data)
+        return await use_cases.send_code(data)
     except InvalidPhoneNumber as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -89,10 +95,10 @@ async def send_code(
 async def verify_code(
     request: Request,
     data: VerifyCodeRequest,
-    service: AuthService = Depends(get_auth_service)
+    use_cases: AuthUseCases = Depends(get_use_cases)
 ) -> VerifyCodeResponse:
     try:
-        return await service.verify_phone(data)
+        return await use_cases.verify_phone(data)
     except InvalidPhoneNumber as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
