@@ -248,6 +248,20 @@ class MessageService:
             span_end=min(limit, self._max_limit),
         )
 
+    async def count_messages_after(
+            self, chat_uuid: str, after_uuid: Optional[str]
+    ) -> int:
+        after_created_at: Optional[datetime] = None
+        if after_uuid:
+            after_message = await self._message_repository.get_by_uuid(after_uuid)
+            if after_message:
+                after_created_at = after_message.created_at
+
+        return await self._message_repository.count_messages_after(
+            chat_uuid=chat_uuid,
+            after_created_at=after_created_at,
+        )
+
 
 def get_message_service(permission_protocol: PermissionProtocol, chat_protocol: ChatProtocol) -> MessageService:
     return MessageService(permission_protocol, chat_protocol)

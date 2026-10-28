@@ -1,7 +1,6 @@
 from typing import Optional, List, Tuple, Dict, Any
 
 from src.general.repository.sql.sql_query import SqlQuery
-from src.modules.friends.core.services.friend_service import NotFriends
 from src.modules.chats.participants.models.enums import ResourceType
 from src.modules.chats.participants import Permission, PermissionService, ChatAction, MessageAction
 
@@ -65,7 +64,7 @@ class PersonalChatService(BaseChatService):
 
             return True
 
-        except (CannotChatWithSelfError, ChatIsExisting, NotFriends):
+        except (CannotChatWithSelfError, ChatIsExisting, Exception):
             return False
 
     async def get_chat_by_uuid(self, chat_uuid: str) -> Optional[ChatEntity]:

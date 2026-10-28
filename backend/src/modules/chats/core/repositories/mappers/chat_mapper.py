@@ -2,7 +2,6 @@ from typing import Any, Tuple
 from sqlalchemy.orm import InstrumentedAttribute
 
 from src.general.repository.sql.sql_base_mapper import BaseMapper
-from src.general.repository.exception import NotConvertableValue
 from src.core.logger import get_logger
 
 from ....models.orm.chat_orm import ChatORM

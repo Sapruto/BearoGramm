@@ -27,37 +27,6 @@ class SubscriberService:
         self.repo = subscriber_repository or get_subscriber_repository()
         self.registry = get_registry()
 
-    async def subscribe(self, user_uuid: str) -> bool:
-        return await self.repo.add_subscriber(user_uuid)
-
-    async def unsubscribe(self, user_uuid: str) -> bool:
-        return await self.repo.remove_subscriber(user_uuid)
-
-    async def handle_incoming(self, user_uuid: str, raw: str) -> Optional[str]:
-        try:
-            parsed = json.loads(raw)
-        except (json.JSONDecodeError, TypeError):
-            logger.warning("Invalid incoming payload: %r", raw)
-            return None
-
-        event_type = parsed.get("type")
-        if not event_type:
-            return None
-
-        data: Dict[str, Any] = parsed.get("data") or {}
-        data.setdefault("user_uuid", user_uuid)
-
-        handler = self.registry.get(event_type)
-        if handler is None:
-            logger.warning("No handler for event type: %s", event_type)
-            return None
-
-        try:
-            return await handler(data)
-        except Exception as e:
-            logger.error("Handler error for %s: %s", event_type, e, exc_info=True)
-            return None
-
     async def _redis_to_send(
         self,
         user_uuid: str,
@@ -95,6 +64,37 @@ class SubscriberService:
         except (asyncio.CancelledError, Exception):
             pass
         await self.unsubscribe(user_uuid)
+
+    async def subscribe(self, user_uuid: str) -> bool:
+        return await self.repo.add_subscriber(user_uuid)
+
+    async def unsubscribe(self, user_uuid: str) -> bool:
+        return await self.repo.remove_subscriber(user_uuid)
+
+    async def handle_incoming(self, user_uuid: str, raw: str) -> Optional[str]:
+        try:
+            parsed = json.loads(raw)
+        except (json.JSONDecodeError, TypeError):
+            logger.warning("Invalid incoming payload: %r", raw)
+            return None
+
+        event_type = parsed.get("type")
+        if not event_type:
+            return None
+
+        data: Dict[str, Any] = parsed.get("data") or {}
+        data["user_uuid"] = user_uuid
+
+        handler = self.registry.get(event_type)
+        if handler is None:
+            logger.warning("No handler for event type: %s", event_type)
+            return None
+
+        try:
+            return await handler(data)
+        except Exception as e:
+            logger.error("Handler error for %s: %s", event_type, e, exc_info=True)
+            return None
 
     async def listen_events(
             self,

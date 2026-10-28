@@ -38,11 +38,6 @@ class PersonalProtocol(Protocol):
         pass
 
 
-class FriendProtocol(Protocol):
-    async def check_friends(self, user_uuid: str, other_user_uuid: str) -> bool:
-        pass
-
-
 class PermissionProtocol(Protocol):
     async def create(
             self,
@@ -117,18 +112,23 @@ class ProfileProtocol(Protocol):
         pass
 
 
+class ChatReadingProtocol(Protocol):
+    async def get_unread_count(self, chat_uuid: str, user_uuid: str) -> int:
+        pass
+
+
 class PersonalUseCases:
     def __init__(
             self,
             personal_protocol: PersonalProtocol,
-            friend_protocol: FriendProtocol,
             permission_protocol: PermissionProtocol,
             profile_protocol: ProfileProtocol,
+            chat_reading_protocol: ChatReadingProtocol,
     ):
         self._personal = personal_protocol
-        self._friend = friend_protocol
         self._permission = permission_protocol
         self._profile = profile_protocol
+        self._reading = chat_reading_protocol
 
     async def _ensure_participant(
             self,
@@ -214,6 +214,7 @@ class PersonalUseCases:
                     created_at=chat.created_at,
                     updated_at=chat.updated_at,
                     last_message_at=chat.last_message_at,
+                    unread_count=await self._reading.get_unread_count(chat.uuid, user_uuid),
                 )
             )
 

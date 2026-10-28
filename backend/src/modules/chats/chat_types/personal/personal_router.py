@@ -1,6 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 
-from src.modules.friends.core.services.friend_service import get_friend_service
 from src.modules.profiles_custom.core.services.profile_custom_service import get_profile_custom_service
 from src.modules.user import get_current_user_depends
 
@@ -20,13 +19,13 @@ from ..base.exceptions import (
 )
 from ...participants import get_permission_service
 
+
 personal_chats_router = APIRouter(prefix="/api/personal", tags=["personal_chat"])
 
 
 def get_use_cases() -> PersonalUseCases:
     return PersonalUseCases(
         personal_protocol=get_personal_chat_service(),
-        friend_protocol=get_friend_service(),
         permission_protocol=get_permission_service(),
         profile_protocol=get_profile_custom_service(),
     )

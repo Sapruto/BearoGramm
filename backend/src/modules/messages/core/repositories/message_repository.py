@@ -1,6 +1,8 @@
 from typing import Optional, Sequence, List
-from sqlalchemy import select, union_all
+from sqlalchemy import select, func
 from sqlalchemy.orm import selectinload
+
+from datetime import datetime
 
 from src.core.database import AsyncSessionLocal
 from src.general.repository.sql.sql_base_repository import BaseRepository
@@ -242,6 +244,17 @@ class MessageRepository(BaseRepository[MessageManager, MessageFields, MessageEnt
             await session.delete(orm)
             await session.commit()
             return True
+
+    async def count_messages_after(
+        self, chat_uuid: str, after_created_at: Optional[datetime]
+    ) -> int:
+        async with AsyncSessionLocal() as session:
+            stmt = select(func.count()).select_from(MessageORM).where(
+                MessageORM.chat_uuid == chat_uuid
+            )
+            if after_created_at is not None:
+                stmt = stmt.where(MessageORM.created_at > after_created_at)
+            return (await session.execute(stmt)).scalar_one()
 
 
 def get_message_repository() -> MessageRepository:
