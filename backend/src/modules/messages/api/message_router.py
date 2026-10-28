@@ -23,14 +23,14 @@ logger = get_logger(__name__)
 message_router = APIRouter(prefix=MessageRoutes.base, tags=["messages"])
 
 
-def get_message_service_with_protocol_with_protocol() -> MessageService:
+def get_message_service_with_protocol() -> MessageService:
     return get_message_service(get_permission_service(), get_chat_service())
 
 
 @message_router.post(MessageRoutes.send_message, response_model=SendMessageResponse)
 async def send_message(
     request: SendMessageRequest,
-    service: MessageService = Depends(get_message_service_with_protocol_with_protocol),
+    service: MessageService = Depends(get_message_service_with_protocol),
     current_user: UserEntity = Depends(get_current_user_depends()),
 ):
     try:
@@ -43,7 +43,7 @@ async def send_message(
 @message_router.put(MessageRoutes.update_message, response_model=UpdateMessageResponse)
 async def update_message(
     request: UpdateMessageRequest,
-    service: MessageService = Depends(get_message_service_with_protocol_with_protocol),
+    service: MessageService = Depends(get_message_service_with_protocol),
     current_user: UserEntity = Depends(get_current_user_depends()),
 ):
     try:
@@ -56,7 +56,7 @@ async def update_message(
 @message_router.delete(MessageRoutes.delete_message, response_model=DeleteMessageResponse)
 async def delete_message(
     message_uuid: str = Path(..., description="UUID of message"),
-    service: MessageService = Depends(get_message_service_with_protocol_with_protocol),
+    service: MessageService = Depends(get_message_service_with_protocol),
     current_user: UserEntity = Depends(get_current_user_depends()),
 ):
     try:
