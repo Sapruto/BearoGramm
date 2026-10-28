@@ -44,12 +44,13 @@ class ProfileCustomEntity(BaseModel):
     updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     user_uuid: Optional[str] = Field(default=None)
 
-    # @model_validator(mode='before')
-    # def validate_hex(self) -> None:
-    #     if not self.banner_color.startswith("#"):
-    #         raise ValueError("Want to start with #")
-    #     if len(self.banner_color) != 7:
-    #         raise ValueError("Length is not correct")
+    @model_validator(mode='after')
+    def validate_hex(self) -> "ProfileCustomEntity":
+        if not self.banner_color.startswith("#"):
+            raise ValueError("Want to start with #")
+        if len(self.banner_color) != 7:
+            raise ValueError("Length is not correct")
+        return self
 
     @field_serializer('avatar_url')
     def serialize_avatar_url(self, avatar_url: Optional[str]) -> Optional[str]:
