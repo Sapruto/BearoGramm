@@ -245,6 +245,54 @@ class CallsStateService:
         raw = await ws_receive()
         return json.loads(raw)
 
+    async def _call_timeout_watcher(self, caller_uuid: str, entity: CallStateEntity) -> None:
+        try:
+            await asyncio.sleep(self.CALL_TIMEOUT)
+            current = await self.calls_state_repository.get_by_id(caller_uuid)
+            if current and current.status == CallStatus.WAITING:
+                await self._update_call_status(current, "timeout")
+                await self.calls_state_repository.notify_user(
+                    caller_uuid, {"type": "call_timeout"}
+                )
+        except asyncio.CancelledError:
+            pass
+
+    async def _handle_call_offer(
+            self,
+            user_uuid: str,
+            room_uuid: str | None,
+            data: dict,
+            ws_send: Callable,
+    ) -> Optional[asyncio.Task]:
+        callee_uuid = data.get("callee_uuid")
+        sdp_offer = data.get("sdp_offer")
+        caller_name = data.get("caller_name")
+    
+        if not callee_uuid or not sdp_offer:
+            await ws_send(json.dumps({"error": "Missing callee_uuid or sdp_offer"}))
+            return None
+    
+        entity = self._create_call_entity(user_uuid, callee_uuid, sdp_offer, room_uuid)
+        await self.calls_state_repository.save(entity)
+    
+        await self.calls_state_repository.notify_user(
+            callee_uuid,
+            {
+                "type": "incoming_call",
+                "caller_uuid": user_uuid,
+                "sdp_offer": sdp_offer,
+                "room_uuid": room_uuid,
+            },
+        )
+        await self.push_client_api.send_call_push(
+            phone_number=callee_uuid,
+            caller_uuid=user_uuid,
+            caller_name=caller_name,
+            room_uuid=room_uuid,
+        )
+    
+        return asyncio.create_task(self._call_timeout_watcher(user_uuid, entity))
+
     async def handle_call_session(
             self,
             user_uuid: str,
@@ -252,68 +300,34 @@ class CallsStateService:
             ws_send: Callable[[str], Awaitable[None]],
             ws_receive: Callable[[], Awaitable[str]],
     ) -> None:
-        pubsub = self.calls_state_repository.pubsub()
+        pubsub = await self.calls_state_repository.pubsub()
         channel = f"user:{user_uuid}:notifications"
         await pubsub.subscribe(channel)
-
+    
         redis_task = asyncio.create_task(self._listen_redis(pubsub, ws_send))
-        outgoing_call_task = None
-
+        call_timeout_tasks: dict[str, asyncio.Task] = {}
+    
         try:
             await self._send_pending_calls(user_uuid, ws_send)
-
-            if room_uuid:
-                async def _run_call():
-                    try:
-                        data = await self._receive_json(ws_receive)
-                        if data.get("type") != "call_offer":
-                            return await ws_send(json.dumps({"error": "Expected call_offer"}))
-
-                        callee_uuid, sdp_offer, caller_name = data.get("callee_uuid"), data.get("sdp_offer"), data.get(
-                            "caller_name")
-                        if not callee_uuid or not sdp_offer:
-                            return await ws_send(json.dumps({"error": "Missing callee_uuid or sdp_offer"}))
-
-                        entity = self._create_call_entity(user_uuid, callee_uuid, sdp_offer, room_uuid)
-                        await self.calls_state_repository.save(entity)
-                        await self.calls_state_repository.notify_user(callee_uuid, {"type": "incoming_call",
-                                                                                    "caller_uuid": user_uuid,
-                                                                                    "sdp_offer": sdp_offer,
-                                                                                    "room_uuid": room_uuid})
-                        await self.push_client_api.send_call_push(phone_number=callee_uuid, caller_uuid=user_uuid,
-                                                                  caller_name=caller_name, room_uuid=room_uuid)
-
-                        try:
-                            result = await asyncio.wait_for(self._wait_for_answer(user_uuid, ws_send),
-                                                            timeout=self.CALL_TIMEOUT)
-                        except asyncio.TimeoutError:
-                            result = "timeout"
-
-                        await self._update_call_status(entity, result)
-                    except Exception as ce:
-                        logger.error(f"Outgoing call error: {ce}")
-                        await ws_send(json.dumps({"error": str(ce)}))
-
-                outgoing_call_task = asyncio.create_task(_run_call())
-
-                await asyncio.sleep(0.01)
-
+    
             while True:
                 data = await self._receive_json(ws_receive)
+    
+                if data.get("type") == "call_offer":
+                    task = await self._handle_call_offer(
+                        user_uuid, room_uuid, data, ws_send
+                    )
+                    if task:
+                        call_timeout_tasks[user_uuid] = task
+                    continue
+    
                 await self._handle_command(user_uuid, data, ws_send)
-
-        except Exception as e:
-            logger.error(f"Session error: {e}")
-            try:
-                await ws_send(json.dumps({"error": str(e)}))
-            except Exception:
-                pass
         finally:
-            if outgoing_call_task and not outgoing_call_task.done():
-                outgoing_call_task.cancel()
+            for t in call_timeout_tasks.values():
+                if not t.done():
+                    t.cancel()
             redis_task.cancel()
             await pubsub.unsubscribe(channel)
-
 
 _calls_state_service: Optional[CallsStateService] = None
 

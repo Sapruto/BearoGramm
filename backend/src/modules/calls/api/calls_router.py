@@ -7,12 +7,11 @@ from src.modules.user import authenticate_by_token
 from src.core.logger import get_logger
 from src.general.websockets import safe_close
 
-from .calls_router_names import CallsRoutes
 from ..core.services.calls_state_service import get_calls_state_service
 
 logger = get_logger(__name__)
 
-calls_router = APIRouter(prefix=CallsRoutes.base)
+calls_router = APIRouter()
 
 
 @calls_router.websocket("/ws/call/{room_uuid}")
