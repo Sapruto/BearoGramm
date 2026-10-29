@@ -38,9 +38,9 @@ class PushClientAPI:
         phone_number: str,
         caller_uuid: str,
         caller_name: str = "caller_name",
-        room_id: Optional[str] = None,
+        room_uuid: Optional[str] = None,
     ) -> bool:
-        data = {"caller_uuid": caller_uuid, "room_id": room_id}
+        data = {"caller_uuid": caller_uuid, "room_uuid": room_uuid}
 
         return await self.send_push_notification(
             phone_number=phone_number,

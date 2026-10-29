@@ -1,5 +1,4 @@
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
-from starlette.websockets import WebSocketState
 import json
 
 from ..core.services.subscriber_service import get_subscriber_service
@@ -7,21 +6,12 @@ from ..core.services.subscriber_service import get_subscriber_service
 from src.core.logger import get_logger
 from src.modules.user import authenticate_by_token
 
+from src.general.websockets import safe_close
+
 
 logger = get_logger(__name__)
 
 event_notification_router = APIRouter(tags=["event_notification"])
-
-
-async def safe_close(websocket: WebSocket, code: int, reason: str = "") -> None:
-    try:
-        if (
-                websocket.client_state != WebSocketState.DISCONNECTED
-                and websocket.application_state != WebSocketState.DISCONNECTED
-        ):
-            await websocket.close(code=code, reason=reason)
-    except Exception:
-        pass
 
 
 @event_notification_router.websocket("/ws/listen_events/")

@@ -48,7 +48,7 @@ class CallsStateService:
         }
 
     def _create_call_entity(
-        self, caller: str, callee: str, sdp: str, room_id: Optional[str]
+        self, caller: str, callee: str, sdp: str, room_uuid: str
     ) -> CallStateEntity:
         return CallStateEntity(
             user_uuid=caller,
@@ -56,9 +56,9 @@ class CallsStateService:
             callee_uuid=callee,
             sdp_offer=sdp,
             status=CallStatus.WAITING,
-            call_type=CallType.ROOM if room_id else CallType.P2P,
-            room_id=room_id,
-            participants=[caller] if room_id else [],
+            call_type=CallType.ROOM if room_uuid else CallType.P2P,
+            room_uuid=room_uuid,
+            participants=[caller] if room_uuid else [],
         )
 
     async def _wait_for_answer(self, user_uuid: str, ws_send: Callable) -> str:
@@ -245,84 +245,72 @@ class CallsStateService:
         raw = await ws_receive()
         return json.loads(raw)
 
-    async def call(
-        self,
-        user_uuid: str,
-        ws_send: Callable[[str], Awaitable[None]],
-        ws_receive: Callable[[], Awaitable[str]],
-    ) -> None:
-        try:
-            data = await self._receive_json(ws_receive)
-            if data.get("type") != "call_offer":
-                await ws_send(json.dumps({"error": "Expected call_offer"}))
-                return
-
-            callee_uuid = data.get("callee_uuid")
-            sdp_offer = data.get("sdp_offer")
-            room_id = data.get("room_id")
-            caller_name = data.get("caller_name")
-
-            if not callee_uuid or not sdp_offer:
-                await ws_send(json.dumps({"error": "Missing callee_uuid or sdp_offer"}))
-                return
-
-            entity = self._create_call_entity(
-                user_uuid, callee_uuid, sdp_offer, room_id
-            )
-            await self.calls_state_repository.save(entity)
-
-            await self.calls_state_repository.notify_user(
-                callee_uuid,
-                {
-                    "type": "incoming_call",
-                    "caller_uuid": user_uuid,
-                    "sdp_offer": sdp_offer,
-                    "room_id": room_id,
-                },
-            )
-
-            await self.push_client_api.send_call_push(
-                phone_number=callee_uuid,
-                caller_uuid=user_uuid,
-                caller_name=caller_name,
-                room_id=room_id,
-            )
-
-            try:
-                result = await asyncio.wait_for(
-                    self._wait_for_answer(user_uuid, ws_send), timeout=self.CALL_TIMEOUT
-                )
-            except asyncio.TimeoutError:
-                result = "timeout"
-
-            await self._update_call_status(entity, result)
-
-        except Exception as e:
-            logger.error(f"Call error: {e}")
-            await ws_send(json.dumps({"error": str(e)}))
-
-    async def listen_calls(
-        self,
-        user_uuid: str,
-        ws_send: Callable[[str], Awaitable[None]],
-        ws_receive: Callable[[], Awaitable[str]],
+    async def handle_call_session(
+            self,
+            user_uuid: str,
+            room_uuid: str | None,
+            ws_send: Callable[[str], Awaitable[None]],
+            ws_receive: Callable[[], Awaitable[str]],
     ) -> None:
         pubsub = self.calls_state_repository.pubsub()
         channel = f"user:{user_uuid}:notifications"
         await pubsub.subscribe(channel)
 
         redis_task = asyncio.create_task(self._listen_redis(pubsub, ws_send))
+        outgoing_call_task = None
 
         try:
             await self._send_pending_calls(user_uuid, ws_send)
+
+            if room_uuid:
+                async def _run_call():
+                    try:
+                        data = await self._receive_json(ws_receive)
+                        if data.get("type") != "call_offer":
+                            return await ws_send(json.dumps({"error": "Expected call_offer"}))
+
+                        callee_uuid, sdp_offer, caller_name = data.get("callee_uuid"), data.get("sdp_offer"), data.get(
+                            "caller_name")
+                        if not callee_uuid or not sdp_offer:
+                            return await ws_send(json.dumps({"error": "Missing callee_uuid or sdp_offer"}))
+
+                        entity = self._create_call_entity(user_uuid, callee_uuid, sdp_offer, room_uuid)
+                        await self.calls_state_repository.save(entity)
+                        await self.calls_state_repository.notify_user(callee_uuid, {"type": "incoming_call",
+                                                                                    "caller_uuid": user_uuid,
+                                                                                    "sdp_offer": sdp_offer,
+                                                                                    "room_uuid": room_uuid})
+                        await self.push_client_api.send_call_push(phone_number=callee_uuid, caller_uuid=user_uuid,
+                                                                  caller_name=caller_name, room_uuid=room_uuid)
+
+                        try:
+                            result = await asyncio.wait_for(self._wait_for_answer(user_uuid, ws_send),
+                                                            timeout=self.CALL_TIMEOUT)
+                        except asyncio.TimeoutError:
+                            result = "timeout"
+
+                        await self._update_call_status(entity, result)
+                    except Exception as ce:
+                        logger.error(f"Outgoing call error: {ce}")
+                        await ws_send(json.dumps({"error": str(ce)}))
+
+                outgoing_call_task = asyncio.create_task(_run_call())
+
+                await asyncio.sleep(0.01)
 
             while True:
                 data = await self._receive_json(ws_receive)
                 await self._handle_command(user_uuid, data, ws_send)
 
         except Exception as e:
-            logger.error(f"Listen error: {e}")
+            logger.error(f"Session error: {e}")
+            try:
+                await ws_send(json.dumps({"error": str(e)}))
+            except Exception:
+                pass
         finally:
+            if outgoing_call_task and not outgoing_call_task.done():
+                outgoing_call_task.cancel()
             redis_task.cancel()
             await pubsub.unsubscribe(channel)
 
