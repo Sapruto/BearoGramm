@@ -39,6 +39,11 @@ class CallsStateService:
         self.call_notificator = call_notificator or get_call_notificator()
         self.CALL_TIMEOUT = 30
 
+    def _parse_redis_message(self, data) -> dict:
+        if isinstance(data, bytes):
+            data = data.decode()
+        return json.loads(data)
+
     def _entity_to_dict(self, entity: CallStateEntity) -> dict:
         return {
             "user_uuid": entity.user_uuid,
@@ -61,6 +66,50 @@ class CallsStateService:
             room_uuid=room_uuid,
             participants=[caller] if room_uuid else [],
         )
+
+    async def _wait_for_answer(self, user_uuid: str, ws_send: WsSend) -> str:
+        pubsub = await self.calls_state_repository.pubsub()
+        channel = f"user:notifications:{user_uuid}"
+        await pubsub.subscribe(channel)
+
+        try:
+            async def _loop() -> str:
+                async for msg in pubsub.listen():
+                    if msg["type"] != "message":
+                        continue
+
+                    data = self._parse_redis_message(msg["data"])
+                    msg_type = data.get("type")
+
+                    if msg_type == "call_answer":
+                        await ws_send(
+                            json.dumps(
+                                {"type": "answer", "sdp_answer": data.get("sdp_answer")}
+                            )
+                        )
+                        return "answered"
+
+                    if msg_type == "call_rejected":
+                        await ws_send(json.dumps({"type": "rejected"}))
+                        return "rejected"
+
+                    if msg_type == "ice_candidate":
+                        await ws_send(
+                            json.dumps(
+                                {
+                                    "type": "ice_candidate",
+                                    "candidate": data.get("candidate"),
+                                }
+                            )
+                        )
+
+                return "timeout"
+
+            return await asyncio.wait_for(_loop(), timeout=self.CALL_TIMEOUT)
+        except asyncio.TimeoutError:
+            return "timeout"
+        finally:
+            await pubsub.unsubscribe(channel)
 
     async def _update_call_status(self, entity: CallStateEntity, result: str) -> None:
         status_map = {
@@ -88,10 +137,6 @@ class CallsStateService:
                     }
                 )
             )
-
-    async def _receive_json(self, ws_receive: WsReceive) -> dict:
-        raw = await ws_receive()
-        return json.loads(raw)
 
     async def _handle_command(
         self, user_uuid: str, data: dict, ws_send: WsSend
@@ -192,6 +237,21 @@ class CallsStateService:
                         )
                 break
 
+    async def _listen_redis(self, pubsub, ws_send: WsSend) -> None:
+        try:
+            async for msg in pubsub.listen():
+                if msg["type"] == "message":
+                    data = self._parse_redis_message(msg["data"])
+                    await ws_send(json.dumps(data))
+        except asyncio.CancelledError:
+            pass
+        except Exception as e:
+            logger.error(f"Redis listener error: {e}")
+
+    async def _receive_json(self, ws_receive: WsReceive) -> dict:
+        raw = await ws_receive()
+        return json.loads(raw)
+
     async def handle_call_session(
         self,
         user_uuid: str,
@@ -199,14 +259,11 @@ class CallsStateService:
         ws_send: WsSend,
         ws_receive: WsReceive,
     ) -> None:
-        stop_event = asyncio.Event()
-        listen_task = asyncio.create_task(
-            self.call_notificator.listen_events(
-                user_uuid=user_uuid,
-                ws_send=ws_send,
-                stop_event=stop_event,
-            )
-        )
+        pubsub = await self.calls_state_repository.pubsub()
+        channel = f"user:notifications:{user_uuid}"
+        await pubsub.subscribe(channel)
+
+        redis_task = asyncio.create_task(self._listen_redis(pubsub, ws_send))
         outgoing_call_task: Optional[asyncio.Task] = None
 
         try:
@@ -217,21 +274,15 @@ class CallsStateService:
                     try:
                         data = await self._receive_json(ws_receive)
                         if data.get("type") != "call_offer":
-                            return await ws_send(
-                                json.dumps({"error": "Expected call_offer"})
-                            )
+                            return await ws_send(json.dumps({"error": "Expected call_offer"}))
 
                         callee_uuid = data.get("callee_uuid")
                         sdp_offer = data.get("sdp_offer")
                         caller_name = data.get("caller_name")
                         if not callee_uuid or not sdp_offer:
-                            return await ws_send(
-                                json.dumps({"error": "Missing callee_uuid or sdp_offer"})
-                            )
+                            return await ws_send(json.dumps({"error": "Missing callee_uuid or sdp_offer"}))
 
-                        entity = self._create_call_entity(
-                            user_uuid, callee_uuid, sdp_offer, room_uuid
-                        )
+                        entity = self._create_call_entity(user_uuid, callee_uuid, sdp_offer, room_uuid)
                         await self.calls_state_repository.save(entity)
 
                         await self.call_notificator.notify_incoming_call(
@@ -247,11 +298,7 @@ class CallsStateService:
                             room_uuid=room_uuid,
                         )
 
-                        result = await self.call_notificator.wait_for_answer(
-                            user_uuid=user_uuid,
-                            ws_send=ws_send,
-                            timeout=self.CALL_TIMEOUT,
-                        )
+                        result = await self._wait_for_answer(user_uuid, ws_send)
                         await self._update_call_status(entity, result)
                     except Exception as ce:
                         logger.error(f"Outgoing call error: {ce}")
@@ -271,14 +318,10 @@ class CallsStateService:
             except Exception:
                 pass
         finally:
-            stop_event.set()
             if outgoing_call_task and not outgoing_call_task.done():
                 outgoing_call_task.cancel()
-            listen_task.cancel()
-            try:
-                await listen_task
-            except (asyncio.CancelledError, Exception):
-                pass
+            redis_task.cancel()
+            await pubsub.unsubscribe(channel)
 
 
 _calls_state_service: Optional[CallsStateService] = None
