@@ -104,6 +104,10 @@ class BaseRepository(
                 )
             else:
                 result = await self._update_from_orm(orm_obj)
+                if result is None:
+                    result = await self.manager.create(
+                        orm_obj, on_conflict=OnConflictAction.NOTHING
+                    )
 
             if result is None:
                 raise ValueError(f"Failed to save entity: {entity}")
