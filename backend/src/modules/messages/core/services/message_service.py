@@ -1,6 +1,7 @@
 from datetime import datetime, timezone
 from typing import Optional, Protocol
 
+from src.modules.chats.models.entities.chat_entity import ChatEntity
 from src.general.repository.sql.sql_query import SqlQuery
 from src.modules.chats.participants import NotParticipant
 
@@ -50,7 +51,7 @@ class PermissionProtocol(Protocol):
 
 
 class ChatProtocol(Protocol):
-    async def get_chat(self, chat_uuid: str):
+    async def get_chat(self, chat_uuid: str) -> ChatEntity:
         pass
 
 

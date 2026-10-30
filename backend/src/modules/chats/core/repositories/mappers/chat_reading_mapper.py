@@ -33,7 +33,7 @@ class ChatReadingMapper(BaseMapper[ChatReadingEntity, ChatReadingORM, ChatReadin
             uuid=entity.uuid,
             chat_uuid=entity.chat_uuid,
             user_uuid=entity.user_uuid,
-            last_readed_message_uuid=entity.last_read_message_uuid,
+            last_read_message_uuid=entity.last_read_message_uuid,
             updated_at=entity.updated_at,
         )
 
@@ -42,7 +42,7 @@ class ChatReadingMapper(BaseMapper[ChatReadingEntity, ChatReadingORM, ChatReadin
             uuid=orm.uuid,
             chat_uuid=orm.chat_uuid,
             user_uuid=orm.user_uuid,
-            last_readed_message_uuid=orm.last_read_message_uuid,
+            last_read_message_uuid=orm.last_read_message_uuid,
             updated_at=orm.updated_at,
         )
 

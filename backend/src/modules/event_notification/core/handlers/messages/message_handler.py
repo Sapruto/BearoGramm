@@ -106,7 +106,7 @@ class MessageHandler:
             return
 
         try:
-            await self._chat_reading_service.mark_read(user_uuid, chat_uuid, last_read_message_uuid)
+            await self._chat_reading_service.mark_read(chat_uuid, user_uuid, last_read_message_uuid)
         except LastReadMessageUuidNotFound:
             pass
 

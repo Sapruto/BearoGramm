@@ -81,7 +81,7 @@ class ChatReadingService:
     ) -> ChatReadingEntity:
         if not last_read_message_uuid:
             response = await self._message_service.get_messages(chat_uuid, 1, 0, user_uuid, True)
-            last_read_message_uuid = response.messages[0]
+            last_read_message_uuid = response.messages[0].uuid
             if not last_read_message_uuid:
                 raise LastReadMessageUuidNotFound()
 
