@@ -110,6 +110,14 @@ class MessageHandler:
         except LastReadMessageUuidNotFound:
             pass
 
+        await self._notification_service.notify_users(
+            recipients,
+            {
+                "type": EventType.LAST_READ_MESSAGE.value,
+                "data": {"user_uuid": user_uuid, "last_read_message": last_read_message_uuid or "ALL"},
+            },
+        )
+
 
 _handler = MessageHandler()
 message_handlers = {
