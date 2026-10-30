@@ -1,6 +1,7 @@
 import { queryClient } from '@/shared/api/queryClient';
 import { chatSocket } from '@/shared/api/wsClient';
-import { getChatUnreadCount, updateChatUnreadCount } from '@/shared/lib/useUpdateChatUnreadCount';
+import { queryKeys } from '@/shared/lib/queryKeys';
+import { updateChatUnreadCount } from '@/shared/lib/useUpdateChatUnreadCount';
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type RefObject } from 'react';
 import { useParams } from 'react-router-dom';
 import { Virtuoso, type VirtuosoHandle } from 'react-virtuoso';
@@ -164,7 +165,7 @@ const ChatRoom = ({ chatUUID }: { chatUUID: string }) => {
     useEffect(() => () => cancelAnimationFrame(snapLoopRef.current), []);
 
     useEffect(() => {
-        // updateChatUnreadCount(queryClient, chatUUID, 0);
+        updateChatUnreadCount(queryClient, chatUUID, 0);
 
         chatSocket.send({
             type: "last_read_message", data: {
@@ -172,7 +173,7 @@ const ChatRoom = ({ chatUUID }: { chatUUID: string }) => {
                 chat_uuid: chatUUID
             }
         });
-
+        queryClient.invalidateQueries({ queryKey: queryKeys.personalChats });
     }, []);
 
     const handleSend = (text: string) => {
