@@ -49,21 +49,16 @@ class MessageHandler:
         participants = await self._chat_service.get_participants(chat_uuid)
         return [i.user_uuid for i in participants]
 
-    async def on_typing(self, payload: Dict[str, Any]) -> Optional[str]:
+    async def on_typing(self, payload: Dict[str, Any]) -> None:
         user_uuid = payload.get("user_uuid")
         chat_uuid = payload.get("chat_uuid")
-        if not user_uuid or not chat_uuid:
-            return None
+        if not isinstance(user_uuid, str) or not isinstance(chat_uuid, str):
+            return
 
         recipients = await self._get_chat_participants(chat_uuid)
 
-        ok = False
-        for r in recipients:
-            if r == user_uuid:
-                ok = True
-                break
-        if not ok:
-            return None
+        if user_uuid not in recipients:
+            return
 
         recipients = [r for r in recipients]
 
@@ -74,7 +69,6 @@ class MessageHandler:
                 "data": {"user_uuid": user_uuid, "chat_uuid": chat_uuid},
             },
         )
-        return None
 
     async def on_user_online(self, payload: Dict[str, Any]) -> Optional[str]:
         user_uuid = payload.get("user_uuid")
@@ -98,16 +92,19 @@ class MessageHandler:
         )
         return None
 
-    async def on_last_read_message(self, payload: Dict[str, Any]) -> Optional[str]:
+    async def on_last_read_message(self, payload: Dict[str, Any]) -> None:
         user_uuid = payload.get("user_uuid")
         chat_uuid = payload.get("chat_uuid")
         last_read_message_uuid = payload.get("last_read_message_uuid")
-        if not user_uuid or not chat_uuid:
-            return None
+        if not isinstance(user_uuid, str) or not isinstance(chat_uuid, str) or not isinstance(last_read_message_uuid, str):
+            return
+
+        recipients = await self._get_chat_participants(chat_uuid)
+
+        if user_uuid not in recipients:
+            return
 
         await self._chat_reading_service.mark_read(user_uuid, chat_uuid, last_read_message_uuid)
-
-        return None
 
 
 _handler = MessageHandler()
