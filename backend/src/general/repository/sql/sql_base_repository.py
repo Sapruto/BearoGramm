@@ -62,6 +62,38 @@ class BaseRepository(
                 raise
         return result
 
+    async def _update_from_orm(self, orm_obj: Base) -> Optional[Base]:
+        identifier_field = self.manager.identifier_field
+        identifier_name = identifier_field.key
+        identifier_value = getattr(orm_obj, identifier_name, None)
+
+        if identifier_value is None:
+            raise ValueError(
+                f"Cannot update: identifier field '{identifier_name}' is None"
+            )
+
+        immutable_names = {
+            getattr(f, "key", getattr(f, "name", str(f)))
+            for f in self.manager.immutable_fields
+        }
+        immutable_names.add(identifier_name)
+
+        data = {
+            c.name: getattr(orm_obj, c.name)
+            for c in self.manager.model.__table__.columns
+            if c.name not in immutable_names and hasattr(orm_obj, c.name)
+        }
+
+        if not data:
+            return await self.manager.get_by_field(
+                identifier_value, identifier_field
+            )
+
+        return await self.manager.update(
+            where={identifier_field: identifier_value},
+            **data,
+        )
+
     async def save(self, entity: EntityType, to_update: bool = False) -> EntityType:
         try:
             orm_obj = await self._to_orm(entity)
@@ -71,9 +103,7 @@ class BaseRepository(
                     orm_obj, on_conflict=OnConflictAction.NOTHING
                 )
             else:
-                result = await self.manager.create(
-                    orm_obj, on_conflict=OnConflictAction.UPDATE
-                )
+                result = await self._update_from_orm(orm_obj)
 
             if result is None:
                 raise ValueError(f"Failed to save entity: {entity}")
