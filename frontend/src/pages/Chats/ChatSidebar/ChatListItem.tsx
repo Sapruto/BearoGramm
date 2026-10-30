@@ -5,6 +5,7 @@ import type { PersonalChat } from '../../../shared/api/personal';
 import { ConfirmDialog } from '../../../shared/components/ConfirmDialog';
 import ProfileTrigger from '../../../shared/components/ProfileCard/ProfileTrigger';
 import { useDeletePersonalChat } from '../../../shared/hooks/personal/useDeletePersonalChat';
+
 interface ChatListItemProps {
     chat: PersonalChat;
     isActive: boolean;
@@ -21,6 +22,9 @@ export function ChatListItem({ chat, isActive, onSelect }: ChatListItemProps) {
             onSuccess: () => setDeleteDialogOpen(false),
         });
     };
+
+    const hasUnread = chat.unread_count > 0;
+    const unreadLabel = chat.unread_count > 99 ? '99+' : String(chat.unread_count);
 
     return (
         <>
@@ -43,13 +47,25 @@ export function ChatListItem({ chat, isActive, onSelect }: ChatListItemProps) {
                             <span className="text-sm text-[#f4f4f5] truncate flex-1" title={chat.uuid}>
                                 {chat.partner_profile.name}
                             </span>
+
+                            {hasUnread && (
+                                <span
+                                    className="shrink-0 min-w-4 h-4 px-1.5 flex items-center justify-center rounded-full bg-[#d12d39] text-white text-[11px] font-semibold leading-none group-hover:hidden"
+                                >
+                                    {unreadLabel}
+                                </span>
+                            )}
+
                             <button
                                 type="button"
                                 onClick={(e) => {
                                     e.stopPropagation();
                                     setDeleteDialogOpen(true);
                                 }}
-                                className="shrink-0 w-7 h-7 flex items-center justify-center rounded-md text-[#71717a] opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto transition-colors duration-200 hover:text-red-400 hover:bg-[#27272a]"
+                                className={`shrink-0 w-7 h-7 items-center justify-center rounded-md text-[#71717a] pointer-events-none group-hover:pointer-events-auto transition-colors duration-200 hover:text-red-400 hover:bg-[#27272a] ${hasUnread
+                                    ? 'hidden group-hover:flex'
+                                    : 'flex opacity-0 group-hover:opacity-100'
+                                    }`}
                                 title="Delete chat"
                             >
                                 <X size={16} />

@@ -7,6 +7,7 @@ export type PersonalChat = {
     partner_uuid: string;
     partner_profile: Profile;
     updated_at: string;
+    unread_count: number;
 };
 
 export type GetPersonalChatsParams = {

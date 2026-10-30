@@ -3,6 +3,7 @@ import type { MessageEntity } from "../api/messages";
 import type { GetChatPartnerResponse } from "../api/personal";
 import { queryClient } from "../api/queryClient";
 import { queryKeys } from "./queryKeys";
+import { updateChatUnreadCount } from "./useUpdateChatUnreadCount";
 
 
 const messageNotifySound = new Audio('/messageNotifySound.mp3');
@@ -13,6 +14,8 @@ export function messageNotify(chatUUID: string | undefined, msg: MessageEntity) 
 
     if (document.hasFocus() && msg.chat_uuid === chatUUID)
         return;
+
+    updateChatUnreadCount(queryClient, msg.chat_uuid, (prev) => prev + 1);
 
     const partnerProfileData = queryClient.getQueryData(queryKeys.chatPartner(msg.chat_uuid)) as GetChatPartnerResponse | undefined;
 

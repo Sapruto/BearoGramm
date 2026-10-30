@@ -1,3 +1,6 @@
+import { queryClient } from '@/shared/api/queryClient';
+import { chatSocket } from '@/shared/api/wsClient';
+import { getChatUnreadCount, updateChatUnreadCount } from '@/shared/lib/useUpdateChatUnreadCount';
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type RefObject } from 'react';
 import { useParams } from 'react-router-dom';
 import { Virtuoso, type VirtuosoHandle } from 'react-virtuoso';
@@ -159,6 +162,18 @@ const ChatRoom = ({ chatUUID }: { chatUUID: string }) => {
     }, [flatItems.length, settleBottom]);
 
     useEffect(() => () => cancelAnimationFrame(snapLoopRef.current), []);
+
+    useEffect(() => {
+        // updateChatUnreadCount(queryClient, chatUUID, 0);
+
+        chatSocket.send({
+            type: "last_read_message", data: {
+                user_uuid: userUUID,
+                chat_uuid: chatUUID
+            }
+        });
+
+    }, []);
 
     const handleSend = (text: string) => {
         sendMessage({ chat_uuid: chatUUID, message_text: text, references: [] });

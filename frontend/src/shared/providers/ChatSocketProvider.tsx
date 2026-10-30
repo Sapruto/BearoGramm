@@ -30,14 +30,14 @@ export function ChatSocketProvider({ children }: { children: React.ReactNode }) 
 
         chatSocket.connect();
 
-        const { add, remove, clear } = useTypingStore.getState();
+        const { add: addTypingIndicator, remove: removeTypingIndicator, clear: clearTypingIndicator } = useTypingStore.getState();
 
         const unsubscribe = chatSocket.subscribe((msg) => {
             switch (msg.type) {
                 case 'message_created':
                     messageNotify(chatUUIDRef.current, msg.data);
                     addMessageToCache(queryClient, msg.data.chat_uuid, msg.data);
-                    remove(msg.data.chat_uuid, msg.data.user_uuid);
+                    removeTypingIndicator(msg.data.chat_uuid, msg.data.user_uuid);
                     break;
                 case 'chat_created':
                     queryClient.invalidateQueries({ queryKey: queryKeys.personalChats });
@@ -46,7 +46,7 @@ export function ChatSocketProvider({ children }: { children: React.ReactNode }) 
                     removePersonalChat(msg.data.chat_uuid);
                     break;
                 case 'typing':
-                    add(msg.data.chat_uuid, msg.data.user_uuid);
+                    addTypingIndicator(msg.data.chat_uuid, msg.data.user_uuid);
                     break;
                 case 'friends:new_request':
                 case 'friends:changed_status':
@@ -58,7 +58,7 @@ export function ChatSocketProvider({ children }: { children: React.ReactNode }) 
         return () => {
             unsubscribe();
             chatSocket.disconnect();
-            clear();
+            clearTypingIndicator();
         };
     }, [token, queryClient, removePersonalChat]);
 
