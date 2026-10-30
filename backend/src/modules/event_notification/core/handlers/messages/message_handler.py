@@ -3,7 +3,8 @@ from typing import Any, Dict, List, Optional
 
 from src.core.logger import get_logger
 from src.modules.chats import ChatService, get_chat_service
-from src.modules.chats.core.services.chat_reading_service import ChatReadingService, get_chat_reading_service
+from src.modules.chats.core.services.chat_reading_service import ChatReadingService, get_chat_reading_service, \
+    LastReadMessageUuidNotFound
 from src.modules.chats.participants import get_permission_service
 from src.modules.messages.core.services.message_service import get_message_service
 
@@ -96,7 +97,7 @@ class MessageHandler:
         user_uuid = payload.get("user_uuid")
         chat_uuid = payload.get("chat_uuid")
         last_read_message_uuid = payload.get("last_read_message_uuid")
-        if not isinstance(user_uuid, str) or not isinstance(chat_uuid, str) or not isinstance(last_read_message_uuid, str):
+        if not isinstance(user_uuid, str) or not isinstance(chat_uuid, str):
             return
 
         recipients = await self._get_chat_participants(chat_uuid)
@@ -104,7 +105,10 @@ class MessageHandler:
         if user_uuid not in recipients:
             return
 
-        await self._chat_reading_service.mark_read(user_uuid, chat_uuid, last_read_message_uuid)
+        try:
+            await self._chat_reading_service.mark_read(user_uuid, chat_uuid, last_read_message_uuid)
+        except LastReadMessageUuidNotFound:
+            pass
 
 
 _handler = MessageHandler()
