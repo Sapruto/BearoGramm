@@ -85,13 +85,10 @@ class ChatReadingService:
                 raise LastReadMessageUuidNotFound()
             last_read_message_uuid = response.messages[0].uuid
 
-        return await self._chat_reading_repository.save(
-            ChatReadingEntity(
-                chat_uuid=chat_uuid,
-                user_uuid=user_uuid,
-                last_read_message_uuid=last_read_message_uuid,
-            ),
-            to_update=True,
+        return await self._chat_reading_repository.upsert_last_read(
+            chat_uuid=chat_uuid,
+            user_uuid=user_uuid,
+            last_read_message_uuid=last_read_message_uuid,
         )
 
 
