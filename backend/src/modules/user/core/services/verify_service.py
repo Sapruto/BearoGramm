@@ -1,5 +1,5 @@
 from typing import Optional
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 from src.core.logger import get_logger
 from src.general.repository.redis.redis_query import RedisQuery
@@ -39,7 +39,7 @@ class VerifyService:
             entity = VerificationCodeEntity(
                 phone=phone_number,
                 code=code,
-                expired_at=datetime.now()
+                expired_at=datetime.now(timezone.utc)
                 + timedelta(seconds=self.verification_code_repository.ttl),
             )
             await self.verification_code_repository.save(entity)
@@ -75,7 +75,7 @@ class VerifyService:
             entity = VerificationCodeEntity(
                 phone=phone_number,
                 code=code,
-                expired_at=datetime.now()
+                expired_at=datetime.now(timezone.utc)
                 + timedelta(seconds=self.verification_code_repository.ttl),
             )
             await self.verification_code_repository.save(entity)
@@ -111,7 +111,7 @@ class VerifyService:
             if not entity:
                 return False
 
-            if datetime.now() > entity.expired_at:
+            if datetime.now(timezone.utc) > entity.expired_at:
                 query = RedisQuery[VerificationCodeFields]().add_filter(
                     VerificationCodeFields.PHONE, entity.phone
                 )

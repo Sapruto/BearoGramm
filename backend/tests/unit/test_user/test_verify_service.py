@@ -2,7 +2,7 @@ from uuid import uuid4
 
 import pytest
 from unittest.mock import AsyncMock, MagicMock
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 from src.modules.user.core.services.verify_service import VerifyService
 
@@ -105,7 +105,7 @@ class TestVerifyService:
 
         entity = MagicMock()
         entity.phone = "+79001234567"
-        entity.expired_at = datetime.now() + timedelta(minutes=5)
+        entity.expired_at = datetime.now(timezone.utc) + timedelta(minutes=5)
 
         mock_verify_repo.get = AsyncMock(return_value=entity)
         mock_verify_repo.delete = AsyncMock(return_value=1)
@@ -128,7 +128,7 @@ class TestVerifyService:
     async def test_verify_code_expired(self, verify_service, mock_verify_repo):
         entity = MagicMock()
         entity.phone = "+79001234567"
-        entity.expired_at = datetime.now() - timedelta(minutes=5)
+        entity.expired_at = datetime.now(timezone.utc) - timedelta(minutes=5)
 
         mock_verify_repo.get = AsyncMock(return_value=entity)
         mock_verify_repo.delete = AsyncMock(return_value=1)

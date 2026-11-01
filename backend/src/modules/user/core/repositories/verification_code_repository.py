@@ -1,5 +1,5 @@
 from typing import Optional
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 import random
 import hashlib
 
@@ -51,7 +51,7 @@ class VerificationCodeMapper(
             phone=data.get("phone", ""),
             code=data.get("code", ""),
             expired_at=datetime.fromisoformat(
-                data.get("expired_at", datetime.now().isoformat())
+                data.get("expired_at", datetime.now(timezone.utc).isoformat())
             ),
         )
 

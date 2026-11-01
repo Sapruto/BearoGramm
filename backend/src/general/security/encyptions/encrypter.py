@@ -145,7 +145,7 @@ class Encrypter:
                 logger.warning("Invalid ROTATION_KEYS format, skipping")
 
     def _generate_default_key(self):
-        key_id = f"key_{int(datetime.now().timestamp())}"
+        key_id = f"key_{int(datetime.now(timezone.utc).timestamp())}"
         master_key = secrets.token_bytes(32)
         master_key_b64 = base64.b64encode(master_key).decode("utf-8")
         salt = os.urandom(self.salt_length)
@@ -312,7 +312,7 @@ class Encrypter:
         self, master_key: Union[str, bytes], key_id: Optional[str] = None
     ) -> str:
         if key_id is None:
-            key_id = f"key_{int(datetime.now().timestamp())}"
+            key_id = f"key_{int(datetime.now(timezone.utc).timestamp())}"
 
         self._load_keys({key_id: master_key})
 

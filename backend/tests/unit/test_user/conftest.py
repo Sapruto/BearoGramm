@@ -1,6 +1,6 @@
 import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from uuid import uuid4
 
 from src.modules.user.models.entities.user_entity import UserEntity
@@ -115,7 +115,7 @@ def mock_verify_repo():
     entity = MagicMock()
     entity.phone = "+79001234567"
     entity.code = "12345"
-    entity.expired_at = datetime.now() + timedelta(minutes=5)
+    entity.expired_at = datetime.now(timezone.utc) + timedelta(minutes=5)
 
     repo.get_by_code = AsyncMock(return_value=entity)
     repo.delete_by_phone = AsyncMock(return_value=True)

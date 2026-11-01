@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import Optional, List, Dict, Any
 from uuid import uuid4
-from datetime import datetime
+from datetime import datetime, timezone
 
 from src.modules.chats.participants import (
     Permission,
@@ -95,8 +95,8 @@ class BaseChatService(ABC):
         chat = ChatEntity(
             uuid=str(uuid4()),
             chat_type=self._get_chat_type(),
-            created_at=datetime.now(),
-            updated_at=datetime.now(),
+            created_at=datetime.now(timezone.utc),
+            updated_at=datetime.now(timezone.utc),
         )
         saved_chat = await self._repository.save(chat)
 

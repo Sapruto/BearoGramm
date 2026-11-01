@@ -36,7 +36,7 @@ class SessionService:
                 sessions = await self._session_repo.get_all(query)
 
                 if len(sessions) >= self._max_sessions:
-                    sessions.sort(key=lambda s: s.expired_at or datetime.min)
+                    sessions.sort(key=lambda s: s.expired_at or datetime.min.replace(tzinfo=timezone.utc))
                     delete_query = RedisQuery[SessionFields]().add_filter(
                         SessionFields.TOKEN, sessions[0].token
                     )
