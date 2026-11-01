@@ -1,6 +1,6 @@
 from sqlalchemy.orm import mapped_column, Mapped
-from sqlalchemy import DateTime, String, Integer, func, Enum
-from datetime import datetime
+from sqlalchemy import DateTime, String, Integer, Enum
+from datetime import datetime, timezone
 from uuid import uuid4
 
 from src.core.database import Base
@@ -39,5 +39,5 @@ class MediaORM(Base):
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         nullable=False,
-        default=func.now(),
+        default=lambda: datetime.now(timezone.utc),
     )

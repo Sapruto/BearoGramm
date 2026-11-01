@@ -1,8 +1,8 @@
-from sqlalchemy import String, ForeignKey, DateTime, func, UniqueConstraint, Index
+from sqlalchemy import String, ForeignKey, DateTime, UniqueConstraint, Index
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from typing import Optional
-from datetime import datetime
+from datetime import datetime, timezone
 from uuid import uuid4
 
 from src.core.database import Base
@@ -27,7 +27,7 @@ class ChatReadingORM(Base):
 
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False,
-        default=func.now(), onupdate=func.now(),
+        default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc),
     )
 
     chat: Mapped["ChatORM"] = relationship("ChatORM", back_populates="read_states")

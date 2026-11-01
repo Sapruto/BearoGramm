@@ -1,9 +1,9 @@
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy import DateTime, String, ForeignKey, func, Index, Boolean, Text
+from sqlalchemy import DateTime, String, ForeignKey, Index, Boolean, Text
 from typing import List, Optional
 
 from uuid import uuid4
-from datetime import datetime
+from datetime import datetime, timezone
 
 from src.core.database import Base
 
@@ -18,10 +18,10 @@ class MessageORM(Base):
     message_text: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
 
     created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), nullable=False, default=func.now()
+        DateTime(timezone=True), nullable=False, default=lambda: datetime.now(timezone.utc)
     )
     updated_at: Mapped[Optional[datetime]] = mapped_column(
-        DateTime(timezone=True), nullable=True, onupdate=func.now()
+        DateTime(timezone=True), nullable=True, onupdate=lambda: datetime.now(timezone.utc)
     )
 
     is_stated: Mapped[bool] = mapped_column(Boolean(), nullable=False, default=False)

@@ -1,10 +1,10 @@
 from src.core.database import Base
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy import String, DateTime, func
+from sqlalchemy import String, DateTime
 
 from typing import List, Optional
 from uuid import uuid4
-from datetime import datetime
+from datetime import datetime, timezone
 
 
 class UserORM(Base):
@@ -23,10 +23,10 @@ class UserORM(Base):
     phone_number_mask: Mapped[str] = mapped_column(String(20), nullable=True)
 
     created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), nullable=False, default=func.now()
+        DateTime(timezone=True), nullable=False, default=lambda: datetime.now(timezone.utc)
     )
     updated_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), nullable=False, default=func.now(), onupdate=func.now()
+        DateTime(timezone=True), nullable=False, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc)
     )
 
     messages: Mapped[List["MessageORM"]] = relationship(

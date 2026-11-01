@@ -1,9 +1,9 @@
 from src.core.database import Base
 from sqlalchemy.orm import Mapped, mapped_column
-from sqlalchemy import String, DateTime, func, ForeignKey, Enum
+from sqlalchemy import String, DateTime, ForeignKey, Enum
 
 from uuid import uuid4
-from datetime import datetime
+from datetime import datetime, timezone
 
 from ..enums import FriendStatus
 
@@ -46,5 +46,5 @@ class FriendORM(Base):
     )
 
     created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), nullable=False, default=func.now()
+        DateTime(timezone=True), nullable=False, default=lambda: datetime.now(timezone.utc)
     )

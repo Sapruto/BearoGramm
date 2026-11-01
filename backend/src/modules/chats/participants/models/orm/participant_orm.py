@@ -1,9 +1,9 @@
-from sqlalchemy import ForeignKey, String, Enum, JSON, Index, DateTime, func
+from sqlalchemy import ForeignKey, String, Enum, JSON, Index, DateTime
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column
 from src.core.database import Base
 from uuid import uuid4
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Dict
 
 from ...models.enums import ResourceType
@@ -37,14 +37,14 @@ class ParticipantORM(Base):
 
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
-        server_default=func.now(),
+        default=lambda: datetime.now(timezone.utc),
         nullable=False
     )
 
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
-        server_default=func.now(),
-        onupdate=func.now(),
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc),
         nullable=False
     )
 

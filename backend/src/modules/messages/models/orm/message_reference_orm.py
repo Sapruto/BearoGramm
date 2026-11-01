@@ -1,9 +1,9 @@
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy import DateTime, String, ForeignKey, func, Index, Enum, text, Integer, Boolean
+from sqlalchemy import DateTime, String, ForeignKey, Index, Enum, text, Integer, Boolean
 from typing import Optional
 
 from uuid import uuid4
-from datetime import datetime
+from datetime import datetime, timezone
 
 from ..enums.reference_type import ReferenceType
 
@@ -40,7 +40,7 @@ class MessageReferenceORM(Base):
     span_all: Mapped[Optional[bool]] = mapped_column(Boolean, nullable=True)
 
     created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), server_default=func.now(), nullable=False
+        DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False
     )
 
     source: Mapped["MessageORM"] = relationship(

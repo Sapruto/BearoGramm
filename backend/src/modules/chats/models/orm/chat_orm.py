@@ -1,8 +1,8 @@
-from sqlalchemy import DateTime, func, Index, Enum, String
+from sqlalchemy import DateTime, Index, Enum, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from src.core.database import Base
 from uuid import uuid4
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import List
 
 from .chat_reading_orm import ChatReadingORM
@@ -24,7 +24,7 @@ class ChatORM(Base):
         nullable=False,
     )
     created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), nullable=False, default=func.now()
+        DateTime(timezone=True), nullable=False, default=lambda: datetime.now(timezone.utc)
     )
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=True)
     last_message_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=True)
