@@ -35,7 +35,6 @@ slowapi==0.1.10
 
 py-svg-hush==0.3.0
 python-magic==0.4.27
-python-magic-bin==0.4.14
 pydantic-settings~=2.15.0
 starlette~=0.41.3
 smsru_api~=1.4
