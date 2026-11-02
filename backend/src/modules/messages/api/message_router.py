@@ -4,7 +4,8 @@ from src.modules.user import get_current_user_depends, UserEntity
 from src.core.logger import get_logger
 
 from .message_router_names import MessageRoutes
-from ..core.services.message_service import get_message_service, MessageService
+from ..core.use_cases import MessageUseCases
+from ..core.services.message_service import get_message_service
 from ..models.dto.requests import (
     SendMessageRequest,
     UpdateMessageRequest,
@@ -15,6 +16,7 @@ from ..models.dto.responses import (
     UpdateMessageResponse,
     DeleteMessageResponse,
 )
+from ...chats.core.services.chat_reading_service import get_chat_reading_service
 from ...chats.core.services.chat_service import get_chat_service
 from ...chats.participants import get_permission_service
 
@@ -23,14 +25,22 @@ logger = get_logger(__name__)
 message_router = APIRouter(prefix=MessageRoutes.base, tags=["messages"])
 
 
-def get_message_service_with_protocol() -> MessageService:
-    return get_message_service(get_permission_service(), get_chat_service())
+def get_use_cases() -> MessageUseCases:
+    message_service = get_message_service()
+    return MessageUseCases(
+        permission_protocol=get_permission_service(),
+        chat_protocol=get_chat_service(),
+        message_protocol=message_service,
+        mark_read_protocol=get_chat_reading_service(
+            message_service=message_service,
+        ),
+    )
 
 
 @message_router.post(MessageRoutes.send_message, response_model=SendMessageResponse)
 async def send_message(
     request: SendMessageRequest,
-    service: MessageService = Depends(get_message_service_with_protocol),
+    service: MessageUseCases = Depends(get_use_cases),
     current_user: UserEntity = Depends(get_current_user_depends()),
 ):
     try:
@@ -43,7 +53,7 @@ async def send_message(
 @message_router.put(MessageRoutes.update_message, response_model=UpdateMessageResponse)
 async def update_message(
     request: UpdateMessageRequest,
-    service: MessageService = Depends(get_message_service_with_protocol),
+    service: MessageUseCases = Depends(get_use_cases),
     current_user: UserEntity = Depends(get_current_user_depends()),
 ):
     try:
@@ -56,7 +66,7 @@ async def update_message(
 @message_router.delete(MessageRoutes.delete_message, response_model=DeleteMessageResponse)
 async def delete_message(
     message_uuid: str = Path(..., description="UUID of message"),
-    service: MessageService = Depends(get_message_service_with_protocol),
+    service: MessageUseCases = Depends(get_use_cases),
     current_user: UserEntity = Depends(get_current_user_depends()),
 ):
     try:
@@ -75,7 +85,7 @@ async def get_messages(
         default=True,
         description="If this = false, we must show a f*cking old messages else new",
     ),
-    service: MessageService = Depends(get_message_service_with_protocol),
+    service: MessageUseCases = Depends(get_use_cases),
     current_user: UserEntity = Depends(get_current_user_depends()),
 ):
     try:
@@ -99,7 +109,7 @@ async def get_around_message(
     message_uuid: str = Path(..., description="UUID of target message"),
     span_start: int = Query(default=-10, le=0),
     span_end: int = Query(default=10, ge=0),
-    service: MessageService = Depends(get_message_service_with_protocol),
+    service: MessageUseCases = Depends(get_use_cases),
     current_user: UserEntity = Depends(get_current_user_depends()),
 ):
     try:
@@ -121,7 +131,7 @@ async def get_around_message(
 async def get_messages_before(
     message_uuid: str = Path(..., description="UUID of the boundary message"),
     limit: int = Query(default=10, ge=1, le=100, description="Count of messages"),
-    service: MessageService = Depends(get_message_service_with_protocol),
+    service: MessageUseCases = Depends(get_use_cases),
     current_user: UserEntity = Depends(get_current_user_depends()),
 ):
     try:
@@ -142,7 +152,7 @@ async def get_messages_before(
 async def get_messages_after(
     message_uuid: str = Path(..., description="UUID of the boundary message"),
     limit: int = Query(default=10, ge=1, le=100, description="Count of messages"),
-    service: MessageService = Depends(get_message_service_with_protocol),
+    service: MessageUseCases = Depends(get_use_cases),
     current_user: UserEntity = Depends(get_current_user_depends()),
 ):
     try:
