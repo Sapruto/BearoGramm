@@ -8,6 +8,7 @@ import { addMessageToCache } from '../lib/addMessageToCache';
 import { messageNotify } from '../lib/messageNotify';
 import { queryKeys } from '../lib/queryKeys';
 import { useRemovePersonalChat } from '../lib/useRemovePersonalChat';
+import { updatePersonalChatLastMessageAt } from '../lib/updatePersonalChatLastMessageAt';
 
 export function ChatSocketProvider({ children }: { children: React.ReactNode }) {
     const queryClient = useQueryClient();
@@ -37,6 +38,7 @@ export function ChatSocketProvider({ children }: { children: React.ReactNode }) 
                 case 'message_created':
                     messageNotify(chatUUIDRef.current, msg.data);
                     addMessageToCache(queryClient, msg.data.chat_uuid, msg.data);
+                    updatePersonalChatLastMessageAt(queryClient, msg.data.chat_uuid, msg.data.created_at);
                     removeTypingIndicator(msg.data.chat_uuid, msg.data.user_uuid);
                     break;
                 case 'chat_created':

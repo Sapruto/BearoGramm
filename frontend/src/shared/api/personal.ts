@@ -6,7 +6,9 @@ export type PersonalChat = {
     chat_type: 'personal';
     partner_uuid: string;
     partner_profile: Profile;
+    created_at: string;
     updated_at: string;
+    last_message_at?: string;
     unread_count: number;
 };
 

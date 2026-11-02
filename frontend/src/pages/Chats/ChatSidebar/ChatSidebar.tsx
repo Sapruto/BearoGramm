@@ -59,14 +59,16 @@ const ChatSidebar = ({ activeChatId, onSelectAddFriend, onSelectChat }: Props) =
                     ref={scrollContainerRef}
                     className="flex flex-col gap-0.5 flex-1"
                 >
-                    {chats.map((chat: PersonalChat) => (
-                        <ChatListItem
-                            key={chat.uuid}
-                            chat={chat}
-                            isActive={activeChatId === chat.uuid}
-                            onSelect={onSelectChat}
-                        />
-                    ))}
+                    {chats
+                        .toSorted((a, b) => Date.parse(b.last_message_at ?? b.created_at) - Date.parse(a.last_message_at ?? a.created_at))
+                        .map((chat: PersonalChat) => (
+                            <ChatListItem
+                                key={chat.uuid}
+                                chat={chat}
+                                isActive={activeChatId === chat.uuid}
+                                onSelect={onSelectChat}
+                            />
+                        ))}
 
                     <div ref={sentinelRef} className="h-8 flex items-center justify-center shrink-0">
                         {isFetchingNextPage && (
