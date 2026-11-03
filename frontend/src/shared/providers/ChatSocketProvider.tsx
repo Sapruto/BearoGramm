@@ -13,6 +13,7 @@ import { updatePersonalChatLastMessageAt } from '../lib/updatePersonalChatLastMe
 export function ChatSocketProvider({ children }: { children: React.ReactNode }) {
     const queryClient = useQueryClient();
     const token = useAuthStore((state) => state.token);
+    const userUUID = useAuthStore((state) => state.userUUID);
     const { uuid: chatUUID } = useParams();
 
     const chatUUIDRef = useRef(chatUUID);
@@ -40,6 +41,15 @@ export function ChatSocketProvider({ children }: { children: React.ReactNode }) 
                     addMessageToCache(queryClient, msg.data.chat_uuid, msg.data);
                     updatePersonalChatLastMessageAt(queryClient, msg.data.chat_uuid, msg.data.created_at);
                     removeTypingIndicator(msg.data.chat_uuid, msg.data.user_uuid);
+
+                    if (chatUUIDRef.current === msg.data.chat_uuid && msg.data.user_uuid !== userUUID) {
+                        chatSocket.send({
+                            type: "last_read_message", data: {
+                                user_uuid: userUUID,
+                                chat_uuid: chatUUIDRef.current
+                            }
+                        });
+                    }
                     break;
                 case 'chat_created':
                     queryClient.invalidateQueries({ queryKey: queryKeys.personalChats });
@@ -62,7 +72,7 @@ export function ChatSocketProvider({ children }: { children: React.ReactNode }) 
             chatSocket.disconnect();
             clearTypingIndicator();
         };
-    }, [token, queryClient, removePersonalChat]);
+    }, [token, queryClient, removePersonalChat, userUUID]);
 
     return <>{children}</>;
 }

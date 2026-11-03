@@ -32,10 +32,7 @@ def get_use_cases() -> PersonalUseCases:
         permission_protocol=get_permission_service(),
         profile_protocol=get_profile_custom_service(),
         chat_reading_protocol=get_chat_reading_service(
-            message_service=get_message_service(
-                permission_protocol=get_permission_service(),
-                chat_protocol=get_chat_service(),
-            ),
+            message_service=get_message_service(),
         ),
     )
 

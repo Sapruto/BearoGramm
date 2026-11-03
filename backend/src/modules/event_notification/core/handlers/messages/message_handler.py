@@ -39,10 +39,7 @@ class MessageHandler:
         self._chat_service = chat_service or get_chat_service()
         self._chat_reading_service = chat_reading_service or (
             get_chat_reading_service(
-                get_message_service(
-                    get_permission_service(),
-                    get_chat_service()
-                )
+                get_message_service()
             )
         )
 
