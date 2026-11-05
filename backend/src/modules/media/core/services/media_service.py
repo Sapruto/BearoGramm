@@ -56,7 +56,8 @@ class MediaService:
     def _compute_hash(content: bytes) -> str:
         return hashlib.sha256(content).hexdigest()
 
-    def _make_full_url(self, url: str):
+    @staticmethod
+    def _make_full_url(url: str):
         return Settings.MEDIA_BASE_URL + "/" + url
 
     async def _validate_file_or_delete(self, entity: MediaEntity) -> bool:
@@ -264,6 +265,8 @@ class MediaService:
         entity = await self._get_or_raise(media_uuid)
         if entity:
             entity.ptrs -= 1
+            if not await self._validate_file_or_delete(entity):
+                return True
             await self._repository.save(entity, to_update=True)
         return True
 
