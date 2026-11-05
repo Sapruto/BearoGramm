@@ -221,8 +221,12 @@ class MediaService:
 
         content = full_path.read_bytes()
         media_hash = self._compute_hash(content)
-        media_uuid = str(uuid4())
 
+        entity = await self._repository.get(SqlQuery[MediaFields]().add_filter(field=MediaFields.HASH, value=media_hash))
+        if entity:
+            return entity.uuid
+
+        media_uuid = str(uuid4())
         entity = MediaEntity(
             uuid=media_uuid,
             full_url=full_url,

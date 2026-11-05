@@ -142,7 +142,9 @@ class ProfileCustomService:
         if not entity or not user:
             raise NotFoundProfile()
 
-        return GetProfileResponse(profile=entity, username=user.username, email=user.email)
+        media_dto = await self._media_service.get_media(entity.avatar_uuid)
+
+        return GetProfileResponse(profile=entity, username=user.username, email=user.email, media=media_dto)
 
     async def get(
             self,

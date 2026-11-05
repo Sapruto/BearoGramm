@@ -1,11 +1,13 @@
 from typing import Optional
 from pydantic import BaseModel, Field
 
+from src.modules.media.models.dto import MediaDTO
 from ..entities.profile_custom_entity import ProfileCustomEntity
 
 
 class GetProfileResponse(BaseModel):
     profile: Optional[ProfileCustomEntity] = Field(default=None)
+    media: Optional[MediaDTO] = Field(default=None)
     username: Optional[str] = Field(default=None)
     email: Optional[str] = Field(default=None)
 
