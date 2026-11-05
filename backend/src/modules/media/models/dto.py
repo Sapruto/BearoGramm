@@ -31,7 +31,7 @@ class DeleteMediaResponse(BaseModel):
 
 class MediaExistsResponse(BaseModel):
     exists: bool
-    filename: str
+    filename: str = ""
 
 
 class MediaMeta(BaseModel):

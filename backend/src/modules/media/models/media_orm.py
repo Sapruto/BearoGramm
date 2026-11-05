@@ -1,6 +1,7 @@
 from sqlalchemy.orm import mapped_column, Mapped
-from sqlalchemy import DateTime, String, Integer, Enum
+from sqlalchemy import DateTime, String, Integer, Enum, Boolean
 from datetime import datetime, timezone
+from typing import Optional
 from uuid import uuid4
 
 from src.core.database import Base
@@ -36,8 +37,15 @@ class MediaORM(Base):
 
     ptrs: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
 
+    is_server_file: Mapped[bool] = mapped_column(Boolean(), nullable=False, default=False)
+
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         nullable=False,
         default=lambda: datetime.now(timezone.utc),
+    )
+    updated_at: Mapped[Optional[datetime]] = mapped_column(
+        DateTime(timezone=True),
+        nullable=True,
+        onupdate=lambda: datetime.now(timezone.utc),
     )

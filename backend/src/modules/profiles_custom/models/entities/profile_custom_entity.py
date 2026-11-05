@@ -1,23 +1,19 @@
 from uuid import uuid4
 
-from pydantic import BaseModel, Field, field_serializer, model_validator
+from pydantic import BaseModel, Field, model_validator
 from enum import Enum
 from datetime import datetime, timezone
-from typing import Any, Optional, Dict
+from typing import Optional
 
-from src.core.settings import Settings
 from ..enums import Gender
-from ..orm.default_avatar_randomizer import AvatarRandomizer
-
-
-randomizer = AvatarRandomizer()
+from ..orm.default_avatar_randomizer import get_avatar_randomizer
 
 
 class ProfileCustomFields(str, Enum):
     UUID = "uuid"
 
     NAME = "name"
-    AVATAR_URL = "avatar_url"
+    AVATAR_UUID = "avatar_url"
 
     BANNER_COLOR = "banner_color"
     GENDER = "gender"
@@ -34,7 +30,7 @@ class ProfileCustomEntity(BaseModel):
     uuid: str = Field(default_factory=lambda: str(uuid4()))
 
     name: str = Field(default="Unnamed")
-    avatar_url: str = Field(default_factory=lambda: str(randomizer.get_random_avatar()))
+    avatar_uuid: str = Field(default_factory=lambda: str(get_avatar_randomizer().get_random_avatar()))
 
     banner_color: str = Field(default="#000000")
 
@@ -51,9 +47,3 @@ class ProfileCustomEntity(BaseModel):
         if len(self.banner_color) != 7:
             raise ValueError("Length is not correct")
         return self
-
-    @field_serializer('avatar_url')
-    def serialize_avatar_url(self, avatar_url: Optional[str]) -> Optional[str]:
-        if not avatar_url:
-            return None
-        return f"{Settings.MEDIA_BASE_URL.rstrip('/')}/{avatar_url.lstrip('/')}"

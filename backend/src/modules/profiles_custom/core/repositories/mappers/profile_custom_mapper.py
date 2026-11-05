@@ -15,7 +15,7 @@ class ProfileCustomMapper(BaseMapper[ProfileCustomEntity, ProfileCustomORM, Prof
     field_mapping = {
         ProfileCustomFields.UUID: ProfileCustomORM.uuid,
         ProfileCustomFields.NAME: ProfileCustomORM.name,
-        ProfileCustomFields.AVATAR_URL: ProfileCustomORM.avatar_url,
+        ProfileCustomFields.AVATAR_UUID: ProfileCustomORM.avatar_uuid,
         ProfileCustomFields.BANNER_COLOR: ProfileCustomORM.banner_color,
         ProfileCustomFields.GENDER: ProfileCustomORM.gender,
         ProfileCustomFields.BIO: ProfileCustomORM.bio,
@@ -26,7 +26,7 @@ class ProfileCustomMapper(BaseMapper[ProfileCustomEntity, ProfileCustomORM, Prof
     reverse_field_mapping = {
         ProfileCustomORM.uuid: ProfileCustomFields.UUID,
         ProfileCustomORM.name: ProfileCustomFields.NAME,
-        ProfileCustomORM.avatar_url: ProfileCustomFields.AVATAR_URL,
+        ProfileCustomORM.avatar_uuid: ProfileCustomFields.AVATAR_UUID,
         ProfileCustomORM.banner_color: ProfileCustomFields.BANNER_COLOR,
         ProfileCustomORM.gender: ProfileCustomFields.GENDER,
         ProfileCustomORM.bio: ProfileCustomFields.BIO,
@@ -38,7 +38,7 @@ class ProfileCustomMapper(BaseMapper[ProfileCustomEntity, ProfileCustomORM, Prof
         return ProfileCustomORM(
             uuid=entity.uuid,
             name=entity.name,
-            avatar_url=entity.avatar_url,
+            avatar_uuid=entity.avatar_uuid,
             banner_color=entity.banner_color,
             gender=entity.gender,
             bio=entity.bio,
@@ -50,7 +50,7 @@ class ProfileCustomMapper(BaseMapper[ProfileCustomEntity, ProfileCustomORM, Prof
         return ProfileCustomEntity(
             uuid=orm.uuid,
             name=orm.name,
-            avatar_url=orm.avatar_url,
+            avatar_uuid=orm.avatar_uuid,
             banner_color=orm.banner_color,
             gender=orm.gender,
             bio=orm.bio,

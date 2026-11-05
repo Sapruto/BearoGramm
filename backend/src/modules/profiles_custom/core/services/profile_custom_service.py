@@ -4,6 +4,7 @@ from datetime import datetime, timezone
 from src.core.logger import get_logger
 from src.general.repository.sql.sql_query import SqlQuery
 from src.modules.media.core.services.media_service import get_media_service, MediaService
+from src.modules.media.models.enums import MediaType
 from src.modules.user import get_user_service, UserService
 
 from ..exceptions import (
@@ -32,7 +33,7 @@ class ProfileCustomService:
         self,
         user_uuid: str,
         name: Optional[str] = None,
-        avatar_url: Optional[str] = None,
+        avatar_uuid: Optional[str] = None,
     ) -> ProfileCustomEntity:
         if user_uuid:
             existing = await self.get(user_uuid=user_uuid)
@@ -42,15 +43,22 @@ class ProfileCustomService:
                 )
 
         entity = ProfileCustomEntity(user_uuid=user_uuid)
+        media = None
 
         if name:
             entity.name = name
-        if avatar_url:
-            entity.avatar_url = avatar_url
+        if avatar_uuid:
+            entity.avatar_uuid = avatar_uuid
+            media = await self._media_service.verify_avatar_url_and_get(avatar_uuid)
+            if not media:
+                raise ProfileCustomDataError("Media Verify failed")
 
         created = await self._repository.save(entity)
         if not created:
             raise ProfileCustomDataError("Failed to save profile")
+
+        if media:
+            await self._media_service.add_ptr(media.uuid)
 
         return created
 
@@ -59,17 +67,26 @@ class ProfileCustomService:
         user_uuid: str,
         request: UpdateProfileRequest
     ) -> ProfileCustomEntity:
-        if request.avatar_url is not None and not await self._media_service.verify_avatar_url(request.avatar_url):
-            raise BadAvatarUrl()
-
         entity = await self.get(user_uuid=user_uuid)
         if not entity:
             raise ProfileCustomNotFoundError(f"Profile for user {user_uuid} not found")
 
+        old_media_uuid = None
+        has_new_media = False
+
         if request.name is not None:
             entity.name = request.name
-        if request.avatar_url is not None:
-            entity.avatar_url = request.avatar_url
+        if request.avatar_media is not None:
+            media_result = await self._media_service.upload_media(
+                content=await request.avatar_media.read(),
+                filename=request.avatar_media.filename or "file",
+                content_type=request.avatar_media.content_type,
+                media_type=MediaType.IMAGE,
+            )
+            if media_result.success:
+                old_media_uuid = entity.avatar_uuid
+                entity.avatar_uuid = media_result.media.uuid
+                has_new_media = True
         if request.banner_color is not None:
             entity.banner_color = request.banner_color
         if request.gender is not None:
@@ -86,6 +103,9 @@ class ProfileCustomService:
         if not updated or not result:
             raise ProfileCustomDataError("Failed to update profile")
 
+        if has_new_media and old_media_uuid:
+            await self._media_service.remove_ptr(old_media_uuid)
+
         return updated
 
     async def delete_by_user(self, user_uuid: str) -> bool:
@@ -99,6 +119,9 @@ class ProfileCustomService:
 
         if not deleted:
             raise ProfileCustomDataError("Failed to delete profile")
+
+        if entity.avatar_uuid:
+            await self._repository.remove_ptr(entity.avatar_uuid)
 
         return True
 

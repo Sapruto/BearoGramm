@@ -24,7 +24,9 @@ class MediaMapper(BaseMapper[MediaEntity, MediaORM, MediaFields]):
         MediaFields.SIZE: MediaORM.size,
         MediaFields.VERSION: MediaORM.version,
         MediaFields.PTRS: MediaORM.ptrs,
+        MediaFields.IS_SERVER_FILE: MediaORM.is_server_file,
         MediaFields.CREATED_AT: MediaORM.created_at,
+        MediaFields.UPDATED_AT: MediaORM.updated_at,
     }
 
     reverse_field_mapping = {
@@ -38,7 +40,9 @@ class MediaMapper(BaseMapper[MediaEntity, MediaORM, MediaFields]):
         MediaORM.size: MediaFields.SIZE,
         MediaORM.version: MediaFields.VERSION,
         MediaORM.ptrs: MediaFields.PTRS,
+        MediaORM.is_server_file: MediaFields.IS_SERVER_FILE,
         MediaORM.created_at: MediaFields.CREATED_AT,
+        MediaORM.updated_at: MediaFields.UPDATED_AT,
     }
 
     async def to_orm(self, entity: MediaEntity) -> MediaORM:
@@ -53,7 +57,9 @@ class MediaMapper(BaseMapper[MediaEntity, MediaORM, MediaFields]):
             size=entity.size,
             version=entity.version,
             ptrs=entity.ptrs,
+            is_server_file=entity.is_server_file,
             created_at=entity.created_at,
+            updated_at=entity.updated_at,
         )
 
     async def to_entity(self, orm: MediaORM) -> MediaEntity:
@@ -68,7 +74,9 @@ class MediaMapper(BaseMapper[MediaEntity, MediaORM, MediaFields]):
             size=orm.size,
             version=orm.version,
             ptrs=orm.ptrs,
+            is_server_file=orm.is_server_file,
             created_at=orm.created_at,
+            updated_at=orm.updated_at,
         )
 
     async def to_orm_value(

@@ -18,7 +18,9 @@ class MediaFields(str, Enum):
     SIZE = "size"
     VERSION = "version"
     PTRS = "ptrs"
+    IS_SERVER_FILE = "is_server_file"
     CREATED_AT = "created_at"
+    UPDATED_AT = "updated_at"
 
     def __str__(self):
         return self.value
@@ -38,4 +40,7 @@ class MediaEntity(BaseModel):
 
     ptrs: int = Field(default=1)
 
+    is_server_file: bool = Field(default=False)
+
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    updated_at: Optional[datetime] = Field(default_factory=lambda: datetime.now(timezone.utc))

@@ -15,7 +15,7 @@ from src.core.logger import get_logger
 from src.core.limiter import limiter
 
 from src.general.db.events import *
-
+from src.modules.profiles_custom.models.orm.default_avatar_randomizer import setup_avatar_randomizer
 
 logger = get_logger(__name__)
 
@@ -50,6 +50,8 @@ async def lifespan(app: FastAPI):
 
     logger.info(f"Application started in {Settings.ENV} mode")
     logger.info(f"Debug mode: {Settings.APP.DEBUG}")
+
+    await setup_avatar_randomizer()
 
     yield
 

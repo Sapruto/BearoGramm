@@ -1,4 +1,6 @@
+import mimetypes
 from datetime import datetime, timezone
+from pathlib import Path
 from typing import Optional, Tuple
 from uuid import uuid4
 import hashlib
@@ -8,6 +10,7 @@ from py_svg_hush import filter_svg
 from sqlalchemy.exc import IntegrityError
 
 from src.core.logger import get_logger
+from src.core.paths import STATIC_ROOT
 from src.core.settings import Settings
 from src.general.repository.sql.sql_query import SqlQuery
 
@@ -56,10 +59,25 @@ class MediaService:
     def _make_full_url(self, url: str):
         return Settings.MEDIA_BASE_URL + "/" + url
 
-    async def _get_or_raise(self, media_id: str) -> MediaEntity:
-        entity = await self._repository.get(media_id)
+    async def _validate_file_or_delete(self, entity: MediaEntity) -> bool:
+        if entity.is_server_file:
+            return True
+
+        if entity.ptrs < 0 or (entity.updated_at is not None and entity.ptrs == 0):
+            await self._repository.delete(SqlQuery[MediaFields]().add_filter(field=MediaFields.UUID, value=entity.uuid))
+            await self._storage.unload_file(entity.filename)
+            return False
+        return True
+
+    async def _get_or_raise(self, media_uuid: str) -> MediaEntity:
+        entity = await self._repository.get(SqlQuery[MediaFields](field=MediaFields.UUID, value=media_uuid))
+
         if not entity:
-            raise NotFoundError(f"Media not found: {media_id}")
+            raise NotFoundError(f"Media not found: {media_uuid}")
+
+        if not await self._validate_file_or_delete(entity):
+            raise NotFoundError(f"Media deleted because ptrs is zero: {media_uuid}")
+
         return entity
 
     def _to_dto(self, entity: MediaEntity) -> MediaDTO:
@@ -120,6 +138,7 @@ class MediaService:
             filename: str,
             media_type: MediaType,
             content_type: str,
+            is_server_file: bool = False,
     ) -> UploadMediaResponse:
         is_valid, content, real_content_type, err = self._validate_file_with_xss(
             content, content_type
@@ -160,7 +179,9 @@ class MediaService:
             media_type=media_type,
             size=len(content),
             version=1,
+            ptrs=1,
             created_at=datetime.now(timezone.utc),
+            is_server_file=is_server_file,
         )
 
         try:
@@ -185,6 +206,49 @@ class MediaService:
 
         return UploadMediaResponse(success=True, media=self._to_dto(saved))
 
+    async def get_or_create_server_file(
+            self,
+            storage_path: Path,
+            file_name: str,
+    ) -> Optional[str]:
+        storage_path_str = storage_path.as_posix()
+        full_url = self._make_full_url(storage_path_str)
+
+        full_path = STATIC_ROOT / storage_path
+        if not full_path.is_file():
+            logger.warning(f"Server file not found: {full_path}")
+            return None
+
+        content = full_path.read_bytes()
+        media_hash = self._compute_hash(content)
+        media_uuid = str(uuid4())
+
+        entity = MediaEntity(
+            uuid=media_uuid,
+            full_url=full_url,
+            url=storage_path_str,
+            hash=media_hash,
+            filename=file_name,
+            content_type=mimetypes.guess_type(file_name)[0] or "application/octet-stream",
+            media_type=MediaType.IMAGE,
+            size=len(content),
+            version=1,
+            ptrs=1,
+            created_at=datetime.now(timezone.utc),
+            is_server_file=True,
+        )
+
+        try:
+            saved = await self._repository.save(entity)
+            if saved is not None:
+                logger.info(f"media created uuid={saved.uuid} url={saved.url}")
+            else:
+                logger.info(f"media already exists uuid={media_uuid}")
+        except Exception as e:
+            logger.warning(f"media save skipped uuid={media_uuid}: {e}")
+
+        return media_uuid
+
     async def add_ptr(self, media_uuid: str) -> bool:
         entity = await self._get_or_raise(media_uuid)
         if entity:
@@ -199,17 +263,29 @@ class MediaService:
             await self._repository.save(entity, to_update=True)
         return True
 
-    async def media_exists(self, media_id: str) -> MediaExistsResponse:
-        entity = await self._repository.get(media_id)
+    async def media_exists(self, media_uuid: str) -> MediaExistsResponse:
+        entity = await self._get_or_raise(media_uuid)
         if not entity:
-            return MediaExistsResponse(exists=False, filename=media_id)
+            return MediaExistsResponse(exists=False)
 
         storage_key = self._storage_key_from_url(entity.url)
         exists = await self._storage.storage_impl.file_exists(storage_key)
-        return MediaExistsResponse(exists=exists, filename=entity.url)
+        return MediaExistsResponse(exists=exists, filename=entity.filename)
 
-    async def get_media(self, media_id: str) -> MediaDTO:
-        entity = await self._get_or_raise(media_id)
+    async def get_media(self, media_uuid: str) -> MediaDTO:
+        entity = await self._get_or_raise(media_uuid)
+        return self._to_dto(entity)
+
+    async def get_media_by_url(self, url: str) -> Optional[MediaDTO]:
+        entity = await self._repository.get(SqlQuery[MediaFields](field=MediaFields.URL, value=url))
+
+        if not entity:
+            return None
+
+        if entity.ptrs == 0:
+            await self._repository.delete(SqlQuery[MediaFields]().add_filter(field=MediaFields.URL, value=entity.url))
+            return None
+
         return self._to_dto(entity)
 
     async def verify_avatar_url(self, avatar_url: str) -> bool:
@@ -217,6 +293,12 @@ class MediaService:
         if not media:
             return False
         return media.media_type == MediaType.IMAGE
+
+    async def verify_avatar_url_and_get(self, avatar_url: str) -> Optional[MediaDTO]:
+        media = await self._repository.get(SqlQuery[MediaFields](value=avatar_url, field=MediaFields.URL))
+        if not media or media.media_type != MediaType.IMAGE:
+            return None
+        return self._to_dto(media)
 
 
 def get_media_service() -> MediaService:

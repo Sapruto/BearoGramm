@@ -24,7 +24,11 @@ class ProfileCustomORM(Base):
     )
 
     name: Mapped[str] = mapped_column(String(67), nullable=False, default="Unnamed")
-    avatar_url: Mapped[str] = mapped_column(String(555), nullable=False, default=lambda: str(randomizer.get_random_avatar()))
+    avatar_uuid: Mapped[str] = mapped_column(
+        String(36),
+        ForeignKey("media.uuid", ondelete="SET NULL"),
+        nullable=True,
+    )
 
     banner_color: Mapped[str] = mapped_column(String(7), nullable=False, default="#000000")
     gender: Mapped[Gender] = mapped_column(
@@ -39,12 +43,12 @@ class ProfileCustomORM(Base):
     bio: Mapped[str] = mapped_column(Text, nullable=False, default="I am ameba")
 
     updated_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), nullable=False
+        DateTime(timezone=True), default=None, nullable=False
     )
 
     user_uuid: Mapped[Optional[str]] = mapped_column(
         String(36),
-        ForeignKey("users.uuid", ondelete="SET NULL"),
+        ForeignKey("users.uuid", ondelete="CASCADE"),
         nullable=True,
         index=True
     )
@@ -54,6 +58,12 @@ class ProfileCustomORM(Base):
         back_populates="profile_customs",
         lazy="selectin",
         foreign_keys=[user_uuid]
+    )
+
+    media: Mapped[Optional["MediaORM"]] = relationship(
+        "MediaORM",
+        lazy="selectin",
+        foreign_keys=[avatar_uuid]
     )
 
     __table_args__ = (

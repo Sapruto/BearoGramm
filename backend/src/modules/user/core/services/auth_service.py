@@ -1,6 +1,5 @@
 from typing import Optional
 
-from src.modules.profiles_custom.service import get_profile_custom_service, ProfileCustomService
 from .verify_service import VerifyService, get_verify_service
 from ..repositories.user_repository import UserRepository, get_user_repository
 from ..exceptions import (
