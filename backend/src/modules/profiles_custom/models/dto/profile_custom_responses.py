@@ -9,7 +9,6 @@ class GetProfileResponse(BaseModel):
     profile: Optional[ProfileCustomEntity] = Field(default=None)
     media: Optional[MediaDTO] = Field(default=None)
     username: Optional[str] = Field(default=None)
-    email: Optional[str] = Field(default=None)
 
 
 class UpdateProfileResponse(BaseModel):

@@ -6,7 +6,7 @@ from datetime import datetime, timezone
 from typing import Optional
 
 from ..enums import Gender
-from ..orm.default_avatar_randomizer import get_avatar_randomizer
+from src.modules.media.default_avatar_randomizer import get_avatar_randomizer
 
 
 class ProfileCustomFields(str, Enum):

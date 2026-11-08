@@ -1,5 +1,6 @@
 from typing import Protocol, List, Tuple, Optional, Dict
 
+from src.modules.profiles_custom.models.dto.profile_custom_responses import GetProfileResponse
 from .personal_models import PersonalChatResponse, PersonalChatPreview, GetChatPartnerResponse
 from ..base.exceptions import ChatNotFoundError, UserNotParticipantError, PermissionDeniedError
 from ...models.entities.chat_entity import ChatEntity
@@ -105,10 +106,16 @@ class PermissionProtocol(Protocol):
 
 
 class ProfileProtocol(Protocol):
-    async def get_by_user_uuid(self, user_uuid: str):
+    async def get_me_profile_response(
+            self,
+            profile_uuid: Optional[str] = None,
+            user_uuid: Optional[str] = None,
+    ) -> GetProfileResponse:
         pass
 
-    async def get_by_user_uuids(self, user_uuids: List[str]) -> dict:
+    async def get_responses_by_user_uuids(
+            self, user_uuids: List[str]
+    ) -> Dict[str, GetProfileResponse]:
         pass
 
 
@@ -160,7 +167,7 @@ class PersonalUseCases:
         if partner_uuid is None:
             raise UserNotParticipantError(user_uuid, chat_uuid)
 
-        partner_profile = await self._profile.get_by_user_uuid(partner_uuid)
+        partner_profile = await self._profile.get_me_profile_response(user_uuid=partner_uuid)
 
         return PersonalChatResponse(
             uuid=chat.uuid,
@@ -196,7 +203,7 @@ class PersonalUseCases:
                     partner_uuids.add(p.user_uuid)
                     break
 
-        profiles_by_uuid = await self._profile.get_by_user_uuids(list(partner_uuids))
+        profiles_by_uuid = await self._profile.get_responses_by_user_uuids(list(partner_uuids))
 
         previews: List[PersonalChatPreview] = []
         for chat in chats:
@@ -258,7 +265,7 @@ class PersonalUseCases:
         participants = await self._personal.get_participants(chat_uuid)
         for p in participants:
             if p.user_uuid != user_uuid:
-                profile = await self._profile.get_by_user_uuid(p.user_uuid)
+                profile = await self._profile.get_me_profile_response(p.user_uuid)
                 return GetChatPartnerResponse(partner_uuid=p.user_uuid, partner_profile=profile)
 
         raise UserNotParticipantError(user_uuid, chat_uuid)

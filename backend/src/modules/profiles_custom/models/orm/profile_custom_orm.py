@@ -7,7 +7,7 @@ from datetime import datetime
 
 from src.core.database import Base
 
-from .default_avatar_randomizer import AvatarRandomizer
+from src.modules.media.default_avatar_randomizer import AvatarRandomizer
 from ..enums import Gender
 
 

@@ -1,8 +1,8 @@
-from typing import Dict, List, Optional
+from typing import List, Optional
 from pydantic import BaseModel
 from datetime import datetime
 
-from src.modules.profiles_custom import ProfileCustomEntity
+from src.modules.profiles_custom.models.dto.profile_custom_responses import GetProfileResponse
 from ..chat_types import ChatType
 
 
@@ -13,14 +13,14 @@ class PersonalChatResponse(BaseModel):
     created_at: datetime
     updated_at: datetime
 
-    partner_profile: Optional[ProfileCustomEntity] = None
+    partner_profile: Optional[GetProfileResponse] = None
 
 
 class PersonalChatPreview(BaseModel):
     uuid: str
     chat_type: str = ChatType.PERSONAL
     partner_uuid: str
-    partner_profile: Optional[ProfileCustomEntity] = None
+    partner_profile: Optional[GetProfileResponse] = None
     created_at: datetime
     updated_at: datetime
     last_message_at: Optional[datetime] = None
@@ -40,7 +40,7 @@ class GetPersonalChatsResponse(BaseModel):
 
 class GetChatPartnerResponse(BaseModel):
     partner_uuid: str
-    partner_profile: Optional[ProfileCustomEntity] = None
+    partner_profile: Optional[GetProfileResponse] = None
 
 
 class CheckParticipantResponse(BaseModel):

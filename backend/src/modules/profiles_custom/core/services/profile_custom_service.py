@@ -1,16 +1,19 @@
+from asyncio import gather
 from typing import Optional, Dict, List
 from datetime import datetime, timezone
 
 from src.core.logger import get_logger
 from src.general.repository.sql.sql_query import SqlQuery
 from src.modules.media.core.services.media_service import get_media_service, MediaService
+from src.modules.media.models.dto import MediaDTO
 from src.modules.media.models.enums import MediaType
 from src.modules.user import get_user_service, UserService
+from src.modules.user.models.entities.user_entity import UserEntity
 
 from ..exceptions import (
     ProfileCustomNotFoundError,
     ProfileCustomDataError,
-    ProfileCustomAlreadyExistsError, BadAvatarUrl, NotFoundProfile,
+    ProfileCustomAlreadyExistsError, NotFoundProfile,
 )
 from ...models.dto.profile_custom_requests import UpdateProfileRequest
 from ...models.dto.profile_custom_responses import GetProfileResponse
@@ -144,7 +147,60 @@ class ProfileCustomService:
 
         media_dto = await self._media_service.get_media(entity.avatar_uuid)
 
-        return GetProfileResponse(profile=entity, username=user.username, email=user.email, media=media_dto)
+        return GetProfileResponse(profile=entity, username=user.username, media=media_dto)
+
+    async def get_responses_by_user_uuids(
+            self, user_uuids: List[str]
+    ) -> Dict[str, GetProfileResponse]:
+        if not user_uuids:
+            return {}
+
+        profiles = await self._repository.get_by_user_uuids(user_uuids)
+        if not profiles:
+            return {}
+
+        profiles_by_user: Dict[str, ProfileCustomEntity] = {
+            p.user_uuid: p for p in profiles if p and p.user_uuid
+        }
+        if not profiles_by_user:
+            return {}
+
+        uuids = list(profiles_by_user.keys())
+
+        users_raw = await gather(
+            *(self._user_service.get_user_by_uuid(uid) for uid in uuids),
+            return_exceptions=True,
+        )
+        users_map: Dict[str, UserEntity] = {}
+        for uid, u in zip(uuids, users_raw):
+            users_map[uid] = u
+
+        avatar_to_user: Dict[str, str] = {
+            p.avatar_uuid: uid
+            for uid, p in profiles_by_user.items()
+            if p.avatar_uuid
+        }
+        media_map: Dict[str, MediaDTO] = {}
+        if avatar_to_user:
+            avatars = list(avatar_to_user.keys())
+            media_raw = await gather(
+                *(self._media_service.get_media(a) for a in avatars),
+                return_exceptions=True,
+            )
+            for a, m in zip(avatars, media_raw):
+                media_map[a] = m
+
+        result: Dict[str, GetProfileResponse] = {}
+        for user_uuid, profile in profiles_by_user.items():
+            user = users_map.get(user_uuid)
+            if not user:
+                continue
+            result[user_uuid] = GetProfileResponse(
+                profile=profile,
+                username=user.username,
+                media=media_map.get(profile.avatar_uuid) if profile.avatar_uuid else None,
+            )
+        return result
 
     async def get(
             self,
